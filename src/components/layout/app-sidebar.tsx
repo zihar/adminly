@@ -18,10 +18,16 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/layout/nav-user";
+import { useRbac } from "@/components/providers/rbac-provider";
 import { navMain, siteConfig } from "@/config/site";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { can } = useRbac();
+  // Hanya tampilkan menu yang boleh diakses role aktif.
+  const visibleNav = navMain.filter(
+    (item) => !item.permission || can(item.permission),
+  );
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -49,7 +55,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarMenu>
-            {navMain.map((item) => {
+            {visibleNav.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (

@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/layout/mode-toggle";
+import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { navMain } from "@/config/site";
 
 export function SiteHeader() {
@@ -31,6 +32,7 @@ export function SiteHeader() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-2">
+        <RoleSwitcher />
         <ModeToggle />
       </div>
     </header>

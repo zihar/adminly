@@ -56,6 +56,26 @@ src/
 - Dark mode pakai `next-themes` (class `.dark`). Toggle ada di header.
 - State buka/tutup sidebar tersimpan di cookie `sidebar_state`, dibaca di `(app)/layout.tsx`.
 
+## RBAC (Role-Based Access Control)
+
+Adminly punya scaffold RBAC siap pakai dengan 3 role contoh: **Admin · Editor · Viewer**.
+
+- **Sumber kebenaran:** `src/config/rbac.ts` — daftar role, `Permission`, pemetaan
+  `ROLE_PERMISSIONS`, dan `ROUTE_PERMISSIONS` (prefix route → permission).
+- **Proteksi route:** `src/proxy.ts` memblokir akses halaman sesuai role (redirect ke
+  `/dashboard`). Catatan: di Next.js 16 `middleware` diganti **`proxy`**.
+- **Gating UI:** sidebar otomatis menyembunyikan menu tanpa izin (`navMain[].permission`),
+  dan komponen `<Can permission="users:manage">…</Can>` untuk tombol/aksi.
+- **Role aktif (demo):** disimpan di cookie `adminly_role`, bisa diganti lewat
+  **Role switcher** di header. Di project nyata, ganti sumber role dengan sesi/JWT user
+  dan verifikasi otorisasi juga di Server Component/Server Action.
+
+| Role | dashboard | analytics | users | settings |
+|------|:--------:|:---------:|:-----:|:--------:|
+| Admin  | ✅ | ✅ | ✅ | ✅ |
+| Editor | ✅ | ✅ | — | — |
+| Viewer | ✅ | — | — | — |
+
 ## Lisensi
 
 [MIT](./LICENSE) © zihar
