@@ -12,10 +12,13 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
+import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { useI18n } from "@/components/providers/i18n-provider";
 import { navMain } from "@/config/site";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const current = navMain.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   );
@@ -27,11 +30,14 @@ export function SiteHeader() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbPage>{current?.title ?? "Dashboard"}</BreadcrumbPage>
+            <BreadcrumbPage>
+              {t.nav[current?.key ?? "dashboard"]}
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-2">
+        <LocaleSwitcher />
         <RoleSwitcher />
         <ModeToggle />
       </div>

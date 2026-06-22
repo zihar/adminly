@@ -15,37 +15,42 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { useI18n } from "@/components/providers/i18n-provider";
 
+// `m` = indeks bulan (0..5) → label diambil dari kamus i18n agar bisa berganti bahasa.
 const data = [
-  { month: "Jan", visits: 1860, signups: 800 },
-  { month: "Feb", visits: 3050, signups: 1200 },
-  { month: "Mar", visits: 2370, signups: 1100 },
-  { month: "Apr", visits: 1730, signups: 900 },
-  { month: "Mei", visits: 2090, signups: 1300 },
-  { month: "Jun", visits: 3140, signups: 1700 },
+  { m: 0, visits: 1860, signups: 800 },
+  { m: 1, visits: 3050, signups: 1200 },
+  { m: 2, visits: 2370, signups: 1100 },
+  { m: 3, visits: 1730, signups: 900 },
+  { m: 4, visits: 2090, signups: 1300 },
+  { m: 5, visits: 3140, signups: 1700 },
 ];
 
-const chartConfig = {
-  visits: { label: "Kunjungan", color: "var(--chart-1)" },
-  signups: { label: "Pendaftaran", color: "var(--chart-3)" },
-} satisfies ChartConfig;
-
 export function OverviewChart() {
+  const { t } = useI18n();
+
+  const chartConfig = {
+    visits: { label: t.chart.visits, color: "var(--chart-1)" },
+    signups: { label: t.chart.signups, color: "var(--chart-3)" },
+  } satisfies ChartConfig;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ringkasan</CardTitle>
-        <CardDescription>Kunjungan & pendaftaran 6 bulan terakhir</CardDescription>
+        <CardTitle>{t.chart.title}</CardTitle>
+        <CardDescription>{t.chart.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[260px] w-full">
           <AreaChart data={data} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="m"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              tickFormatter={(value: number) => t.chart.months[value]}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>

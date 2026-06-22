@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRbac } from "@/components/providers/rbac-provider";
+import { useI18n } from "@/components/providers/i18n-provider";
 import { ROLES, type Role } from "@/config/rbac";
 
 /**
@@ -21,6 +22,7 @@ import { ROLES, type Role } from "@/config/rbac";
  */
 export function RoleSwitcher() {
   const { role, setRole } = useRbac();
+  const { t } = useI18n();
 
   return (
     <DropdownMenu>
@@ -29,7 +31,7 @@ export function RoleSwitcher() {
         {role}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
-        <DropdownMenuLabel>Role (demo)</DropdownMenuLabel>
+        <DropdownMenuLabel>{t.roleSwitcher.label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
           value={role}

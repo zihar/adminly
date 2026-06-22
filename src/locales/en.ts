@@ -1,0 +1,105 @@
+/**
+ * Kamus English — SUMBER KEBENARAN struktur i18n.
+ * Tipe `Dictionary` diturunkan dari sini; locale lain wajib mengikuti bentuk ini.
+ */
+export const en = {
+  app: {
+    tagline: "Dashboard starter",
+    sidebarMenu: "Menu",
+    description:
+      "Generic internal-tool dashboard starter — fork it for each new project.",
+  },
+  nav: {
+    dashboard: "Dashboard",
+    users: "Users",
+    analytics: "Analytics",
+    settings: "Settings",
+  },
+  modeToggle: { toggle: "Toggle theme" },
+  localeSwitcher: { label: "Language" },
+  roleSwitcher: { label: "Role (demo)" },
+  user: { account: "Account", signOut: "Sign out" },
+  footer: { rights: "All rights reserved." },
+  login: {
+    metaTitle: "Sign in",
+    signInTo: "Sign in to",
+    subtitle: "Use your work account to continue.",
+    google: "Sign in with Google",
+    or: "or",
+    email: "Email",
+    emailPlaceholder: "name@company.com",
+    password: "Password",
+    forgot: "Forgot password?",
+    submit: "Sign in",
+    noAccount: "Don't have an account?",
+    signUp: "Sign up",
+  },
+  dashboard: {
+    title: "Dashboard",
+    description: "A summary of your app's key metrics.",
+    stats: {
+      revenue: { title: "Revenue", value: "$45.2K", hint: "vs last month" },
+      activeUsers: { title: "Active users", value: "2,340", hint: "vs last month" },
+      transactions: { title: "Transactions", value: "1,205", hint: "vs last month" },
+      uptime: { title: "Uptime", value: "99.98%", hint: "30 days" },
+    },
+    recentActivity: "Recent activity",
+    recentActivityDesc: "A few recent events",
+    activities: [
+      { who: "Andi", what: "added a new user", when: "5 min ago" },
+      { who: "Bunga", what: "updated settings", when: "1 hour ago" },
+      { who: "Citra", what: "exported a report", when: "3 hours ago" },
+      { who: "Dimas", what: "signed in from a new device", when: "yesterday" },
+    ],
+  },
+  analytics: {
+    title: "Analytics",
+    description: "Usage trends and metrics.",
+    stats: {
+      pageViews: { title: "Page views", value: "84,120" },
+      ctr: { title: "Click-through rate", value: "3.7%" },
+      sessionDuration: { title: "Session duration", value: "4m 12s" },
+    },
+  },
+  chart: {
+    title: "Overview",
+    description: "Visits & signups, last 6 months",
+    visits: "Visits",
+    signups: "Signups",
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  },
+  users: {
+    title: "Users",
+    description: "Manage users and their access.",
+    addUser: "Add user",
+    searchPlaceholder: "Search name, email, or role…",
+    colName: "Name",
+    colRole: "Role",
+    colStatus: "Status",
+    colJoined: "Joined",
+    empty: "No data.",
+    actions: "Actions",
+    edit: "Edit",
+    delete: "Delete",
+    editingToast: "Editing {name}",
+    deletingToast: "Deleting {name}",
+    status: { active: "Active", invited: "Invited", suspended: "Suspended" },
+  },
+  settings: {
+    title: "Settings",
+    description: "Manage application preferences.",
+    tabGeneral: "General",
+    tabAccount: "Account",
+    orgTitle: "Organization info",
+    orgDesc: "This name appears across the app.",
+    orgName: "Organization name",
+    domain: "Domain",
+    profileTitle: "Profile",
+    profileDesc: "Update your account details.",
+    name: "Name",
+    email: "Email",
+    save: "Save changes",
+  },
+};
+
+export type Dictionary = typeof en;

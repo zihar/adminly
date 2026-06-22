@@ -14,21 +14,26 @@ import type { Permission } from "@/config/rbac";
  */
 export const siteConfig = {
   name: "Adminly",
-  description: "Starter dashboard untuk internal tool — siap di-fork tiap project baru.",
+  description:
+    "Generic internal-tool dashboard starter — fork it for each new project.",
 };
 
+/** Kunci label navigasi → dicocokkan ke kamus i18n (`t.nav[key]`). */
+export type NavKey = "dashboard" | "users" | "analytics" | "settings";
+
 export type NavItem = {
-  title: string;
+  /** Kunci i18n untuk judul (lihat `t.nav`). */
+  key: NavKey;
   href: string;
   icon: LucideIcon;
   /** Permission yang dibutuhkan agar item ini tampil di sidebar. */
   permission?: Permission;
 };
 
-/** Item navigasi utama di sidebar. */
+/** Item navigasi utama di sidebar. Label diambil dari kamus i18n via `key`. */
 export const navMain: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard:view" },
-  { title: "Pengguna", href: "/users", icon: Users, permission: "users:manage" },
-  { title: "Analitik", href: "/analytics", icon: BarChart3, permission: "analytics:view" },
-  { title: "Pengaturan", href: "/settings", icon: Settings, permission: "settings:manage" },
+  { key: "dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard:view" },
+  { key: "users", href: "/users", icon: Users, permission: "users:manage" },
+  { key: "analytics", href: "/analytics", icon: BarChart3, permission: "analytics:view" },
+  { key: "settings", href: "/settings", icon: Settings, permission: "settings:manage" },
 ];

@@ -13,40 +13,44 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getDictionary } from "@/lib/get-dictionary";
 
-export const metadata: Metadata = { title: "Pengaturan" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.settings.title };
+}
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Pengaturan" description="Kelola preferensi aplikasi." />
+      <PageHeader title={t.settings.title} description={t.settings.description} />
 
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="general">Umum</TabsTrigger>
-          <TabsTrigger value="account">Akun</TabsTrigger>
+          <TabsTrigger value="general">{t.settings.tabGeneral}</TabsTrigger>
+          <TabsTrigger value="account">{t.settings.tabAccount}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>Informasi Organisasi</CardTitle>
-              <CardDescription>
-                Nama ini muncul di seluruh aplikasi.
-              </CardDescription>
+              <CardTitle>{t.settings.orgTitle}</CardTitle>
+              <CardDescription>{t.settings.orgDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="org">Nama Organisasi</Label>
+                <Label htmlFor="org">{t.settings.orgName}</Label>
                 <Input id="org" defaultValue="Acme Inc." className="max-w-sm" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="domain">Domain</Label>
+                <Label htmlFor="domain">{t.settings.domain}</Label>
                 <Input id="domain" defaultValue="acme.example.com" className="max-w-sm" />
               </div>
             </CardContent>
             <CardFooter className="border-t pt-4">
-              <Button>Simpan Perubahan</Button>
+              <Button>{t.settings.save}</Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -54,21 +58,21 @@ export default function SettingsPage() {
         <TabsContent value="account">
           <Card>
             <CardHeader>
-              <CardTitle>Profil</CardTitle>
-              <CardDescription>Perbarui detail akunmu.</CardDescription>
+              <CardTitle>{t.settings.profileTitle}</CardTitle>
+              <CardDescription>{t.settings.profileDesc}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Nama</Label>
+                <Label htmlFor="name">{t.settings.name}</Label>
                 <Input id="name" defaultValue="Admin" className="max-w-sm" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t.settings.email}</Label>
                 <Input id="email" type="email" defaultValue="admin@example.com" className="max-w-sm" />
               </div>
             </CardContent>
             <CardFooter className="border-t pt-4">
-              <Button>Simpan Perubahan</Button>
+              <Button>{t.settings.save}</Button>
             </CardFooter>
           </Card>
         </TabsContent>

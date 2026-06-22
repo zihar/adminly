@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useI18n } from "@/components/providers/i18n-provider";
 
 type User = {
   name: string;
@@ -28,6 +29,7 @@ type User = {
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
+  const { t } = useI18n();
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
@@ -87,13 +89,13 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                Akun
+                {t.user.account}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/login" />}>
               <LogOut />
-              Keluar
+              {t.user.signOut}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

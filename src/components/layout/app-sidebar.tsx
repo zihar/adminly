@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "@/components/layout/nav-user";
 import { useRbac } from "@/components/providers/rbac-provider";
+import { useI18n } from "@/components/providers/i18n-provider";
 import { navMain, siteConfig } from "@/config/site";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { can } = useRbac();
+  const { t } = useI18n();
   // Hanya tampilkan menu yang boleh diakses role aktif.
   const visibleNav = navMain.filter(
     (item) => !item.permission || can(item.permission),
@@ -43,7 +45,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   {siteConfig.name}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  Dashboard starter
+                  {t.app.tagline}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -53,20 +55,21 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>{t.app.sidebarMenu}</SidebarGroupLabel>
           <SidebarMenu>
             {visibleNav.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const label = t.nav[item.key];
               return (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     render={<Link href={item.href} />}
                     isActive={isActive}
-                    tooltip={item.title}
+                    tooltip={label}
                   >
                     <item.icon />
-                    <span>{item.title}</span>
+                    <span>{label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );

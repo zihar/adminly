@@ -11,22 +11,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getDictionary } from "@/lib/get-dictionary";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.dashboard.title };
+}
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const t = await getDictionary();
+  const s = t.dashboard.stats;
+
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Ringkasan metrik utama aplikasimu."
-      />
+      <PageHeader title={t.dashboard.title} description={t.dashboard.description} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Pendapatan" value="Rp 45,2 jt" delta={12.5} hint="vs bulan lalu" icon={DollarSign} />
-        <StatCard title="Pengguna Aktif" value="2.340" delta={5.1} hint="vs bulan lalu" icon={Users} />
-        <StatCard title="Transaksi" value="1.205" delta={-2.4} hint="vs bulan lalu" icon={CreditCard} />
-        <StatCard title="Uptime" value="99,98%" delta={0.1} hint="30 hari" icon={Activity} />
+        <StatCard title={s.revenue.title} value={s.revenue.value} delta={12.5} hint={s.revenue.hint} icon={DollarSign} />
+        <StatCard title={s.activeUsers.title} value={s.activeUsers.value} delta={5.1} hint={s.activeUsers.hint} icon={Users} />
+        <StatCard title={s.transactions.title} value={s.transactions.value} delta={-2.4} hint={s.transactions.hint} icon={CreditCard} />
+        <StatCard title={s.uptime.title} value={s.uptime.value} delta={0.1} hint={s.uptime.hint} icon={Activity} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -35,16 +39,11 @@ export default function DashboardPage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Aktivitas Terbaru</CardTitle>
-            <CardDescription>Beberapa kejadian terakhir</CardDescription>
+            <CardTitle>{t.dashboard.recentActivity}</CardTitle>
+            <CardDescription>{t.dashboard.recentActivityDesc}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            {[
-              { who: "Andi", what: "menambahkan pengguna baru", when: "5 mnt lalu" },
-              { who: "Bunga", what: "memperbarui pengaturan", when: "1 jam lalu" },
-              { who: "Citra", what: "mengekspor laporan", when: "3 jam lalu" },
-              { who: "Dimas", what: "login dari perangkat baru", when: "kemarin" },
-            ].map((item, i) => (
+            {t.dashboard.activities.map((item, i) => (
               <div key={i} className="flex items-start gap-3">
                 <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
                 <p className="text-muted-foreground">

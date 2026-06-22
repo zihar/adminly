@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { getDictionary } from "@/lib/get-dictionary";
 
-export const metadata: Metadata = { title: "Masuk" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.login.metaTitle };
+}
 
 export default function LoginPage() {
   return (

@@ -22,13 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useI18n } from "@/components/providers/i18n-provider";
+import { format } from "@/locales";
 import type { AppUser, UserStatus } from "@/lib/data";
-
-const statusLabel: Record<UserStatus, string> = {
-  active: "Aktif",
-  invited: "Diundang",
-  suspended: "Ditangguhkan",
-};
 
 const statusVariant: Record<
   UserStatus,
@@ -40,6 +36,7 @@ const statusVariant: Record<
 };
 
 export function UsersTable({ data }: { data: AppUser[] }) {
+  const { t } = useI18n();
   const [query, setQuery] = React.useState("");
 
   const filtered = data.filter((u) =>
@@ -51,7 +48,7 @@ export function UsersTable({ data }: { data: AppUser[] }) {
       <div className="relative max-w-sm">
         <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Cari nama, email, atau peran…"
+          placeholder={t.users.searchPlaceholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-8"
@@ -62,10 +59,10 @@ export function UsersTable({ data }: { data: AppUser[] }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead>Peran</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Bergabung</TableHead>
+              <TableHead>{t.users.colName}</TableHead>
+              <TableHead>{t.users.colRole}</TableHead>
+              <TableHead>{t.users.colStatus}</TableHead>
+              <TableHead>{t.users.colJoined}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
@@ -73,7 +70,7 @@ export function UsersTable({ data }: { data: AppUser[] }) {
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  Tidak ada data.
+                  {t.users.empty}
                 </TableCell>
               </TableRow>
             ) : (
@@ -97,7 +94,7 @@ export function UsersTable({ data }: { data: AppUser[] }) {
                   <TableCell>{user.role}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariant[user.status]}>
-                      {statusLabel[user.status]}
+                      {t.users.status[user.status]}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground tabular-nums">
@@ -111,19 +108,23 @@ export function UsersTable({ data }: { data: AppUser[] }) {
                         }
                       >
                         <MoreHorizontal className="size-4" />
-                        <span className="sr-only">Aksi</span>
+                        <span className="sr-only">{t.users.actions}</span>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => toast.info(`Mengedit ${user.name}`)}
+                          onClick={() =>
+                            toast.info(format(t.users.editingToast, { name: user.name }))
+                          }
                         >
-                          Edit
+                          {t.users.edit}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => toast.error(`Menghapus ${user.name}`)}
+                          onClick={() =>
+                            toast.error(format(t.users.deletingToast, { name: user.name }))
+                          }
                         >
-                          Hapus
+                          {t.users.delete}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

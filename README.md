@@ -76,6 +76,24 @@ Adminly punya scaffold RBAC siap pakai dengan 3 role contoh: **Admin · Editor �
 | Editor | ✅ | ✅ | — | — |
 | Viewer | ✅ | — | — | — |
 
+## i18n (multi-bahasa)
+
+Adminly punya i18n ringan berbasis **dictionary + cookie**, default **English** (`en`),
+dengan **Indonesia** (`id`) sebagai opsi kedua. Locale TIDAK di URL — cocok untuk
+internal tool yang tak butuh SEO multi-locale.
+
+- **Kamus:** `src/locales/en.ts` (sumber kebenaran tipe `Dictionary`) & `src/locales/id.ts`
+  (wajib mengikuti struktur yang sama — TypeScript akan error kalau ada key hilang).
+- **Server Component:** `await getDictionary()` dari `src/lib/get-dictionary.ts`
+  (mis. dipakai di setiap `page.tsx` + `generateMetadata`).
+- **Client Component:** `const { t, locale, setLocale } = useI18n()` dari
+  `src/components/providers/i18n-provider.tsx`.
+- **Ganti bahasa:** lewat **Language switcher** di header (disimpan di cookie `adminly_locale`).
+- `<html lang>` ikut locale aktif (di-set di `src/app/layout.tsx`).
+
+Menambah bahasa baru: tambah kode di `LOCALES` (`src/config/i18n.ts`), buat
+`src/locales/<kode>.ts` meniru struktur `Dictionary`, daftarkan di `src/locales/index.ts`.
+
 ## Lisensi
 
 [MIT](./LICENSE) © zihar

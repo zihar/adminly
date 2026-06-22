@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useI18n } from "@/components/providers/i18n-provider";
 import { siteConfig } from "@/config/site";
 
 /** Logo Google multi-warna (inline — lucide tidak menyediakan ikon brand). */
@@ -43,6 +44,7 @@ function GoogleIcon() {
 
 export function LoginForm() {
   const router = useRouter();
+  const { t } = useI18n();
 
   // Dummy: belum ada autentikasi sungguhan — langsung arahkan ke dashboard.
   // Ganti dengan call ke API/auth provider saat dipakai untuk project nyata.
@@ -57,10 +59,10 @@ export function LoginForm() {
         <div className="mb-2 flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Boxes className="size-5" />
         </div>
-        <CardTitle className="text-xl">Masuk ke {siteConfig.name}</CardTitle>
-        <CardDescription>
-          Gunakan akun kerjamu untuk melanjutkan.
-        </CardDescription>
+        <CardTitle className="text-xl">
+          {t.login.signInTo} {siteConfig.name}
+        </CardTitle>
+        <CardDescription>{t.login.subtitle}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -71,22 +73,22 @@ export function LoginForm() {
           onClick={() => router.push("/dashboard")}
         >
           <GoogleIcon />
-          Masuk dengan Google
+          {t.login.google}
         </Button>
 
         <div className="flex items-center gap-2">
           <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">atau</span>
+          <span className="text-xs text-muted-foreground">{t.login.or}</span>
           <span className="h-px flex-1 bg-border" />
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.login.email}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="nama@perusahaan.com"
+              placeholder={t.login.emailPlaceholder}
               autoComplete="email"
               required
             />
@@ -94,12 +96,12 @@ export function LoginForm() {
 
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t.login.password}</Label>
               <Link
                 href="#"
                 className="text-xs text-muted-foreground underline-offset-4 hover:underline"
               >
-                Lupa password?
+                {t.login.forgot}
               </Link>
             </div>
             <Input
@@ -111,17 +113,17 @@ export function LoginForm() {
           </div>
 
           <Button type="submit" className="w-full">
-            Masuk
+            {t.login.submit}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Belum punya akun?{" "}
+          {t.login.noAccount}{" "}
           <Link
             href="#"
             className="text-foreground underline-offset-4 hover:underline"
           >
-            Daftar
+            {t.login.signUp}
           </Link>
         </p>
       </CardContent>
