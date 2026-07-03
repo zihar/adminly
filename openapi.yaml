@@ -1,0 +1,78 @@
+openapi: 3.1.0
+info:
+  title: Adminly API
+  version: 1.0.0
+  description: >-
+    Self-contained contract for the starter. Route Handlers under src/app/api
+    implement it against an in-memory store. Swap `servers.url` + the generated
+    schema for your real backend (Go/Huma, NestJS+Swagger, ...).
+servers:
+  - url: /api
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      summary: List users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewUser"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+  /users/{id}:
+    delete:
+      operationId: deleteUser
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+components:
+  schemas:
+    User:
+      type: object
+      required: [id, name, email, role, status, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string }
+        status:
+          type: string
+          enum: [active, invited, suspended]
+        createdAt: { type: string }
+    NewUser:
+      type: object
+      required: [name, email, role]
+      properties:
+        name: { type: string }
+        email: { type: string }
+        role: { type: string }
