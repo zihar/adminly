@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Plus } from "lucide-react";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Can } from "@/components/auth/can";
 import { UsersTable } from "@/components/dashboard/users-table";
 import { getDictionary } from "@/lib/get-dictionary";
-import { users } from "@/lib/data";
+import { getQueryClient } from "@/lib/query/get-query-client";
+import { usersQueryOptions } from "@/hooks/api/use-users";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getDictionary();
@@ -16,17 +15,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function UsersPage() {
   const t = await getDictionary();
 
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(usersQueryOptions());
+
   return (
     <>
-      <PageHeader title={t.users.title} description={t.users.description}>
-        <Can permission="users:manage">
-          <Button>
-            <Plus className="size-4" />
-            {t.users.addUser}
-          </Button>
-        </Can>
-      </PageHeader>
-      <UsersTable data={users} />
+      <PageHeader title={t.users.title} description={t.users.description} />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <UsersTable />
+      </HydrationBoundary>
     </>
   );
 }
