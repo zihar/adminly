@@ -23,13 +23,14 @@ npm start       # run the production build
 ```
 src/
 ├─ app/
-│  ├─ layout.tsx            # root: fonts, ThemeProvider, I18nProvider, Toaster
+│  ├─ layout.tsx            # root: fonts, QueryProvider, ThemeProvider, I18nProvider, Toaster
 │  ├─ page.tsx              # redirect → /dashboard
 │  ├─ login/                # login page (outside the dashboard shell)
+│  ├─ api/users/            # Route Handlers (GET/POST + [id] DELETE) — demo backend
 │  └─ (app)/                # dashboard shell (sidebar + header + footer)
 │     ├─ layout.tsx         # RbacProvider + SidebarProvider + AppSidebar + SiteHeader
 │     ├─ dashboard/         # overview: stat cards + chart + activity
-│     ├─ users/             # example table + search + row actions
+│     ├─ users/             # prefetch + hydrate → TanStack Query table
 │     ├─ analytics/         # example chart page
 │     └─ settings/          # example form + tabs
 ├─ components/
@@ -43,9 +44,15 @@ src/
 │  ├─ rbac.ts               # roles, permissions, route→permission map
 │  └─ i18n.ts               # locales config (default English)
 ├─ locales/                 # en.ts (type source) + id.ts dictionaries
+├─ hooks/
+│  └─ api/use-users.ts      # TanStack Query hooks (query + optimistic mutations)
 ├─ proxy.ts                 # RBAC route protection (Next.js 16: "proxy", not "middleware")
 └─ lib/
    ├─ data.ts               # dummy data — replace with a real API/DB
+   ├─ api/client.ts         # typed openapi-fetch client
+   ├─ api/schema.d.ts       # GENERATED from openapi.yaml (npm run gen:api)
+   ├─ api/users-store.ts    # in-memory store behind the Route Handlers
+   ├─ query/get-query-client.ts  # QueryClient factory (App Router pattern)
    ├─ get-dictionary.ts     # server-side i18n helper
    └─ utils.ts              # cn() helper
 ```
@@ -57,6 +64,20 @@ src/
 3. **Wire up data**: replace `src/lib/data.ts` with fetches to your API/database. Pages are Server Components, so they can be `async` + `await fetch(...)`.
 4. **Branding/colors**: edit the CSS variables in `src/app/globals.css` (`:root` and `.dark`).
 5. **Add UI components**: `npx shadcn@latest add <component>`.
+
+## Data layer (TanStack Query + typed OpenAPI client)
+
+- `openapi.yaml` is the API contract. `npm run gen:api` regenerates
+  `src/lib/api/schema.d.ts` with `openapi-typescript` — never edit it by hand.
+- `src/lib/api/client.ts` is an `openapi-fetch` client typed end-to-end from the
+  spec (paths, params, bodies, responses).
+- Query/mutation hooks live in `src/hooks/api/*` and demonstrate caching,
+  optimistic updates, and rollback (see `use-users.ts`).
+- The users page prefetches on the server and hydrates on the client.
+
+**Pointing at a real backend:** set `NEXT_PUBLIC_API_BASE_URL` (see `.env.example`),
+replace `openapi.yaml` with your backend's spec (or a URL), run `npm run gen:api`,
+and delete `src/app/api/*` + `src/lib/api/users-store.ts`. Everything else is unchanged.
 
 ## Technical notes
 
