@@ -11,7 +11,10 @@ export default defineConfig({
     // `e2e/**` dijalankan lewat Playwright (`npx playwright test`), bukan
     // Vitest — keduanya sama-sama menyuntik global `test`/`expect` sehingga
     // bentrok bila e2e ikut ter-discover di sini.
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    // `src/stories/**` (contoh bawaan Storybook) juga di-exclude — story
+    // dijalankan lewat Storybook (`npm run storybook`/`build-storybook`),
+    // bukan sebagai unit test Vitest.
+    exclude: [...configDefaults.exclude, "e2e/**", "src/stories/**"],
   },
   resolve: { alias: { "@": resolve(__dirname, "./src") } },
 });

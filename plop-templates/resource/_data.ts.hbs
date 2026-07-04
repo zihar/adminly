@@ -1,0 +1,8 @@
+import { createCollectionStore } from "@/app/api/_store/collection-store";
+
+export type {{pascalCase name}}Row = { id: string; nama: string };
+
+export const {{camelCase name}}Store = createCollectionStore<{{pascalCase name}}Row>([
+  { id: "{{name}}-1", nama: "{{seedA}}" },
+  { id: "{{name}}-2", nama: "{{seedB}}" },
+]);

@@ -65,6 +65,35 @@ src/
 4. **Branding/colors**: edit the CSS variables in `src/app/globals.css` (`:root` and `.dark`).
 5. **Add UI components**: `npx shadcn@latest add <component>`.
 
+## Generic CRUD resources + scaffold generator
+
+A **resource** is a config-driven CRUD module (list/create/edit/delete) rendered
+by the generic `[resource]` routes — no per-module page code. See
+`src/config/resources/items.ts` for the anatomy (`defineResource` +
+`createResourceApi`).
+
+**Scaffold a new resource** instead of wiring it by hand:
+
+```bash
+npm run gen:resource            # interactive
+# or non-interactive (bypass):
+npx plop resource products Products "Contoh A" "Contoh B"
+```
+
+The generator (`plopfile.mjs` + `plop-templates/resource/`) emits and wires up:
+
+- `src/config/resources/<name>.ts` — the resource definition (one `nama` text field to start).
+- `src/app/api/<name>/{route,[id]/route,bulk-delete/route,options/route}.ts` + `_data.ts` — a mock in-memory store (following the `regions` pattern; type comes from `_data.ts`, so **no `openapi.yaml`/`gen:api` step**).
+- Injects into `src/config/resources/register.ts` (registry), `src/config/rbac.ts` (4 `<name>:*` permissions + Admin role), and `src/locales/{en,id}.ts` (label block).
+
+After generating: run `npx tsc --noEmit`, then `npm run dev` and open `/<name>`.
+
+> **Note:** `src/config/resources/__tests__/register.test.ts` asserts the exact
+> number of registered resources — bump that count when you add one. To extend a
+> generated resource (more fields, cascade, real backend types), edit its
+> `<name>.ts` and `_data.ts`; for a real backend add the schema to `openapi.yaml`
+> and switch the type to `components["schemas"][...]` (as `items.ts` does).
+
 ## Data layer (TanStack Query + typed OpenAPI client)
 
 - `openapi.yaml` is the API contract. `npm run gen:api` regenerates
@@ -124,6 +153,27 @@ internal tools that don't need multi-locale SEO.
 
 Adding a new language: add its code to `LOCALES` (`src/config/i18n.ts`), create
 `src/locales/<code>.ts` mirroring the `Dictionary` shape, and register it in `src/locales/index.ts`.
+
+## Testing & Storybook
+
+```bash
+npm test               # unit/integration (Vitest, jsdom) — 80+ tests
+npm run test:watch     # Vitest watch mode
+npm run test:e2e       # end-to-end (Playwright, chromium) — auto-starts npm run dev
+npm run storybook      # component explorer at http://localhost:6006
+npm run build-storybook # static Storybook build (Vite)
+```
+
+- **Vitest** covers the CRUD layer, registry, RBAC, components, and API route handlers (`src/**/__tests__`).
+- **Playwright** e2e lives in `e2e/`. First run needs browsers: `npx playwright install chromium`.
+  Specs cover generic CRUD (`crud-items`), RBAC route/UI gating (`rbac`), form validation,
+  list search/sort, login, and users CRUD. Data is served by the in-memory mock stores, so no
+  backend is required; `playwright.config.ts` starts the dev server automatically.
+- **Storybook** uses the Vite framework (`@storybook/nextjs-vite`) — chosen over the webpack
+  `@storybook/nextjs` because Next 16 defaults to Turbopack. Core CRUD components have stories
+  (`src/components/crud/*.stories.tsx`); global providers (React Query, i18n, RBAC, nuqs) are
+  wired as decorators in `.storybook/preview.tsx`, and network is stubbed with MSW
+  (`src/components/crud/__demo__/`).
 
 ## License
 
