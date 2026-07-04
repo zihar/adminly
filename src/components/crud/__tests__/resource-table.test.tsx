@@ -55,6 +55,10 @@ const server = setupServer(
 // dievaluasi, jadi `createResourceApi` wajib di-import dinamis SETELAH
 // `server.listen()`/env var di-set (lihat catatan sama di resource-form.test.tsx).
 let def: ResourceDef;
+// Def khusus test pagination: `perPage` kecil (2) supaya dataset 4 baris
+// benar-benar terbagi 2 halaman (fixture default 2 baris/perPage 10 di atas
+// membuat tombol Next selalu disabled).
+let defPaged: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -69,6 +73,19 @@ beforeAll(async () => {
     permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
     columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
     list: { perPage: 10 },
+    form: {
+      schema: z.object({ nama: z.string() }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text" } },
+    },
+  });
+  defPaged = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
+    list: { perPage: 2 },
     form: {
       schema: z.object({ nama: z.string() }),
       layout: [{ tabKey: "umum", fields: ["nama"] }],
@@ -161,16 +178,106 @@ describe("ResourceTable", () => {
     expect(lastCall.queryString).toContain("q=beta");
   });
 
-  it("klik header kolom sortable meng-update state urutan (sort/order) di URL", async () => {
+  it("klik header kolom sortable meng-update sort/order di URL DAN mengubah urutan baris di DOM", async () => {
     const user = userEvent.setup();
     const onUrlUpdate = vi.fn();
     wrap(<ResourceTable def={def} />, { onUrlUpdate });
     await screen.findByText("Alpha");
 
-    await user.click(screen.getByRole("button", { name: "Name" }));
+    const header = screen.getByRole("button", { name: "Name" });
 
-    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
-    const lastCall = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
-    expect(lastCall.queryString).toContain("sort=nama");
+    // Klik pertama: unsorted -> asc. `order=asc` adalah nilai default nuqs
+    // sehingga TIDAK dicetak di querystring (nuqs membuang param yang sama
+    // dengan default) — order dikonfirmasi lewat indikator visual (▲) &
+    // absennya `order=desc`. Mock server hanya membalik baris untuk
+    // `order=desc`, jadi urutan baris (Alpha, Beta) belum berubah di sini.
+    await user.click(header);
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("sort=nama");
+      expect(last.queryString).not.toContain("order=desc");
+    });
+    expect(header).toHaveTextContent("▲");
+    let dataRows = screen.getAllByRole("row").slice(1);
+    expect(dataRows[0]).toHaveTextContent("Alpha");
+    expect(dataRows[1]).toHaveTextContent("Beta");
+
+    // Klik kedua: asc -> desc. Server membalik baris untuk `order=desc`, jadi
+    // urutan tampilan di DOM harus benar-benar berbalik (Beta lalu Alpha).
+    await user.click(header);
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("sort=nama");
+      expect(last.queryString).toContain("order=desc");
+    });
+    expect(header).toHaveTextContent("▼");
+    await waitFor(() => {
+      dataRows = screen.getAllByRole("row").slice(1);
+      expect(dataRows[0]).toHaveTextContent("Beta");
+      expect(dataRows[1]).toHaveTextContent("Alpha");
+    });
+  });
+
+  it("navigasi Next/Previous mengubah page di URL, memicu refetch, dan mengganti baris yang tampil", async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    // Override handler khusus test ini: dataset 4 baris, dipaginasi sungguhan
+    // lewat `page`/`per_page` supaya Next benar-benar aktif (beda dari fixture
+    // 2 baris default yang membuat Next selalu disabled).
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        const page = Number(url.searchParams.get("page") ?? "1");
+        const perPage = Number(url.searchParams.get("per_page") ?? "10");
+        const all = [
+          { id: "1", nama: "Alpha" },
+          { id: "2", nama: "Beta" },
+          { id: "3", nama: "Gamma" },
+          { id: "4", nama: "Delta" },
+        ];
+        const start = (page - 1) * perPage;
+        return HttpResponse.json({
+          data: all.slice(start, start + perPage),
+          meta: { total: all.length, page, per_page: perPage },
+        });
+      }),
+    );
+    wrap(<ResourceTable def={defPaged} />, { onUrlUpdate });
+
+    await screen.findByText("Alpha");
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    expect(screen.queryByText("Gamma")).not.toBeInTheDocument();
+
+    const previous = screen.getByRole("button", { name: "Previous" });
+    const next = screen.getByRole("button", { name: "Next" });
+    expect(previous).toBeDisabled();
+    expect(next).not.toBeDisabled();
+
+    await user.click(next);
+
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("page=2");
+    });
+    await screen.findByText("Gamma");
+    expect(screen.getByText("Delta")).toBeInTheDocument();
+    expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
+    expect(screen.queryByText("Beta")).not.toBeInTheDocument();
+    expect(previous).not.toBeDisabled();
+    expect(next).toBeDisabled();
+
+    const urlUpdatesBeforePrevious = onUrlUpdate.mock.calls.length;
+    await user.click(previous);
+
+    // `page=1` adalah default nuqs sehingga dibuang dari querystring (bukan
+    // dicetak eksplisit) — cukup pastikan nuqs benar-benar mencatat update
+    // (bukan diam saja) dan bahwa param `page=2` sudah tidak ada lagi.
+    await waitFor(() => expect(onUrlUpdate.mock.calls.length).toBeGreaterThan(urlUpdatesBeforePrevious));
+    const afterPrevious = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+    expect(afterPrevious.queryString).not.toContain("page=2");
+    await screen.findByText("Alpha");
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    expect(previous).toBeDisabled();
+    expect(next).not.toBeDisabled();
   });
 });

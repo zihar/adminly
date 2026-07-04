@@ -102,6 +102,10 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
     state: { sorting },
     manualPagination: true,
     manualSorting: true,
+    // `pageCount` tak dipakai langsung (kontrol Prev/Next di bawah pakai
+    // `state.page`/`total` dari nuqs+`useList`, bukan API paginasi internal
+    // tabel) — tetap disertakan agar konfigurasi manual-pagination lengkap
+    // sesuai kontrak `@tanstack/react-table`.
     pageCount: Math.max(1, Math.ceil(total / perPage)),
     getRowId: (row) => String(row[primaryKey]),
     onSortingChange: (updater) => {
@@ -172,7 +176,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           ))}
         </TableHeader>
         <TableBody>
-          {query.isPending && (
+          {(query.isPending || query.isFetching) && (
             <TableRow>
               <TableCell colSpan={colSpan}>
                 <Skeleton className="h-6 w-full" />
