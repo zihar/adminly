@@ -6,6 +6,17 @@ export const en = {
   common: {
     save: "Save",
     cancel: "Cancel",
+    create: "Create",
+    edit: "Edit",
+    actions: "Actions",
+    searchPlaceholder: "Search...",
+    previous: "Previous",
+    next: "Next",
+    page: "Page {page}",
+    loadError: "Failed to load data.",
+    empty: "No data yet.",
+    deleteSelected: "Delete ({count})",
+    selectRow: "Select row {id}",
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {

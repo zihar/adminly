@@ -5,6 +5,17 @@ export const id: Dictionary = {
   common: {
     save: "Simpan",
     cancel: "Batal",
+    create: "Buat",
+    edit: "Edit",
+    actions: "Aksi",
+    searchPlaceholder: "Cari...",
+    previous: "Sebelumnya",
+    next: "Berikutnya",
+    page: "Halaman {page}",
+    loadError: "Gagal memuat data.",
+    empty: "Belum ada data.",
+    deleteSelected: "Hapus ({count})",
+    selectRow: "Pilih baris {id}",
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {
