@@ -31,7 +31,7 @@ export function createCollectionStore<T extends { id: string }>(seed: T[]) {
       return row;
     },
     update(id: string, patch: Partial<T>) {
-      rows = rows.map((r) => (r.id === id ? { ...r, ...patch } : r));
+      rows = rows.map((r) => (r.id === id ? { ...r, ...patch, id: r.id } : r));
       return this.get(id);
     },
     remove(id: string) {
