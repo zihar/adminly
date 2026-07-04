@@ -91,6 +91,7 @@ export interface paths {
                         "application/json": components["schemas"]["Item"];
                     };
                 };
+                422: components["responses"]["ValidationError"];
             };
         };
         delete?: never;
@@ -125,6 +126,7 @@ export interface paths {
                         "application/json": components["schemas"]["Item"];
                     };
                 };
+                404: components["responses"]["NotFound"];
             };
         };
         put: {
@@ -150,6 +152,8 @@ export interface paths {
                         "application/json": components["schemas"]["Item"];
                     };
                 };
+                404: components["responses"]["NotFound"];
+                422: components["responses"]["ValidationError"];
             };
         };
         post?: never;
@@ -296,8 +300,36 @@ export interface components {
             value: string;
             label: string;
         };
+        Error: {
+            code: number;
+            /** @enum {string} */
+            status: "error";
+            message: string;
+            data: {
+                [key: string]: string[];
+            } | null;
+        };
     };
-    responses: never;
+    responses: {
+        /** @description Not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Validation error */
+        ValidationError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;
@@ -347,13 +379,7 @@ export interface operations {
                     "application/json": components["schemas"]["User"];
                 };
             };
-            /** @description Invalid input */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            422: components["responses"]["ValidationError"];
         };
     };
     deleteUser: {
@@ -374,13 +400,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            404: components["responses"]["NotFound"];
         };
     };
 }

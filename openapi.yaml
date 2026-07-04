@@ -38,8 +38,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        "400":
-          description: Invalid input
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /users/{id}:
     delete:
       operationId: deleteUser
@@ -54,7 +54,7 @@ paths:
         "204":
           description: Deleted
         "404":
-          description: Not found
+          $ref: "#/components/responses/NotFound"
   /items:
     get:
       parameters:
@@ -70,17 +70,25 @@ paths:
       responses:
         "201":
           content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } }
+        "422":
+          $ref: "#/components/responses/ValidationError"
   /items/{id}:
     get:
       parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
       responses:
         "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } } }
+        "404":
+          $ref: "#/components/responses/NotFound"
     put:
       parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
       requestBody:
         content: { application/json: { schema: { $ref: "#/components/schemas/NewItem" } } }
       responses:
         "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } } }
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
     delete:
       parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
       responses: { "204": { description: No Content } }
@@ -152,3 +160,30 @@ components:
       properties:
         value: { type: string }
         label: { type: string }
+    Error:
+      type: object
+      required: [code, status, message, data]
+      properties:
+        code: { type: integer }
+        status:
+          type: string
+          enum: [error]
+        message: { type: string }
+        data:
+          type: [object, "null"]
+          additionalProperties:
+            type: array
+            items: { type: string }
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
