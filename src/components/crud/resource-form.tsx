@@ -7,7 +7,10 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Can } from "@/components/auth/can";
 import { FieldRenderer } from "@/components/crud/fields";
+import { WorkflowStepper } from "@/components/crud/workflow-stepper";
+import { AuditTimeline } from "@/components/crud/audit-timeline";
 import { CrudError } from "@/lib/crud/errors";
 import type { ResourceDef } from "@/lib/crud/define-resource";
 import type { ID } from "@/lib/crud/types";
@@ -29,6 +32,12 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
   const one = def.api.useGetOne(id as ID, { enabled: isEdit });
   const create = def.api.useCreate();
   const update = def.api.useUpdate();
+  // Sama spt `one`: hook dipanggil TANPA syarat — query-nya sendiri sudah
+  // ber-`enabled: !!id` (lihat `auditQueryOptions`), jadi mode create (tanpa
+  // `id`) otomatis tak menembak network. `useTransition` tak butuh gating
+  // (mutation, bukan query) — dipanggil sekali di top level spt `resource-table.tsx`.
+  const audit = def.api.useAudit(id as ID);
+  const transition = def.api.useTransition();
 
   const schema = def.form.schema as ZodType<FormValues, FormValues>;
   const form = useForm<FormValues>({ resolver: zodResolver(schema) });
@@ -66,37 +75,83 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
   }
 
   const tabs = def.form.layout;
+  const wf = def.workflow;
+  // Status terkini row (di field `wf.field`, mis. "status") — hanya berarti di
+  // mode edit (mode create belum punya row/`one.data`). Transisi yang
+  // diizinkan dihitung dari status ini, sama seperti filter per-baris di
+  // `resource-table.tsx`.
+  const currentStatus = wf ? String((one.data as Record<string, unknown> | undefined)?.[wf.field] ?? "") : "";
+  const allowedTransitions = wf ? wf.transitions.filter((tr) => tr.from.includes(currentStatus)) : [];
+
   return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Tabs defaultValue={tabs[0]?.tabKey}>
-          {tabs.length > 1 && (
-            <TabsList>
-              {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{resolveLabel(t, tab.tabKey)}</TabsTrigger>)}
-            </TabsList>
-          )}
-          {tabs.map((tab) => (
-            <TabsContent key={tab.tabKey} value={tab.tabKey} className="space-y-4">
-              {tab.fields.map((f) => (
-                <div key={f} className="space-y-1">
-                  {/* Field `cascade` render label per-levelnya sendiri (tiap
-                      `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
-                      htmlFor={f}>` di sini akan menggantung (tak ada elemen
-                      dengan `id={f}`), jadi dilewati khusus untuk tipe ini. */}
-                  {def.form.fields[f]?.type !== "cascade" && (
-                    <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
-                  )}
-                  <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors[f]?.message as string | undefined}
-                  </p>
-                </div>
+    <>
+      {/* Panel workflow: HANYA di mode edit + resource yang mendeklarasikan
+          `def.workflow` — stepper status, tombol transisi (gated `<Can>`, pola
+          sama dgn aksi transisi baris di ResourceTable), lalu jejak audit. */}
+      {wf && isEdit && (
+        <div className="mb-6 space-y-4 rounded-lg border p-4">
+          <WorkflowStepper statuses={wf.statuses} current={currentStatus} />
+          {allowedTransitions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {allowedTransitions.map((tr) => (
+                <Can key={tr.action} permission={tr.permission}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={tr.variant ?? "outline"}
+                    disabled={transition.isPending}
+                    onClick={() =>
+                      transition.mutate(
+                        { id: id!, action: tr.action },
+                        {
+                          // Toast i18n dipasang di caller — sama spt pola
+                          // aksi transisi di `resource-table.tsx`.
+                          onSuccess: () => toast.success(t.workflow.done),
+                          onError: () => toast.error(t.workflow.failed),
+                        },
+                      )
+                    }
+                  >
+                    {resolveLabel(t, tr.labelKey)}
+                  </Button>
+                </Can>
               ))}
-            </TabsContent>
-          ))}
-        </Tabs>
-        <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>{t.common.save}</Button>
-      </form>
-    </FormProvider>
+            </div>
+          )}
+          <AuditTimeline rows={audit.data ?? []} />
+        </div>
+      )}
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <Tabs defaultValue={tabs[0]?.tabKey}>
+            {tabs.length > 1 && (
+              <TabsList>
+                {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{resolveLabel(t, tab.tabKey)}</TabsTrigger>)}
+              </TabsList>
+            )}
+            {tabs.map((tab) => (
+              <TabsContent key={tab.tabKey} value={tab.tabKey} className="space-y-4">
+                {tab.fields.map((f) => (
+                  <div key={f} className="space-y-1">
+                    {/* Field `cascade` render label per-levelnya sendiri (tiap
+                        `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
+                        htmlFor={f}>` di sini akan menggantung (tak ada elemen
+                        dengan `id={f}`), jadi dilewati khusus untuk tipe ini. */}
+                    {def.form.fields[f]?.type !== "cascade" && (
+                      <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
+                    )}
+                    <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors[f]?.message as string | undefined}
+                    </p>
+                  </div>
+                ))}
+              </TabsContent>
+            ))}
+          </Tabs>
+          <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>{t.common.save}</Button>
+        </form>
+      </FormProvider>
+    </>
   );
 }
