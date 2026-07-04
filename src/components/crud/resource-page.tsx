@@ -1,8 +1,10 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { ResourceTableBoundary } from "@/components/crud/resource-table-boundary";
 import { PageHeader } from "@/components/layout/page-header";
+import { SCOPE_COOKIE, parseScope } from "@/config/scope";
 import { getResource } from "@/config/resources/index";
 import { getDictionary } from "@/lib/get-dictionary";
 import { initialListParams } from "@/lib/crud/list-params";
@@ -22,10 +24,19 @@ export async function ResourcePage({ resource }: { resource: string }) {
 
   const t = await getDictionary();
   const queryClient = getQueryClient();
+  // Baca cookie scope global di server (mis. `workspace` terpilih) supaya
+  // subset `def.scope` ikut masuk ke params awal — sama dgn yang disuntikkan
+  // `ResourceTable` dari `useScope()` pada render pertama. Tanpa ini, saat
+  // scope aktif, query key prefetch (tanpa scope) tak akan cocok dgn query
+  // key `useList` pertama (dgn scope) → cache prefetch terbuang.
+  const store = await cookies();
+  const scope = parseScope(store.get(SCOPE_COOKIE)?.value);
   // Prefetch pakai params awal yang IDENTIK dgn render pertama `ResourceTable`
   // (lihat `initialListParams`) supaya query key cocok → hasil prefetch benar-
   // benar dipakai saat hydrate (tanpa refetch/skeleton di paint pertama).
-  await queryClient.prefetchQuery(def.api.listQueryOptions(initialListParams(def)));
+  await queryClient.prefetchQuery(
+    def.api.listQueryOptions(initialListParams(def, scope)),
+  );
 
   return (
     <div className="space-y-4">

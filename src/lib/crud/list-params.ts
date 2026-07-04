@@ -12,17 +12,34 @@ export const DEFAULT_PER_PAGE = 20;
  * kebenaran, supaya query key kedua sisi TIDAK pernah bergeser — kalau beda,
  * cache hasil prefetch terbuang & skeleton berkedip saat paint pertama.
  *
- * `scope` sengaja tidak disertakan: nilainya berasal dari `ScopeProvider`
- * (client-only) yang tak tersedia saat prefetch di server; `undefined` juga
- * di-drop saat hashing query key sehingga tak memengaruhi kecocokan untuk
- * resource tanpa `def.scope`.
+ * `scope` bersifat opsional: server (`resource-page.tsx`) membaca cookie
+ * scope lalu meneruskannya ke sini, sehingga bila resource mendeklarasikan
+ * `def.scope`, subset scope yang sama ikut masuk ke params awal — persis
+ * seperti yang disuntikkan `ResourceTable` dari `useScope()` pada render
+ * pertama. Ini membuat query key prefetch (server) & `useList` awal (client)
+ * TETAP cocok walau scope sedang aktif, jadi tak ada hydration miss. Kalau
+ * `scope` tak diberikan (mis. dipanggil tanpa cookie), atau resource tak
+ * mendeklarasikan `def.scope`, field `scope` di-drop seluruhnya — sama
+ * seperti perilaku lama, dan `undefined` juga di-drop saat hashing query key.
  */
-export function initialListParams(def: ResourceDef): ListParams {
+export function initialListParams(
+  def: ResourceDef,
+  scope?: Record<string, unknown>,
+): ListParams {
+  const scoped =
+    def.scope?.length && scope
+      ? Object.fromEntries(
+          def.scope
+            .map((k) => [k, scope[k]] as const)
+            .filter(([, v]) => v !== undefined && v !== ""),
+        )
+      : undefined;
   return {
     page: 1,
     perPage: def.list?.perPage ?? DEFAULT_PER_PAGE,
     // `defaultSort` kosong → undefined (kolom tak terurut), samakan dgn tabel.
     sort: def.list?.defaultSort || undefined,
     order: "asc",
+    ...(scoped && Object.keys(scoped).length ? { scope: scoped } : {}),
   };
 }

@@ -15,5 +15,10 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
   permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
   columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
   list: { defaultSort: "nama", perPage: 10 },
+  // Contoh demo: `items` ikut scope global `workspace` supaya list-nya
+  // terlihat refetch saat workspace picker diganti (lihat `resource-table.tsx`
+  // & `resource-page.tsx`). Mock store `items` mengabaikan `scope[...]` yang
+  // tak dikenalinya — aman, murni demo pengkabelan.
+  scope: ["workspace"],
   form: { schema: itemSchema, layout: [{ tabKey: "umum", fields: ["nama"] }], fields: { nama: { type: "text", labelKey: "items.nama" } } },
 });
