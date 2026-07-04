@@ -66,6 +66,11 @@ let defPaged: ResourceDef;
 // `defPaged`) sengaja TIDAK punya `scope` — memverifikasi injeksi ini murni
 // opt-in per resource.
 let defScoped: ResourceDef;
+// Def khusus test kolom badge: punya `workflow.statuses` + kolom
+// `{field:"status", render:"badge"}` — memverifikasi `ResourceTable` merender
+// `<Badge>` berisi label i18n status, BUKAN nilai mentahnya (lihat
+// resource-table.tsx, factory kolom `columns`).
+let defWorkflow: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -111,6 +116,28 @@ beforeAll(async () => {
       schema: z.object({ nama: z.string() }),
       layout: [{ tabKey: "umum", fields: ["nama"] }],
       fields: { nama: { type: "text" } },
+    },
+  });
+  defWorkflow = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "status", labelKey: "items.nama", render: "badge" }],
+    list: { perPage: 10 },
+    form: {
+      schema: z.object({ nama: z.string() }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text" } },
+    },
+    workflow: {
+      field: "status",
+      initial: "draft",
+      statuses: [
+        { value: "draft", labelKey: "workflow.status.draft" },
+        { value: "submitted", labelKey: "workflow.status.submitted" },
+      ],
+      transitions: [],
     },
   });
 });
@@ -383,5 +410,21 @@ describe("ResourceTable", () => {
 
     expect(capturedSearch?.has("scope[workspaceId]")).toBe(false);
     expect([...(capturedSearch?.keys() ?? [])].some((k) => k.startsWith("scope["))).toBe(false);
+  });
+
+  it("merender kolom `render: \"badge\"` sebagai <Badge> berisi label i18n status (bukan nilai mentah)", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", status: "submitted" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defWorkflow} />);
+
+    expect(await screen.findByText("Submitted")).toBeInTheDocument();
+    expect(screen.queryByText("submitted")).not.toBeInTheDocument();
   });
 });

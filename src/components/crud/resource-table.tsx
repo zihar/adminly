@@ -17,6 +17,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -110,9 +111,27 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         accessorFn: (row: Row) => row[c.field],
         header: resolveLabel(t, c.labelKey),
         enableSorting: !!c.sortable,
-        cell: (info) => String(info.getValue() ?? ""),
+        // `c.render === "badge"`: cocokkan nilai sel ke `def.workflow.statuses`
+        // lalu render `<Badge>` langsung (BUKAN lewat lookup komponen dinamis
+        // dari `Map`/objek — itu memicu eslint-plugin-react-hooks
+        // `static-components` karena identitas komponen dianggap berubah tiap
+        // render). Render lain (belum diimplementasi) tetap fallback `String`.
+        cell: (info) => {
+          const value = info.getValue();
+          if (c.render === "badge") {
+            const status = def.workflow?.statuses.find((s) => s.value === value);
+            if (status) {
+              return (
+                <Badge variant={status.variant ?? "secondary"}>
+                  {resolveLabel(t, status.labelKey)}
+                </Badge>
+              );
+            }
+          }
+          return String(value ?? "");
+        },
       })),
-    [def.columns, t],
+    [def.columns, def.workflow, t],
   );
 
   const sorting: SortingState = state.sort ? [{ id: state.sort, desc: state.order === "desc" }] : [];
