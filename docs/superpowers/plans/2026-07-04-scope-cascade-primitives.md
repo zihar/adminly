@@ -549,14 +549,13 @@ Run: `npm test -- regions` → Expected: PASS.
 
 - [ ] **Step 5: Create the options route honoring `parent`**
 
-Create `src/app/api/regions/options/route.ts` (mirror `src/app/api/items/options/route.ts` + `withErrorEnvelope`):
+Create `src/app/api/regions/options/route.ts` (mirror the **committed** `src/app/api/items/options/route.ts` — plain exported `GET`, no `withErrorEnvelope`; that helper is NOT in the committed tree):
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 import { regionsData } from "@/app/api/regions/_data";
-import { withErrorEnvelope } from "@/lib/api/handler";
 
-export const GET = withErrorEnvelope(async (req: NextRequest) => {
+export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const parentId = sp.get("parent[parentId]") ?? "";
   const q = (sp.get("q") ?? "").toLowerCase();
@@ -564,7 +563,7 @@ export const GET = withErrorEnvelope(async (req: NextRequest) => {
     .filter((r) => r.parentId === parentId)
     .filter((r) => (q ? r.name.toLowerCase().includes(q) : true));
   return NextResponse.json(rows.map((r) => ({ value: r.id, label: r.name })));
-});
+}
 ```
 
 - [ ] **Step 6: Create list/[id] routes + resource def + register**
