@@ -7,6 +7,11 @@ import { test, expect } from "@playwright/test";
 // disesuaikan supaya test memverifikasi perilaku SUNGGUHAN, bukan string
 // yang tak pernah dirender.
 test("CRUD items lewat lapisan generik", async ({ page }) => {
+  // Nama unik per run (timestamp): store mock in-memory dipertahankan selama
+  // umur server, jadi nama statis bisa menumpuk & memicu strict-mode violation
+  // (>1 baris cocok) pada eksekusi berulang.
+  const nama = `Item E2E ${Date.now()}`;
+
   await page.goto("/items");
   await expect(page.getByText("Contoh A")).toBeVisible();
 
@@ -15,11 +20,11 @@ test("CRUD items lewat lapisan generik", async ({ page }) => {
   // form — tanpa ini, `getByRole("textbox")` bisa mengenai kotak pencarian
   // di halaman list yang masih sempat terlihat saat transisi berlangsung.
   await page.waitForURL(/\/items\/create$/);
-  await page.getByRole("textbox").fill("Item E2E");
+  await page.getByRole("textbox").fill(nama);
   await page.getByRole("button", { name: /save/i }).click();
 
   await expect(page).toHaveURL(/\/items$/);
-  await expect(page.getByText("Item E2E")).toBeVisible();
+  await expect(page.getByText(nama)).toBeVisible();
 });
 
 test("Edit & Delete item lewat rute generik /[resource]/[id]/edit dan bulk-delete", async ({ page }) => {
@@ -46,6 +51,11 @@ test("Edit & Delete item lewat rute generik /[resource]/[id]/edit dan bulk-delet
   await row.getByRole("link", { name: /edit/i }).click();
   await page.waitForURL(/\/items\/[^/]+\/edit$/);
   const nameField = page.getByRole("textbox");
+  // Tunggu prefill selesai sebelum mengisi: mode edit mengisi field secara async
+  // via useGetOne → reset(one.data) (resource-form.tsx). Tanpa menunggu, di
+  // runtime cepat (production) `fill` bisa mendahului `reset`, lalu reset
+  // menimpa input dengan nilai asli → Save mengirim nilai lama.
+  await expect(nameField).toHaveValue(original);
   await nameField.fill(edited);
   await page.getByRole("button", { name: /save/i }).click();
 
