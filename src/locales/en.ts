@@ -20,6 +20,7 @@ export const en = {
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {
+    title: "Items",
     nama: "Name",
   },
   app: {

@@ -19,6 +19,7 @@ export const id: Dictionary = {
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {
+    title: "Item",
     nama: "Nama",
   },
   app: {
