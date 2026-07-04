@@ -19,7 +19,12 @@
 
 **Non-tujuan (spec terpisah nanti):** engine approval/workflow, import massal, export/PDF, UI non-standar (drag-drop kelas, kalender hari libur, rapor naratif), realtime/offline, dan aplikasi mobile.
 
-**Kriteria sukses (definition of done):** tiga resource representatif terbukti jalan hanya lewat `defineResource` (+ eject bila perlu): `agama` (satu field), `siswa` (3 tab + relasi + cascade wilayah + file), `kehadiran`/`daftarnilai` (filter + scope tahun ajaran).
+**Kriteria sukses (definition of done):** lapisan terbukti **generik** bila tiga **resource contoh generik** (netral, milik adminly upstream) jalan hanya lewat `defineResource` (+ eject bila perlu), masing-masing menguji satu dimensi kapabilitas:
+- **`categories`** — satu field (`name`) → CRUD dasar.
+- **`products`** — 3 tab + relasi (`category`, async-select) + cascade (lokasi `country → state → city`) + file (`image`).
+- **`orders`** — filter (`status`) + scope global generik (`workspace`).
+
+> Resource **domain-spesifik** (mis. Edelweiss: `siswa`/`kehadiran`/`daftarnilai`) adalah **konfigurasi fork**, bukan bagian upstream adminly. adminly hanya mengirim lapisan + contoh generik; fork mendefinisikan resource domainnya sendiri dengan `defineResource` yang sama.
 
 ## 2. Keputusan Desain (ringkas)
 
@@ -61,8 +66,8 @@ Menggeneralisasi pola `src/hooks/api/use-users.ts` menjadi factory. Tetap memaka
 ```ts
 // src/lib/crud/create-resource-api.ts
 type ResourceApiConfig<TItem, TNew, TUpdate> = {
-  resource: string;         // "siswa" — dipakai untuk path & queryKey
-  path: string;             // "/siswa" — path OpenAPI
+  resource: string;         // "products" — dipakai untuk path & queryKey
+  path: string;             // "/products" — path OpenAPI
   primaryKey?: string;      // default "id"
 };
 
@@ -106,33 +111,37 @@ Middleware `onRequest` menyuntik `Authorization: Bearer <token>` bila `getAuthTo
 Satu objek deklaratif per modul → sumber tunggal tabel/form/route/nav/permission. Terhubung ke i18n & RBAC via *key*.
 
 ```ts
+// Contoh GENERIK (milik adminly upstream). Fork mendefinisikan resource
+// domainnya sendiri dgn cara yang persis sama — lihat catatan di bawah.
 defineResource({
-  name: "siswa",
-  primaryKey: "id_siswa",
-  api: createResourceApi<Siswa, NewSiswa, UpdateSiswa>({ resource:"siswa", path:"/siswa" }),
-  nav: { group:"kesiswaan", icon: Users, order: 10 },
-  permissions: { view:"siswa:view", create:"siswa:create", update:"siswa:update", delete:"siswa:delete" },
+  name: "products",
+  primaryKey: "id",
+  api: createResourceApi<Product, NewProduct, UpdateProduct>({ resource:"products", path:"/products" }),
+  nav: { group:"catalog", icon: Package, order: 10 },
+  permissions: { view:"products:view", create:"products:create", update:"products:update", delete:"products:delete" },
 
   columns: [
-    { field:"nis",  labelKey:"siswa.nis",  sortable:true },
-    { field:"nama", labelKey:"siswa.nama", sortable:true, searchable:true },
-    { field:"id_program", labelKey:"siswa.program", render:"relation", relation:"program" },
-    { field:"foto", render:"image" },
+    { field:"sku",  labelKey:"products.sku",  sortable:true },
+    { field:"name", labelKey:"products.name", sortable:true, searchable:true },
+    { field:"category_id", labelKey:"products.category", render:"relation", relation:"categories" },
+    { field:"image", render:"image" },
+    { field:"price", render:"currency" },
   ],
-  list: { defaultSort:"nama", perPage:20, filters:["id_tahun_ajaran","id_kelas"] },
-  scope: ["id_tahun_ajaran"],
+  list: { defaultSort:"name", perPage:20, filters:["category_id","status"] },
+  scope: ["workspace_id"],
 
   form: {
-    schema: siswaSchema,               // Zod → validasi + tipe (z.infer)
+    schema: productSchema,             // Zod → validasi + tipe (z.infer)
     layout: [
-      { tabKey:"data_siswa", fields:["nis","nama","id_program","tgl_lahir","foto"] },
-      { tabKey:"data_ortu",  fields:[/* ... */] },
+      { tabKey:"details", fields:["sku","name","category_id","status"] },
+      { tabKey:"media",   fields:["image","gallery"] },
+      { tabKey:"pricing", fields:["price","currency","tax_rate"] },
     ],
     fields: {
-      id_program:   { type:"async-select", optionsFrom:"program" },
-      kd_kabupaten: { type:"async-select", optionsFrom:"wilayah", dependsOn:["kd_provinsi"] },
-      tgl_lahir:    { type:"date" },
-      foto:         { type:"file", accept:"image/*" },
+      category_id: { type:"async-select", optionsFrom:"categories" },
+      city_id:     { type:"async-select", optionsFrom:"locations", dependsOn:["country_id","state_id"] },
+      image:       { type:"file", accept:"image/*" },
+      status:      { type:"select" },
     },
   },
 
@@ -140,6 +149,8 @@ defineResource({
   components: { /* list?/form? kustom → eject */ },
 })
 ```
+
+> **Contoh konfigurasi fork (Edelweiss, di luar adminly):** `defineResource({ name:"siswa", primaryKey:"id_siswa", … })` dengan tab `data_siswa`/`data_ortu`, relasi `id_program`, cascade wilayah (`kd_provinsi → kd_kabupaten`), scope `id_tahun_ajaran`. Bentuknya identik dgn contoh generik di atas — hanya konfigurasinya yang domain-spesifik.
 
 **Registry:** semua `defineResource()` dikumpulkan di `src/config/resources/index.ts`. Dari situ terbentuk otomatis: **navMain** (extend `config/site.ts`), **Permission** RBAC (extend union `config/rbac.ts` + route-guard `proxy.ts`), dan resolusi renderer `[resource]/page.tsx`.
 
@@ -151,7 +162,7 @@ defineResource({
 - **`<ResourceTable>`** — TanStack Table (headless) + `ui/table`. Server-side: pagination, sort, search, filter (tiap filter = async-select), **column visibility**, **bulk-select** → `bulkDelete`. Toolbar dgn tombol Create (gated `<Can>`), bar aksi massal. State (page/sort/filter) **sinkron ke URL**. Loading = `ui/skeleton`; empty & error state baku.
 - **`<ResourceForm>`** — React Hook Form + `zodResolver`. Edit: `useGetOne` → default values. Render `layout` (tab via `ui/tabs`) → `<FieldRenderer>`. Submit → `useCreate/useUpdate`; **422 → fieldErrors ke `setError`**; sukses → toast + navigate; guard "perubahan belum disimpan".
 - **Field registry** (`components/crud/fields/*`) — map `type→komponen`, terima `control` RHF + meta. `async-select` = `useOptions` + debounce; `dependsOn` → refetch saat parent berubah & reset nilai (cascade).
-- **`<ScopeProvider>`** — primitive generik: context scope global (mis. tahun ajaran/semester). `useScope()` → nilai aktif; `ResourceTable`/`Form` inject key `scope[]` ke params list & default tersembunyi form. Picker di shell (pola `role-switcher`/`locale-switcher`). adminly kirim primitive; fork konfigurasi key + picker.
+- **`<ScopeProvider>`** — primitive generik: context scope global (mis. `workspace`/organization/periode; fork Edelweiss = tahun ajaran/semester). `useScope()` → nilai aktif; `ResourceTable`/`Form` inject key `scope[]` ke params list & default tersembunyi form. Picker di shell (pola `role-switcher`/`locale-switcher`). adminly kirim primitive + contoh `workspace`; fork konfigurasi key + picker.
 - **`<ResourcePage>`** — perekat route dinamis `[resource]`: baca registry, cek permission (redirect bila tak berhak), **prefetch list (RSC) + hydrate**, render `PageHeader` + `ResourceTable`. Form create/edit = **halaman route ter-generate** (`/[resource]/create`, `/[resource]/[id]/edit`); resource kecil boleh modal.
 
 ## 7. Backend Mock & Testing
@@ -189,12 +200,12 @@ Tidak ada blocker tersisa. Spec siap dipecah menjadi rencana implementasi (§11)
 
 ## 11. Fase Implementasi (decomposition)
 
-Scope ini **terlalu besar untuk satu rencana**. Dipecah menjadi fase yang masing-masing menghasilkan software jalan & teruji sendiri. Tiap fase = satu siklus spec-ringkas → plan → implement. **Fase 1 divalidasi oleh resource `agama`** (satu field) sebelum menambah kompleksitas.
+Scope ini **terlalu besar untuk satu rencana**. Dipecah menjadi fase yang masing-masing menghasilkan software jalan & teruji sendiri. Tiap fase = satu siklus spec-ringkas → plan → implement. Semua validasi memakai **resource contoh generik** milik adminly (`categories`/`products`/`orders`), bukan domain fork.
 
-- **Fase 1 — Vertical slice minimal (`agama`).** `createResourceApi` (list/getOne/create/update/remove, buka `{data,meta}`, `CrudError`), `defineResource` minimal + registry, `<ResourceTable>` (pagination/sort/search + URL-state `nuqs`), `<ResourceForm>` (RHF+Zod, field `text`), route `[resource]` prefetch+hydrate, Route Handler mock generik. Auth seam no-op. **DoD:** `agama` CRUD penuh hanya via `defineResource`.
+- **Fase 1 — Vertical slice minimal (`categories`).** `createResourceApi` (list/getOne/create/update/remove, buka `{data,meta}`, `CrudError`), `defineResource` minimal + registry, `<ResourceTable>` (pagination/sort/search + URL-state `nuqs`), `<ResourceForm>` (RHF+Zod, field `text`), route `[resource]` prefetch+hydrate, Route Handler mock generik. Auth seam no-op. **DoD:** `categories` CRUD penuh hanya via `defineResource`.
 - **Fase 2 — Field & kolom registry lengkap + bulk + column visibility.** Sisa tipe field (`number/select/date/checkbox/textarea/file/…`) & render kolom (`badge/date/currency/boolean/image`), `useRemoveMany` + bulk-select, 422→fieldErrors mapping matang.
-- **Fase 3 — Relasi & cascade.** `async-select` + `useOptions` + debounce, `dependsOn` (cascade wilayah), render kolom `relation`. **Validasi:** relasi `siswa.id_program`.
-- **Fase 4 — Scope & tab & file.** `<ScopeProvider>`/`useScope` (tahun ajaran) + injeksi `scope[]`, form multi-tab, field `file` (upload). **Validasi:** `siswa` (3 tab + relasi + scope + foto), `kehadiran`/`daftarnilai` (filter + scope).
+- **Fase 3 — Relasi & cascade.** `async-select` + `useOptions` + debounce, `dependsOn` (cascade), render kolom `relation`. **Validasi:** relasi `products.category_id` + cascade lokasi `country → state → city`.
+- **Fase 4 — Scope & tab & file.** `<ScopeProvider>`/`useScope` (contoh: `workspace`) + injeksi `scope[]`, form multi-tab, field `file` (upload). **Validasi:** `products` (3 tab + relasi + file), `orders` (filter `status` + scope `workspace`).
 - **Fase 5 — Eject & polish.** Jalur `components.list/form` kustom, aksi kustom `{key,icon,run}`, Storybook field registry, guard "perubahan belum disimpan", empty/error baku.
 
 Auth middleware nyata (§4) bisa masuk kapan saja setelah Fase 1 karena seam sudah ada sejak Fase 1.
