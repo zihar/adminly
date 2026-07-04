@@ -43,6 +43,7 @@ export const en = {
   modeToggle: { toggle: "Toggle theme" },
   localeSwitcher: { label: "Language" },
   roleSwitcher: { label: "Role (demo)" },
+  scope: { workspace: "Workspace" },
   user: { account: "Account", signOut: "Sign out" },
   footer: { rights: "All rights reserved." },
   login: {

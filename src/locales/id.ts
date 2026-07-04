@@ -42,6 +42,7 @@ export const id: Dictionary = {
   modeToggle: { toggle: "Ganti tema" },
   localeSwitcher: { label: "Bahasa" },
   roleSwitcher: { label: "Role (demo)" },
+  scope: { workspace: "Workspace" },
   user: { account: "Akun", signOut: "Keluar" },
   footer: { rights: "Semua hak dilindungi." },
   login: {

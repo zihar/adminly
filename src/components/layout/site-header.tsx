@@ -13,6 +13,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { ScopeSwitcher } from "@/components/layout/scope-switcher";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { navMain, resourceNavItems } from "@/config/site";
 import { ensureResourcesRegistered } from "@/config/resources/register";
@@ -41,6 +42,7 @@ export function SiteHeader() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-2">
+        <ScopeSwitcher />
         <LocaleSwitcher />
         <RoleSwitcher />
         <ModeToggle />
