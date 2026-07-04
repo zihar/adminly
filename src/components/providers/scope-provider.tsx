@@ -28,21 +28,23 @@ export function ScopeProvider({
   const [scope, setScopeState] = React.useState<ScopeValue>(initial);
   const setScope = React.useCallback(
     (patch: ScopeValue) => {
-      setScopeState((s) => {
-        const next: ScopeValue = { ...s };
-        for (const [k, v] of Object.entries(patch)) {
-          if (v === undefined || v === "") delete next[k];
-          else next[k] = v;
-        }
-        document.cookie = `${SCOPE_COOKIE}=${encodeURIComponent(
-          JSON.stringify(next),
-        )}; path=/; max-age=31536000; samesite=lax`;
-        return next;
-      });
+      // Hitung `next` di luar updater dulu supaya efek samping (tulis cookie)
+      // tidak berada di dalam updater — updater harus murni (pola sama seperti
+      // `rbac-provider.tsx`). Basis perhitungan dibaca dari `scope` terkini.
+      const next: ScopeValue = { ...scope };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined || v === "") delete next[k];
+        else next[k] = v;
+      }
+      // Simpan ke cookie agar Server Component ikut memakai scope baru.
+      document.cookie = `${SCOPE_COOKIE}=${encodeURIComponent(
+        JSON.stringify(next),
+      )}; path=/; max-age=31536000; samesite=lax`;
+      setScopeState(next);
       // Re-render Server Components (mis. prefetch list) agar ikut scope baru.
       router.refresh();
     },
-    [router],
+    [router, scope],
   );
   const value = React.useMemo(() => ({ scope, setScope }), [scope, setScope]);
   return <ScopeContext.Provider value={value}>{children}</ScopeContext.Provider>;

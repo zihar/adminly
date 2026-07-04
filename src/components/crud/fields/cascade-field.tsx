@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext, useFormState, useWatch } from "react-hook-form";
 import { getResource } from "@/config/resources/index";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { resolveLabel } from "@/locales";
@@ -43,7 +43,7 @@ function CascadeLevel({
   index: number;
 }) {
   const { t } = useI18n();
-  const { register, setValue } = useFormContext();
+  const { register, setValue, getFieldState } = useFormContext();
   const parentFieldKey = index > 0 ? levels[index - 1].key : undefined;
   // `useWatch` selalu dipanggil (jumlah hook stabil); level root watch nama
   // field placeholder yang tak pernah ter-register → hasilnya selalu undefined.
@@ -55,22 +55,35 @@ function CascadeLevel({
   const parent = index > 0 ? { [parentParam]: String(parentValue ?? "") } : undefined;
   const query = source?.api.useOptions({ parent });
 
-  // Reset berjenjang TERJAMIN: begitu value level INI berubah, langsung hapus
-  // SEMUA level yang lebih dalam sekaligus — bukan mengandalkan efek
-  // watch-berantai per-level (rapuh bila satu level tak ikut ter-trigger).
-  // Ref `mounted` memastikan reset hanya berjalan saat value BERUBAH (bukan
-  // saat mount pertama), supaya prefill mode edit tidak ikut terhapus — pola
-  // sama seperti `async-select-field.tsx`.
+  // Reset berjenjang TERJAMIN: begitu value level INI berubah karena AKSI
+  // USER, langsung hapus SEMUA level yang lebih dalam sekaligus — bukan
+  // mengandalkan efek watch-berantai per-level (rapuh bila satu level tak ikut
+  // ter-trigger).
+  //
+  // Kunci anti-hapus-prefill: `reset(one.data)` di mode edit (ResourceForm)
+  // mengubah value induk `undefined → "c1"` pada render BELAKANGAN (setelah
+  // fetch async) — bukan di mount pertama — jadi `mounted` saja tak cukup.
+  // Solusi: reset level lebih dalam HANYA saat field ini `dirty`. `reset()`
+  // menetapkan default baru (non-dirty), sedangkan user yang mengubah select
+  // menandai field ini `dirty`. `useFormState({ name })` men-subscribe status
+  // dirty field ini agar reaktif; `getFieldState(name, formState)` membacanya
+  // per-field. Ref `mounted` tetap dipertahankan sebagai jaring pengaman untuk
+  // mount pertama.
+  const formState = useFormState({ name: level.key });
+  const fieldDirty = getFieldState(level.key, formState).isDirty;
   const mounted = React.useRef(false);
   React.useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
       return;
     }
+    // Abaikan perubahan value yang berasal dari `reset()` (field non-dirty) —
+    // itu prefill default, bukan pilihan user.
+    if (!fieldDirty) return;
     for (const deeper of levels.slice(index + 1)) {
       setValue(deeper.key, "");
     }
-  }, [ownValue, levels, index, setValue]);
+  }, [ownValue, fieldDirty, levels, index, setValue]);
 
   const disabled = index > 0 && !parentValue;
 

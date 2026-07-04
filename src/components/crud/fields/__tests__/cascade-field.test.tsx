@@ -85,6 +85,35 @@ function renderHarness(defaultValues: Record<string, string> = { country: "", st
   );
 }
 
+/**
+ * Harness yang meniru alur EDIT nyata: `useForm()` dipanggil TANPA
+ * `defaultValues`, lalu `reset(data)` dijalankan lewat tombol SETELAH mount
+ * (meniru `useGetOne` yang resolve async di `ResourceForm`). Ini memicu value
+ * induk berpindah `undefined → "c1"` saat `mounted.current === true`, persis
+ * jalur yang sebelumnya diam-diam menghapus prefill level lebih dalam.
+ */
+function AsyncEditHarness({ data }: { data: Record<string, string> }) {
+  const form = useForm();
+  return (
+    <FormProvider {...form}>
+      <button type="button" onClick={() => form.reset(data)}>load</button>
+      <CascadeField name="region" meta={cascadeMeta} />
+      <RegionProbe />
+    </FormProvider>
+  );
+}
+
+function renderAsyncEditHarness(data: Record<string, string>) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <I18nProvider initialLocale="en">
+        <AsyncEditHarness data={data} />
+      </I18nProvider>
+    </QueryClientProvider>,
+  );
+}
+
 // `apiClient` (src/lib/api/client.ts) menangkap `globalThis.fetch` dan
 // meng-resolve base URL saat modulnya pertama kali dievaluasi — jadi
 // `createResourceApi`/`defineResource` wajib di-import dinamis SETELAH
@@ -171,6 +200,20 @@ describe("CascadeField", () => {
   it("tidak menghapus prefill edit-mode (semua level terisi) saat mount pertama", () => {
     renderHarness({ country: "c1", state: "s1", city: "t1" });
     expect(screen.getByTestId("country-value")).toHaveTextContent("c1");
+    expect(screen.getByTestId("state-value")).toHaveTextContent("s1");
+    expect(screen.getByTestId("city-value")).toHaveTextContent("t1");
+  });
+
+  it("tidak menghapus prefill saat `reset()` mengisi form SETELAH mount (alur edit nyata)", () => {
+    renderAsyncEditHarness({ country: "c1", state: "s1", city: "t1" });
+    // `reset()` dijalankan SETELAH mount (mounted.current sudah true) → memicu
+    // value induk berpindah undefined → c1. `fireEvent` membungkus semua efek
+    // lanjutan (termasuk reset-berjenjang versi buggy) dalam `act`, jadi
+    // assertion di bawah deterministik.
+    fireEvent.click(screen.getByText("load"));
+    expect(screen.getByTestId("country-value")).toHaveTextContent("c1");
+    // Level lebih dalam TIDAK boleh terhapus: reset() menetapkan default baru
+    // (non-dirty), jadi bukan perubahan yang digerakkan user.
     expect(screen.getByTestId("state-value")).toHaveTextContent("s1");
     expect(screen.getByTestId("city-value")).toHaveTextContent("t1");
   });

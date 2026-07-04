@@ -39,6 +39,27 @@ function Harness() {
   );
 }
 
+/**
+ * Meniru alur EDIT nyata: `useForm()` TANPA `defaultValues`, lalu `reset(data)`
+ * dijalankan lewat tombol SETELAH mount (meniru `useGetOne` async di
+ * `ResourceForm`). Parent berpindah `undefined → "a"` saat `mounted.current ===
+ * true` — jalur yang sebelumnya diam-diam menghapus value anak yang sudah
+ * terisi.
+ */
+function AsyncEditHarness() {
+  const form = useForm();
+  return (
+    <I18nProvider initialLocale="en">
+      <FormProvider {...form}>
+        <button type="button" onClick={() => form.reset({ parent: "a", child: "existing" })}>load</button>
+        <TextField name="parent" meta={{ type: "text" }} />
+        <AsyncSelectField name="child" meta={{ type: "async-select", dependsOn: ["parent"] }} />
+        <ChildValueProbe />
+      </FormProvider>
+    </I18nProvider>
+  );
+}
+
 describe("AsyncSelectField - reset cascade", () => {
   it("tidak menghapus value yang sudah terisi saat mount pertama", () => {
     render(<Harness />);
@@ -52,5 +73,17 @@ describe("AsyncSelectField - reset cascade", () => {
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "b" } });
 
     expect(screen.getByTestId("child-value")).toHaveTextContent("");
+  });
+
+  it("tidak menghapus value anak saat `reset()` mengisi form SETELAH mount (alur edit nyata)", () => {
+    render(<AsyncEditHarness />);
+    // `reset()` dijalankan SETELAH mount (mounted.current sudah true) → parent
+    // berpindah undefined → "a". `fireEvent` membungkus efek lanjutan dalam
+    // `act`, jadi assertion deterministik.
+    fireEvent.click(screen.getByText("load"));
+    expect(screen.getByDisplayValue("a")).toBeInTheDocument();
+    // Value anak TIDAK boleh terhapus: perubahan parent berasal dari reset()
+    // (non-dirty), bukan aksi user.
+    expect(screen.getByTestId("child-value")).toHaveTextContent("existing");
   });
 });

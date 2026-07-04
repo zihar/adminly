@@ -33,6 +33,7 @@ export const id: Dictionary = {
     city: "Kota",
   },
   regions: {
+    title: "Regions",
     name: "Regions",
   },
   app: {

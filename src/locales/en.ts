@@ -36,6 +36,7 @@ export const en = {
   },
   // Label demo untuk resource generik `regions` (sumber options berjenjang).
   regions: {
+    title: "Regions",
     name: "Regions",
   },
   app: {
