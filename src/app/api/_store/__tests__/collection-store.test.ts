@@ -9,7 +9,7 @@ describe('collection-store', () => {
       ]);
 
       // Attempt to update with a patch that includes id: "hacked"
-      store.update('a', { nama: 'Updated', id: 'hacked' } as any);
+      store.update('a', { nama: 'Updated', id: 'hacked' });
 
       // The row should still have the original id
       const row = store.get('a');

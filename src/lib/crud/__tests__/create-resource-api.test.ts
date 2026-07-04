@@ -51,8 +51,10 @@ afterAll(() => {
 });
 
 function wrapperWithClient(qc: QueryClient) {
-  return ({ children }: { children: React.ReactNode }) =>
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: qc }, children);
+  Wrapper.displayName = "TestQueryWrapper";
+  return Wrapper;
 }
 
 function wrapper() {
