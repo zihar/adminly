@@ -21,3 +21,45 @@ test("CRUD items lewat lapisan generik", async ({ page }) => {
   await expect(page).toHaveURL(/\/items$/);
   await expect(page.getByText("Item E2E")).toBeVisible();
 });
+
+test("Edit & Delete item lewat rute generik /[resource]/[id]/edit dan bulk-delete", async ({ page }) => {
+  // Nama unik per run (timestamp) — store mock in-memory (`itemsStore`)
+  // dipertahankan sepanjang umur dev server (`reuseExistingServer` lokal),
+  // jadi nama statis bisa bentrok dengan sisa data dari run sebelumnya.
+  // Item baru selalu di-prepend oleh store (lihat `collection-store.ts`
+  // `create()`), jadi ia tampil paling atas di halaman 1 tanpa perlu cari.
+  const stamp = Date.now();
+  const original = `Item Edit ${stamp}`;
+  const edited = `Item Edited ${stamp}`;
+
+  // --- Create (prasyarat agar ada baris yang bisa di-edit/hapus) ---
+  await page.goto("/items");
+  await page.getByRole("link", { name: /create/i }).click();
+  await page.waitForURL(/\/items\/create$/);
+  await page.getByRole("textbox").fill(original);
+  await page.getByRole("button", { name: /save/i }).click();
+  await expect(page).toHaveURL(/\/items$/);
+  const row = page.getByRole("row", { name: new RegExp(original) });
+  await expect(row).toBeVisible();
+
+  // --- Edit lewat /items/[id]/edit ---
+  await row.getByRole("link", { name: /edit/i }).click();
+  await page.waitForURL(/\/items\/[^/]+\/edit$/);
+  const nameField = page.getByRole("textbox");
+  await nameField.fill(edited);
+  await page.getByRole("button", { name: /save/i }).click();
+
+  await expect(page).toHaveURL(/\/items$/);
+  const editedRow = page.getByRole("row", { name: new RegExp(edited) });
+  await expect(editedRow).toBeVisible();
+  await expect(page.getByText(original, { exact: true })).not.toBeVisible();
+
+  // --- Delete lewat seleksi baris + hapus massal ---
+  // Tabel generik (`ResourceTable`) hanya punya aksi "Delete (n)" massal
+  // (tanpa tombol hapus per baris) — jadi jalur nyata untuk menghapus satu
+  // baris tetap lewat centang baris tsb lalu klik tombol hapus massal.
+  await editedRow.getByRole("checkbox").check();
+  await page.getByRole("button", { name: /delete \(1\)/i }).click();
+
+  await expect(page.getByRole("row", { name: new RegExp(edited) })).toHaveCount(0);
+});

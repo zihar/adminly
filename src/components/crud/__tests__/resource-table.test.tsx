@@ -13,6 +13,7 @@ import type { createResourceApi as CreateResourceApiType } from "@/lib/crud/crea
 import type { ResourceDef } from "@/lib/crud/define-resource";
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { RbacProvider } from "@/components/providers/rbac-provider";
+import { ScopeProvider } from "@/components/providers/scope-provider";
 import type { Role } from "@/config/rbac";
 
 // `I18nProvider`/`RbacProvider` memanggil `useRouter()` (untuk `router.refresh()`
@@ -59,6 +60,12 @@ let def: ResourceDef;
 // benar-benar terbagi 2 halaman (fixture default 2 baris/perPage 10 di atas
 // membuat tombol Next selalu disabled).
 let defPaged: ResourceDef;
+// Def khusus test scope: mendeklarasikan `scope: ["workspaceId"]` supaya
+// `ResourceTable` menyuntik nilai dari `ScopeProvider` ke `ListParams.scope`
+// (lihat resource-table.tsx, variabel `scopedFilter`). Resource lain (`def`,
+// `defPaged`) sengaja TIDAK punya `scope` — memverifikasi injeksi ini murni
+// opt-in per resource.
+let defScoped: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -92,6 +99,20 @@ beforeAll(async () => {
       fields: { nama: { type: "text" } },
     },
   });
+  defScoped = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
+    list: { perPage: 10 },
+    scope: ["workspaceId"],
+    form: {
+      schema: z.object({ nama: z.string() }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text" } },
+    },
+  });
 });
 afterEach(() => {
   server.resetHandlers();
@@ -102,8 +123,19 @@ afterAll(() => {
   vi.unstubAllEnvs();
 });
 
-function wrap(ui: React.ReactNode, opts?: { role?: Role; onUrlUpdate?: (e: { queryString: string }) => void }) {
+function wrap(
+  ui: React.ReactNode,
+  opts?: {
+    role?: Role;
+    onUrlUpdate?: (e: { queryString: string }) => void;
+    // Nilai awal `ScopeProvider` — hanya dipasang bila diisi, supaya test
+    // tanpa opsi ini tetap memverifikasi fallback `useScope()` tanpa provider
+    // (lihat `scope-provider.tsx`: `ctx ?? { scope: {}, ... }`).
+    scope?: Record<string, unknown>;
+  },
+) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const content = opts?.scope ? <ScopeProvider initial={opts.scope}>{ui}</ScopeProvider> : ui;
   return render(
     <QueryClientProvider client={qc}>
       <I18nProvider initialLocale="en">
@@ -113,7 +145,7 @@ function wrap(ui: React.ReactNode, opts?: { role?: Role; onUrlUpdate?: (e: { que
               render berikutnya. `hasMemory: true` mensimulasikan adapter sungguhan
               (browser `history`) yang benar-benar menyimpan update URL. */}
           <NuqsTestingAdapter hasMemory onUrlUpdate={opts?.onUrlUpdate}>
-            {ui}
+            {content}
           </NuqsTestingAdapter>
         </RbacProvider>
       </I18nProvider>
@@ -279,5 +311,48 @@ describe("ResourceTable", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
     expect(previous).toBeDisabled();
     expect(next).not.toBeDisabled();
+  });
+
+  it("menyuntik nilai ScopeProvider ke query list sebagai scope[...] di request sungguhan (hanya untuk resource ber-`scope`)", async () => {
+    // Tangkap querystring request `/api/items` yang SUNGGUHAN dikirim
+    // (lewat MSW), bukan mock fungsi — ini membuktikan rantai
+    // ScopeProvider -> useScope -> ResourceTable -> useList -> apiClient
+    // -> buildListSearchParams benar-benar nyambung ujung ke ujung.
+    let capturedSearch: URLSearchParams | undefined;
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        capturedSearch = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          data: [{ id: "1", nama: "Alpha" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        });
+      }),
+    );
+
+    wrap(<ResourceTable def={defScoped} />, { scope: { workspaceId: 7 } });
+    await screen.findByText("Alpha");
+
+    expect(capturedSearch?.get("scope[workspaceId]")).toBe("7");
+  });
+
+  it("TIDAK menyuntik scope untuk resource yang tak mendeklarasikan `def.scope`", async () => {
+    // Kontrol negatif: `def` (tanpa `scope`) dipakai di dalam ScopeProvider
+    // yang sama — pastikan `scope[...]` tidak ikut terkirim walau context-nya
+    // tersedia, membuktikan injeksi murni opt-in per resource (bukan global).
+    let capturedSearch: URLSearchParams | undefined;
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        capturedSearch = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          data: [{ id: "1", nama: "Alpha" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        });
+      }),
+    );
+
+    wrap(<ResourceTable def={def} />, { scope: { workspaceId: 7 } });
+    await screen.findByText("Alpha");
+
+    expect(capturedSearch?.has("scope[workspaceId]")).toBe(false);
   });
 });
