@@ -39,18 +39,25 @@ const server = setupServer(
 let createResourceApi: typeof CreateResourceApiType;
 
 beforeAll(async () => {
-  process.env.NEXT_PUBLIC_API_BASE_URL = "http://localhost:3000/api";
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
   server.listen();
   vi.resetModules();
   ({ createResourceApi } = await import("@/lib/crud/create-resource-api"));
 });
 afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+afterAll(() => {
+  server.close();
+  vi.unstubAllEnvs();
+});
+
+function wrapperWithClient(qc: QueryClient) {
+  return ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: qc }, children);
+}
 
 function wrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return ({ children }: { children: React.ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: qc }, children);
+  return wrapperWithClient(qc);
 }
 
 describe("createResourceApi.useList", () => {
@@ -94,5 +101,128 @@ describe("createResourceApi.useCreate", () => {
     result.current.mutate({ nama: "B" });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual({ id: "2", nama: "B" });
+  });
+});
+
+describe("createResourceApi.useGetOne", () => {
+  it("mengambil satu item berdasarkan id", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items/1", () => HttpResponse.json({ id: "1", nama: "A" })),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useGetOne("1"), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual({ id: "1", nama: "A" });
+  });
+});
+
+describe("createResourceApi.useUpdate", () => {
+  it("PUT item lalu mengembalikan item terupdate", async () => {
+    server.use(
+      http.put("http://localhost:3000/api/items/1", async ({ request }) => {
+        const body = (await request.json()) as { nama: string };
+        return HttpResponse.json({ id: "1", nama: body.nama });
+      }),
+    );
+    const api = createResourceApi<Item, unknown, { nama: string }>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useUpdate(), { wrapper: wrapper() });
+    result.current.mutate({ id: "1", values: { nama: "Updated" } });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual({ id: "1", nama: "Updated" });
+  });
+});
+
+describe("createResourceApi.useRemove", () => {
+  it("DELETE item lalu invalidate & memicu refetch list yang sudah termuat", async () => {
+    let getCallCount = 0;
+    server.use(
+      http.get("http://localhost:3000/api/items", () => {
+        getCallCount += 1;
+        const first = getCallCount === 1;
+        return HttpResponse.json({
+          data: first ? [{ id: "1", nama: "A" }] : [],
+          meta: { total: first ? 1 : 0, page: 1, per_page: 10 },
+        });
+      }),
+      http.delete("http://localhost:3000/api/items/1", () => new HttpResponse(null, { status: 204 })),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const w = wrapperWithClient(qc);
+
+    const list = renderHook(() => api.useList({ page: 1, perPage: 10 }), { wrapper: w });
+    await waitFor(() => expect(list.result.current.isSuccess).toBe(true));
+    expect(list.result.current.data?.rows).toHaveLength(1);
+    expect(getCallCount).toBe(1);
+
+    const remove = renderHook(() => api.useRemove(), { wrapper: w });
+    remove.result.current.mutate("1");
+    await waitFor(() => expect(remove.result.current.isSuccess).toBe(true));
+
+    // Query keys.all invalidation must trigger a refetch of the still-mounted list query.
+    await waitFor(() => expect(getCallCount).toBe(2));
+    await waitFor(() => expect(list.result.current.data?.rows).toHaveLength(0));
+  });
+});
+
+describe("createResourceApi.useRemoveMany", () => {
+  it("POST bulk-delete untuk banyak id", async () => {
+    server.use(
+      http.post("http://localhost:3000/api/items/bulk-delete", async ({ request }) => {
+        const body = (await request.json()) as { ids: string[] };
+        expect(body.ids).toEqual(["1", "2"]);
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useRemoveMany(), { wrapper: wrapper() });
+    result.current.mutate(["1", "2"]);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe("createResourceApi.useOptions", () => {
+  it("cascade guard: tidak fetch saat parent belum lengkap", async () => {
+    let called = false;
+    server.use(
+      http.get("http://localhost:3000/api/items/options", () => {
+        called = true;
+        return HttpResponse.json([{ value: "1", label: "A" }]);
+      }),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useOptions({ parent: { id_kelas: "" } }), { wrapper: wrapper() });
+
+    // Query stays disabled the moment it mounts; give any errant async fetch a chance to surface.
+    expect(result.current.fetchStatus).toBe("idle");
+    await new Promise((r) => setTimeout(r, 30));
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(called).toBe(false);
+  });
+
+  it("fetch options saat parent lengkap", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items/options", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("parent[id_kelas]")).toBe("5");
+        return HttpResponse.json([{ value: "1", label: "A" }]);
+      }),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useOptions({ parent: { id_kelas: "5" } }), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([{ value: "1", label: "A" }]);
+  });
+
+  it("fetch options saat tidak ada parent sama sekali", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items/options", () =>
+        HttpResponse.json([{ value: "1", label: "A" }]),
+      ),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useOptions({}), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([{ value: "1", label: "A" }]);
   });
 });
