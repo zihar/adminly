@@ -10,6 +10,8 @@ import { FieldRenderer } from "@/components/crud/fields";
 import { CrudError } from "@/lib/crud/errors";
 import type { ResourceDef } from "@/lib/crud/define-resource";
 import type { ID } from "@/lib/crud/types";
+import { useI18n } from "@/components/providers/i18n-provider";
+import { resolveLabel } from "@/locales";
 
 // `FormDef.schema` disimpan type-erased (`ZodType<unknown>`) di registry resource
 // (heterogen antar resource). Di sini di-cast ke bentuk yang cocok dengan generic
@@ -17,6 +19,7 @@ import type { ID } from "@/lib/crud/types";
 type FormValues = Record<string, unknown>;
 
 export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; onDone?: () => void }) {
+  const { t } = useI18n();
   const isEdit = id !== undefined;
   const one = isEdit ? def.api.useGetOne(id!) : undefined;
   const create = def.api.useCreate();
@@ -48,14 +51,14 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
         <Tabs defaultValue={tabs[0]?.tabKey}>
           {tabs.length > 1 && (
             <TabsList>
-              {tabs.map((t) => <TabsTrigger key={t.tabKey} value={t.tabKey}>{t.tabKey}</TabsTrigger>)}
+              {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{tab.tabKey}</TabsTrigger>)}
             </TabsList>
           )}
-          {tabs.map((t) => (
-            <TabsContent key={t.tabKey} value={t.tabKey} className="space-y-4">
-              {t.fields.map((f) => (
+          {tabs.map((tab) => (
+            <TabsContent key={tab.tabKey} value={tab.tabKey} className="space-y-4">
+              {tab.fields.map((f) => (
                 <div key={f} className="space-y-1">
-                  <Label htmlFor={f}>{def.form.fields[f]?.labelKey ?? f}</Label>
+                  <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
                   <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
                   <p className="text-sm text-destructive">
                     {form.formState.errors[f]?.message as string | undefined}
@@ -65,7 +68,7 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
             </TabsContent>
           ))}
         </Tabs>
-        <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>Simpan</Button>
+        <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>{t.common.save}</Button>
       </form>
     </FormProvider>
   );

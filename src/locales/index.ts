@@ -10,3 +10,25 @@ export type { Dictionary };
 export function format(template: string, vars: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? `{${key}}`);
 }
+
+/**
+ * Resolve `labelKey` dot-path (mis. "items.nama") ke string kamus.
+ * Dipakai bersama oleh layer CRUD generik (ResourceForm, kolom tabel, dst.)
+ * agar label field selalu lewat i18n, bukan raw key.
+ *
+ * Fallback: jika path tidak ditemukan atau bukan string, pakai segmen
+ * terakhir dari key (mis. "items.nama" → "nama") supaya UI tetap terbaca.
+ */
+export function resolveLabel(dict: Dictionary, key: string): string {
+  const segments = key.split(".");
+  let current: unknown = dict;
+  for (const segment of segments) {
+    if (typeof current !== "object" || current === null) {
+      current = undefined;
+      break;
+    }
+    current = (current as Record<string, unknown>)[segment];
+  }
+  if (typeof current === "string") return current;
+  return segments[segments.length - 1] ?? key;
+}

@@ -28,7 +28,7 @@ export function AsyncSelectField({ name, meta }: FieldProps) {
   }, [name, setValue, parentKey]); // reset saat parent berubah
 
   return (
-    <select {...register(name)} className="border rounded px-2 py-1">
+    <select id={name} {...register(name)} className="border rounded px-2 py-1">
       <option value="">-- pilih --</option>
       {(query?.data ?? []).map((o) => (
         <option key={String(o.value)} value={String(o.value)}>{o.label}</option>

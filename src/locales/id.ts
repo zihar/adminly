@@ -2,6 +2,14 @@ import type { Dictionary } from "./en";
 
 /** Kamus Bahasa Indonesia. Wajib mengikuti struktur `Dictionary` (dari en.ts). */
 export const id: Dictionary = {
+  common: {
+    save: "Simpan",
+    cancel: "Batal",
+  },
+  // Label demo untuk resource generik `items` (contoh layer CRUD).
+  items: {
+    nama: "Nama",
+  },
   app: {
     tagline: "Dashboard starter",
     sidebarMenu: "Menu",

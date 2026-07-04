@@ -6,5 +6,5 @@ import type { FieldProps } from "./index";
 
 export function TextField({ name }: FieldProps) {
   const { register } = useFormContext();
-  return <Input {...register(name)} />;
+  return <Input id={name} {...register(name)} />;
 }

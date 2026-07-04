@@ -10,6 +10,13 @@ import { ResourceForm } from "@/components/crud/resource-form";
 import { defineResource } from "@/lib/crud/define-resource";
 import type { createResourceApi as CreateResourceApiType } from "@/lib/crud/create-resource-api";
 import type { ResourceDef } from "@/lib/crud/define-resource";
+import { I18nProvider } from "@/components/providers/i18n-provider";
+
+// `I18nProvider` memanggil `useRouter()` (untuk `router.refresh()` saat ganti
+// locale) — di luar App Router (mis. di test) itu butuh mock manual.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 const server = setupServer(
   http.post("http://localhost:3000/api/items", async ({ request }) => {
@@ -35,7 +42,12 @@ beforeAll(async () => {
     api: createResourceApi({ resource: "items", path: "/items" }),
     permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
     columns: [{ field: "nama", labelKey: "items.nama" }],
-    form: { schema: z.object({ nama: z.string().min(1, "Nama wajib diisi") }), layout: [{ tabKey: "umum", fields: ["nama"] }], fields: { nama: { type: "text" } } },
+    form: {
+      schema: z.object({ nama: z.string().min(1, "Nama wajib diisi") }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      // `labelKey` dot-path → di-resolve ResourceForm lewat `resolveLabel(t, ...)`.
+      fields: { nama: { type: "text", labelKey: "items.nama" } },
+    },
   });
 });
 afterEach(() => server.resetHandlers());
@@ -46,21 +58,34 @@ afterAll(() => {
 
 function wrap(ui: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+  // `ResourceForm` memakai `useI18n()` untuk label field & tombol submit, jadi
+  // wajib dibungkus `I18nProvider` (locale "en" — lihat resolveLabel/dictionary).
+  return render(
+    <QueryClientProvider client={qc}>
+      <I18nProvider initialLocale="en">{ui}</I18nProvider>
+    </QueryClientProvider>,
+  );
 }
 
 describe("ResourceForm", () => {
+  it("me-resolve labelKey field lewat kamus i18n (bukan raw key)", () => {
+    wrap(<ResourceForm def={def} />);
+    // labelKey "items.nama" → dict.items.nama ("Name"), bukan string "items.nama".
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(screen.queryByText("items.nama")).not.toBeInTheDocument();
+  });
+
   it("menampilkan error validasi Zod saat submit kosong", async () => {
     wrap(<ResourceForm def={def} />);
-    await userEvent.click(screen.getByRole("button", { name: /simpan/i }));
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
     expect(await screen.findByText(/Nama wajib diisi/)).toBeInTheDocument();
   });
 
   it("submit valid memanggil create & onDone", async () => {
     const onDone = vi.fn();
     wrap(<ResourceForm def={def} onDone={onDone} />);
-    await userEvent.type(screen.getByRole("textbox"), "Halo");
-    await userEvent.click(screen.getByRole("button", { name: /simpan/i }));
+    await userEvent.type(screen.getByLabelText("Name"), "Halo");
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 });

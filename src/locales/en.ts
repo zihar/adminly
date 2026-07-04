@@ -3,6 +3,14 @@
  * Tipe `Dictionary` diturunkan dari sini; locale lain wajib mengikuti bentuk ini.
  */
 export const en = {
+  common: {
+    save: "Save",
+    cancel: "Cancel",
+  },
+  // Label demo untuk resource generik `items` (contoh layer CRUD).
+  items: {
+    nama: "Name",
+  },
   app: {
     tagline: "Dashboard starter",
     sidebarMenu: "Menu",
