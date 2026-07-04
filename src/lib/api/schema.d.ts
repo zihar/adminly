@@ -274,9 +274,15 @@ export interface components {
         Item: {
             id: string;
             nama: string;
+            country?: string;
+            state?: string;
+            city?: string;
         };
         NewItem: {
             nama: string;
+            country?: string;
+            state?: string;
+            city?: string;
         };
         ItemList: {
             data: components["schemas"]["Item"][];

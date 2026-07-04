@@ -27,6 +27,12 @@ export const en = {
   items: {
     title: "Items",
     nama: "Name",
+    // Demo field `cascade` (Task 6/7): region berjenjang country → state → city.
+    regionTab: "Region",
+    region: "Region",
+    country: "Country",
+    state: "State",
+    city: "City",
   },
   // Label demo untuk resource generik `regions` (sumber options berjenjang).
   regions: {

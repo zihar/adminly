@@ -3,6 +3,7 @@ import * as React from "react";
 import type { FieldMeta, FieldType } from "@/lib/crud/define-resource";
 import { TextField } from "./text-field";
 import { AsyncSelectField } from "./async-select-field";
+import { CascadeField } from "./cascade-field";
 
 /** Props publik bersama untuk semua komponen field (Task 5 deliverable). */
 export type FieldProps = { name: string; meta: FieldMeta };
@@ -15,6 +16,7 @@ const REGISTRY: Partial<Record<FieldType, FieldComponent>> = {};
 export function registerField(type: FieldType, component: FieldComponent) { REGISTRY[type] = component; }
 registerField("text", TextField);
 registerField("async-select", AsyncSelectField);
+registerField("cascade", CascadeField);
 
 export function FieldRenderer({ name, meta }: FieldProps) {
   const Comp = REGISTRY[meta.type] ?? TextField;

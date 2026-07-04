@@ -26,6 +26,11 @@ export const id: Dictionary = {
   items: {
     title: "Item",
     nama: "Nama",
+    regionTab: "Wilayah",
+    region: "Wilayah",
+    country: "Negara",
+    state: "Provinsi",
+    city: "Kota",
   },
   regions: {
     name: "Regions",
