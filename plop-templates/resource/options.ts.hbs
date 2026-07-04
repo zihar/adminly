@@ -1,0 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { {{camelCase name}}Store } from "@/app/api/{{name}}/_data";
+
+export async function GET(req: NextRequest) {
+  const q = req.nextUrl.searchParams.get("q") ?? "";
+  const { data } = {{camelCase name}}Store.list({ page: 1, perPage: 1000, q });
+  return NextResponse.json(data.map((r) => ({ value: r.id, label: r.nama })));
+}

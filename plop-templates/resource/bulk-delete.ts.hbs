@@ -1,0 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { {{camelCase name}}Store } from "@/app/api/{{name}}/_data";
+
+export async function POST(req: NextRequest) {
+  const { ids } = await req.json();
+  {{camelCase name}}Store.removeMany(ids ?? []);
+  return new NextResponse(null, { status: 204 });
+}

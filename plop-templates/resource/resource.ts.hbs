@@ -1,0 +1,24 @@
+import { z } from "zod";
+import { defineResource } from "@/lib/crud/define-resource";
+import { createResourceApi } from "@/lib/crud/create-resource-api";
+import type { {{pascalCase name}}Row } from "@/app/api/{{name}}/_data";
+
+// Resource CRUD generik hasil scaffold `npm run gen:resource`.
+// Tipe diambil dari mock store (`_data.ts`) mengikuti konvensi `regions.ts`
+// — tidak butuh openapi.yaml/gen:api. Untuk backend nyata, ganti `{{pascalCase name}}Row`
+// dengan tipe dari `components["schemas"][...]` (lihat `items.ts`).
+export const {{camelCase name}}Schema = z.object({ nama: z.string().min(1, "Nama wajib diisi") });
+
+export const {{camelCase name}}Resource = defineResource<{{pascalCase name}}Row, {{pascalCase name}}Row, {{pascalCase name}}Row>({
+  name: "{{name}}",
+  path: "/{{name}}",
+  api: createResourceApi<{{pascalCase name}}Row, {{pascalCase name}}Row, {{pascalCase name}}Row>({ resource: "{{name}}", path: "/{{name}}" }),
+  permissions: { view: "{{name}}:view", create: "{{name}}:create", update: "{{name}}:update", delete: "{{name}}:delete" },
+  columns: [{ field: "nama", labelKey: "{{name}}.nama", sortable: true, searchable: true }],
+  list: { defaultSort: "nama", perPage: 10 },
+  form: {
+    schema: {{camelCase name}}Schema,
+    layout: [{ tabKey: "umum", fields: ["nama"] }],
+    fields: { nama: { type: "text", labelKey: "{{name}}.nama" } },
+  },
+});
