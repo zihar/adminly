@@ -3,16 +3,17 @@ import { ensureResourcesRegistered } from "@/config/resources/register";
 import { getResource, allResources, _resetRegistry } from "@/config/resources/index";
 
 describe("ensureResourcesRegistered", () => {
-  it("mendaftarkan resource items sekali & aman dipanggil berulang (idempotent)", () => {
+  it("mendaftarkan resource items & regions sekali & aman dipanggil berulang (idempotent)", () => {
     _resetRegistry();
 
     ensureResourcesRegistered();
     expect(getResource("items")).toBeDefined();
-    expect(allResources()).toHaveLength(1);
+    expect(getResource("regions")).toBeDefined();
+    expect(allResources()).toHaveLength(2);
 
     // Panggilan berulang TIDAK boleh mencoba registrasi ulang (guard `done`) —
     // tanpa guard ini, `registerResources` akan melempar "Resource duplikat".
     expect(() => ensureResourcesRegistered()).not.toThrow();
-    expect(allResources()).toHaveLength(1);
+    expect(allResources()).toHaveLength(2);
   });
 });

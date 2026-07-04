@@ -28,6 +28,10 @@ export const en = {
     title: "Items",
     nama: "Name",
   },
+  // Label demo untuk resource generik `regions` (sumber options berjenjang).
+  regions: {
+    name: "Regions",
+  },
   app: {
     tagline: "Dashboard starter",
     sidebarMenu: "Menu",

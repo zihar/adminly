@@ -27,6 +27,9 @@ export const id: Dictionary = {
     title: "Item",
     nama: "Nama",
   },
+  regions: {
+    name: "Regions",
+  },
   app: {
     tagline: "Dashboard starter",
     sidebarMenu: "Menu",

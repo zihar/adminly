@@ -1,5 +1,6 @@
 import { registerResources } from "@/config/resources/index";
 import { itemsResource } from "@/config/resources/items";
+import { regionsResource } from "@/config/resources/regions";
 
 /**
  * Registrasi semua resource CRUD generik ke registry, sekali per proses
@@ -10,6 +11,6 @@ import { itemsResource } from "@/config/resources/items";
 let done = false;
 export function ensureResourcesRegistered() {
   if (done) return;
-  registerResources([itemsResource]);
+  registerResources([itemsResource, regionsResource]);
   done = true;
 }

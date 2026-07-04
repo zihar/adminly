@@ -5,7 +5,8 @@ import type { ResourceApi } from "@/lib/crud/create-resource-api";
 
 export type FieldType =
   | "text" | "textarea" | "number" | "select" | "async-select"
-  | "date" | "datetime" | "checkbox" | "radio" | "file" | "richtext" | "hidden";
+  | "date" | "datetime" | "checkbox" | "radio" | "file" | "richtext" | "hidden"
+  | "cascade";
 
 export type ColumnRender = "text" | "date" | "badge" | "relation" | "image" | "currency" | "boolean";
 
@@ -25,6 +26,15 @@ export type FieldMeta = {
   dependsOn?: string[];      // field induk (cascade)
   accept?: string;           // untuk file
   options?: { value: string | number; label: string }[]; // untuk select statis
+  // Daftar level untuk field bertipe `cascade` (mis. country → state → city).
+  // Tiap level meng-query `optionsFrom` dg filter `parent[parentParam]=<nilai level di atasnya>`.
+  cascade?: {
+    key: string;            // nama field RHF untuk level ini
+    labelKey?: string;
+    optionsFrom: string;    // resource sumber opsi
+    parentParam?: string;   // nama param parent[...] (default "parentId")
+    searchable?: boolean;
+  }[];
 };
 
 export type FormDef = {
