@@ -12,6 +12,7 @@ import { CrudError } from "@/lib/crud/errors";
 import type { ResourceDef } from "@/lib/crud/define-resource";
 import type { ID } from "@/lib/crud/types";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { useScope } from "@/components/providers/scope-provider";
 import { resolveLabel } from "@/locales";
 
 // `FormDef.schema` disimpan type-erased (`ZodType<unknown>`) di registry resource
@@ -21,6 +22,7 @@ type FormValues = Record<string, unknown>;
 
 export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; onDone?: () => void }) {
   const { t } = useI18n();
+  const { scope } = useScope();
   const isEdit = id !== undefined;
   // Hook dipanggil TANPA syarat (aturan React Hooks); fetch di-gate lewat
   // `enabled: isEdit` — mode create tak menembak network sama sekali.
@@ -35,8 +37,18 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
 
   async function onSubmit(values: FormValues) {
     try {
-      if (isEdit) await update.mutateAsync({ id: id!, values });
-      else await create.mutateAsync(values);
+      if (isEdit) {
+        await update.mutateAsync({ id: id!, values });
+      } else {
+        // Tempelkan scope global aktif (mis. workspace) sebagai default
+        // tersembunyi di payload create — hanya create, edit tak disentuh.
+        // Nilai undefined/"" dianggap "tak ada scope" dan di-drop.
+        const scoped = (def.scope ?? []).reduce<Record<string, unknown>>((acc, k) => {
+          if (scope[k] !== undefined && scope[k] !== "") acc[k] = scope[k];
+          return acc;
+        }, {});
+        await create.mutateAsync({ ...values, ...scoped });
+      }
       // Toast i18n dipasang di caller (factory toast-free); default locale English.
       toast.success(t.common.saved);
       onDone?.();
