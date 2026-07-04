@@ -75,7 +75,7 @@ describe("createResourceApi error path", () => {
   it("melempar CrudError ternormalisasi saat server error", async () => {
     server.use(
       http.get("http://localhost:3000/api/items", () =>
-        HttpResponse.json({ message: "Validasi gagal", errors: { nama: ["wajib diisi"] } }, { status: 422 }),
+        HttpResponse.json({ code: 422, status: "error", message: "Validasi gagal", data: { nama: ["wajib diisi"] } }, { status: 422 }),
       ),
     );
     const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });

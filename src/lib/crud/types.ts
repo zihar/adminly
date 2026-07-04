@@ -20,4 +20,4 @@ export type Option = { value: ID; label: string };
 export type ListEnvelope<T> = { data: T[]; meta: { total: number; page: number; per_page: number } };
 
 /** Envelope error opsional dari backend. */
-export type ErrorEnvelope = { code?: string; status?: string; message?: string; errors?: Record<string, string[]> };
+export type ErrorEnvelope = { code?: number; status?: string; message?: string; data?: Record<string, string[]> | null };

@@ -3,7 +3,7 @@ import { normalizeError, buildListSearchParams, CrudError } from "@/lib/crud/err
 
 describe("normalizeError", () => {
   it("memetakan 422 ke fieldErrors", () => {
-    const e = normalizeError(422, { code: "99", status: "error", message: "Validasi gagal", errors: { nama: ["wajib diisi"] } });
+    const e = normalizeError(422, { code: 422, status: "error", message: "Validasi gagal", data: { nama: ["wajib diisi"] } });
     expect(e).toBeInstanceOf(CrudError);
     expect(e.httpStatus).toBe(422);
     expect(e.fieldErrors).toEqual({ nama: ["wajib diisi"] });

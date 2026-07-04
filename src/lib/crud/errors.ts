@@ -17,7 +17,7 @@ const GENERIC = "Terjadi kesalahan pada server. Coba lagi.";
 export function normalizeError(httpStatus: number, body: unknown): CrudError {
   const env = (body ?? {}) as ErrorEnvelope;
   if (httpStatus === 422) {
-    return new CrudError(422, env.message || "Validasi gagal", env.errors);
+    return new CrudError(422, env.message || "Validasi gagal", env.data ?? undefined);
   }
   if (httpStatus >= 500) {
     return new CrudError(httpStatus, GENERIC);
