@@ -5,6 +5,7 @@ import { ResourceTableBoundary } from "@/components/crud/resource-table-boundary
 import { PageHeader } from "@/components/layout/page-header";
 import { getResource } from "@/config/resources/index";
 import { getDictionary } from "@/lib/get-dictionary";
+import { initialListParams } from "@/lib/crud/list-params";
 import { getQueryClient } from "@/lib/query/get-query-client";
 import { resolveLabel } from "@/locales";
 
@@ -21,8 +22,10 @@ export async function ResourcePage({ resource }: { resource: string }) {
 
   const t = await getDictionary();
   const queryClient = getQueryClient();
-  const perPage = def.list?.perPage ?? 20;
-  await queryClient.prefetchQuery(def.api.listQueryOptions({ page: 1, perPage }));
+  // Prefetch pakai params awal yang IDENTIK dgn render pertama `ResourceTable`
+  // (lihat `initialListParams`) supaya query key cocok → hasil prefetch benar-
+  // benar dipakai saat hydrate (tanpa refetch/skeleton di paint pertama).
+  await queryClient.prefetchQuery(def.api.listQueryOptions(initialListParams(def)));
 
   return (
     <div className="space-y-4">

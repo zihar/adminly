@@ -17,6 +17,11 @@ export const en = {
     empty: "No data yet.",
     deleteSelected: "Delete ({count})",
     selectRow: "Select row {id}",
+    selectPlaceholder: "-- select --",
+    saved: "Saved",
+    deleted: "Deleted",
+    saveFailed: "Failed to save",
+    deleteFailed: "Failed to delete",
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {

@@ -10,6 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { toast } from "sonner";
 
 import { Can } from "@/components/auth/can";
 import { useI18n } from "@/components/providers/i18n-provider";
@@ -26,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { ResourceDef } from "@/lib/crud/define-resource";
+import { initialListParams } from "@/lib/crud/list-params";
 import { format, resolveLabel } from "@/locales";
 
 type Row = Record<string, unknown>;
@@ -44,13 +46,17 @@ type Row = Record<string, unknown>;
  */
 export function ResourceTable({ def }: { def: ResourceDef }) {
   const { t } = useI18n();
+  // Params awal (page/perPage/sort/order) di-derive dari SATU helper yang sama
+  // dgn prefetch RSC (`resource-page.tsx`) supaya query key render pertama cocok
+  // dgn cache prefetch — cegah hydration miss / skeleton flash.
+  const initial = initialListParams(def);
   const [state, setState] = useQueryStates({
-    page: parseAsInteger.withDefault(1),
+    page: parseAsInteger.withDefault(initial.page),
     q: parseAsString.withDefault(""),
-    sort: parseAsString.withDefault(def.list?.defaultSort ?? ""),
-    order: parseAsString.withDefault("asc"),
+    sort: parseAsString.withDefault(initial.sort ?? ""),
+    order: parseAsString.withDefault(initial.order ?? "asc"),
   });
-  const perPage = def.list?.perPage ?? 20;
+  const perPage = initial.perPage;
   const primaryKey = def.primaryKey ?? "id";
 
   // Suntik scope global (mis. `workspace`) ke query list HANYA jika resource
@@ -149,7 +155,15 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             <Button
               variant="destructive"
               onClick={() =>
-                removeMany.mutate([...selected], { onSuccess: () => setSelected(new Set()) })
+                removeMany.mutate([...selected], {
+                  // Toast i18n dipasang di caller (bukan factory) — default
+                  // locale English; factory sendiri toast-free.
+                  onSuccess: () => {
+                    setSelected(new Set());
+                    toast.success(t.common.deleted);
+                  },
+                  onError: () => toast.error(t.common.deleteFailed),
+                })
               }
             >
               {format(t.common.deleteSelected, { count: String(selected.size) })}
@@ -158,7 +172,15 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         )}
       </div>
 
-      <Table>
+      {/* Indikator refetch latar (ganti page/sort/search) — non-destruktif:
+          baris lama tetap tampil, hanya diberi opasitas turun. Skeleton penuh
+          HANYA untuk load pertama (`isPending`), lihat `<TableBody>`. */}
+      <Table
+        aria-busy={query.isFetching && !query.isPending}
+        className={
+          query.isFetching && !query.isPending ? "opacity-60 transition-opacity" : undefined
+        }
+      >
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -185,7 +207,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           ))}
         </TableHeader>
         <TableBody>
-          {(query.isPending || query.isFetching) && (
+          {query.isPending && (
             <TableRow>
               <TableCell colSpan={colSpan}>
                 <Skeleton className="h-6 w-full" />

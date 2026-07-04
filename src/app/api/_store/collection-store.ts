@@ -7,20 +7,39 @@ export function createCollectionStore<T extends { id: string }>(seed: T[]) {
       page = 1,
       perPage = 10,
       q = "",
+      sort,
+      order = "asc",
     }: {
       page?: number;
       perPage?: number;
       q?: string;
+      sort?: string;
+      order?: "asc" | "desc";
     }) {
       const filtered = q
         ? rows.filter((r) =>
             JSON.stringify(r).toLowerCase().includes(q.toLowerCase()),
           )
         : rows;
+      // Urutkan bila `sort` diberikan. Salin dulu (`[...]`) supaya tidak
+      // memutasi `rows` sumber; `Array.prototype.sort` stabil (spec ES2019)
+      // sehingga baris dgn nilai sama menjaga urutan asal. Number-aware:
+      // bandingkan numerik bila kedua nilai number, selain itu string-compare.
+      const ordered = sort
+        ? [...filtered].sort((a, b) => {
+            const av = (a as Record<string, unknown>)[sort];
+            const bv = (b as Record<string, unknown>)[sort];
+            const cmp =
+              typeof av === "number" && typeof bv === "number"
+                ? av - bv
+                : String(av ?? "").localeCompare(String(bv ?? ""));
+            return order === "desc" ? -cmp : cmp;
+          })
+        : filtered;
       const start = (page - 1) * perPage;
       return {
-        data: filtered.slice(start, start + perPage),
-        meta: { total: filtered.length, page, per_page: perPage },
+        data: ordered.slice(start, start + perPage),
+        meta: { total: ordered.length, page, per_page: perPage },
       };
     },
     get(id: string) {

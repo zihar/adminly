@@ -99,5 +99,51 @@ describe("proxy (route guard RBAC)", () => {
       const res = proxy(requestFor("/proxy-test-resource", "Admin"));
       expect(isDeniedRedirect(res)).toBe(false);
     });
+
+    // Guard PER-VERB: `/create` butuh `create`, `/<id>/edit` butuh `update`.
+    // Resource throwaway ini memberi `view` ke SEMUA role (`items:view`) tapi
+    // `create`/`update` hanya ke Admin (`settings:manage`) — jadi Viewer bisa
+    // melihat list tapi TIDAK boleh deep-link ke create/edit.
+    const verbResource = defineResource({
+      name: "proxy-verb-resource",
+      path: "/proxy-verb-resource",
+      api: createResourceApi<{ id: string }>({
+        resource: "proxy-verb-resource",
+        path: "/proxy-verb-resource",
+      }),
+      permissions: {
+        view: "items:view",
+        create: "settings:manage",
+        update: "settings:manage",
+        delete: "settings:manage",
+      },
+      columns: [{ field: "id", labelKey: "id" }],
+      form: { schema: z.object({}), layout: [], fields: {} },
+    });
+
+    it("list tetap butuh view: role ber-view diloloskan (Viewer -> /proxy-verb-resource)", () => {
+      registerResources([verbResource]);
+      expect(isDeniedRedirect(proxy(requestFor("/proxy-verb-resource", "Viewer")))).toBe(false);
+    });
+
+    it("/create butuh create: role tanpa create ditolak (Viewer -> /proxy-verb-resource/create)", () => {
+      registerResources([verbResource]);
+      expect(isDeniedRedirect(proxy(requestFor("/proxy-verb-resource/create", "Viewer")))).toBe(true);
+    });
+
+    it("/create diloloskan untuk role yang punya create (Admin -> /proxy-verb-resource/create)", () => {
+      registerResources([verbResource]);
+      expect(isDeniedRedirect(proxy(requestFor("/proxy-verb-resource/create", "Admin")))).toBe(false);
+    });
+
+    it("/<id>/edit butuh update: role tanpa update ditolak (Viewer -> /proxy-verb-resource/7/edit)", () => {
+      registerResources([verbResource]);
+      expect(isDeniedRedirect(proxy(requestFor("/proxy-verb-resource/7/edit", "Viewer")))).toBe(true);
+    });
+
+    it("/<id>/edit diloloskan untuk role yang punya update (Admin -> /proxy-verb-resource/7/edit)", () => {
+      registerResources([verbResource]);
+      expect(isDeniedRedirect(proxy(requestFor("/proxy-verb-resource/7/edit", "Admin")))).toBe(false);
+    });
   });
 });

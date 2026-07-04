@@ -2,9 +2,11 @@
 import * as React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { getResource } from "@/config/resources/index";
+import { useI18n } from "@/components/providers/i18n-provider";
 import type { FieldProps } from "./index";
 
 export function AsyncSelectField({ name, meta }: FieldProps) {
+  const { t } = useI18n();
   const { setValue, register } = useFormContext();
   const parentValues = useWatch({ name: meta.dependsOn ?? [] });
   const source = meta.optionsFrom ? getResource(meta.optionsFrom) : undefined;
@@ -29,7 +31,7 @@ export function AsyncSelectField({ name, meta }: FieldProps) {
 
   return (
     <select id={name} {...register(name)} className="border rounded px-2 py-1">
-      <option value="">-- pilih --</option>
+      <option value="">{t.common.selectPlaceholder}</option>
       {(query?.data ?? []).map((o) => (
         <option key={String(o.value)} value={String(o.value)}>{o.label}</option>
       ))}

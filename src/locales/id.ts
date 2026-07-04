@@ -16,6 +16,11 @@ export const id: Dictionary = {
     empty: "Belum ada data.",
     deleteSelected: "Hapus ({count})",
     selectRow: "Pilih baris {id}",
+    selectPlaceholder: "-- pilih --",
+    saved: "Data tersimpan",
+    deleted: "Data dihapus",
+    saveFailed: "Gagal menyimpan",
+    deleteFailed: "Gagal menghapus",
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {

@@ -3,6 +3,7 @@ import * as React from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ZodType } from "zod";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,26 +22,34 @@ type FormValues = Record<string, unknown>;
 export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; onDone?: () => void }) {
   const { t } = useI18n();
   const isEdit = id !== undefined;
-  const one = isEdit ? def.api.useGetOne(id!) : undefined;
+  // Hook dipanggil TANPA syarat (aturan React Hooks); fetch di-gate lewat
+  // `enabled: isEdit` — mode create tak menembak network sama sekali.
+  const one = def.api.useGetOne(id as ID, { enabled: isEdit });
   const create = def.api.useCreate();
   const update = def.api.useUpdate();
 
   const schema = def.form.schema as ZodType<FormValues, FormValues>;
   const form = useForm<FormValues>({ resolver: zodResolver(schema) });
   const { reset } = form;
-  React.useEffect(() => { if (one?.data) reset(one.data as FormValues); }, [one?.data, reset]);
+  React.useEffect(() => { if (one.data) reset(one.data as FormValues); }, [one.data, reset]);
 
   async function onSubmit(values: FormValues) {
     try {
       if (isEdit) await update.mutateAsync({ id: id!, values });
       else await create.mutateAsync(values);
+      // Toast i18n dipasang di caller (factory toast-free); default locale English.
+      toast.success(t.common.saved);
       onDone?.();
     } catch (e) {
+      // 422 → petakan ke error per-field (jangan double-toast validasi field).
       if (e instanceof CrudError && e.fieldErrors) {
         for (const [field, msgs] of Object.entries(e.fieldErrors)) {
           form.setError(field, { message: msgs.join(", ") });
         }
+        return;
       }
+      // Error non-422 → tampilkan toast gagal generik (bukan pesan mentah).
+      toast.error(t.common.saveFailed);
     }
   }
 
@@ -51,7 +60,7 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
         <Tabs defaultValue={tabs[0]?.tabKey}>
           {tabs.length > 1 && (
             <TabsList>
-              {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{tab.tabKey}</TabsTrigger>)}
+              {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{resolveLabel(t, tab.tabKey)}</TabsTrigger>)}
             </TabsList>
           )}
           {tabs.map((tab) => (

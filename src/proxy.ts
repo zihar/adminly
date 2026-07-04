@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ROLE_COOKIE, ROUTE_PERMISSIONS, can, parseRole, resourceRoutePermissions } from "@/config/rbac";
+import { ROLE_COOKIE, ROUTE_PERMISSIONS, can, parseRole, resolveResourceRoute } from "@/config/rbac";
 import { ensureResourcesRegistered } from "@/config/resources/register";
 
 /**
@@ -20,11 +20,14 @@ export function proxy(request: NextRequest) {
   // (mis. `items`, didaftarkan lewat `defineResource`) ikut diperiksa di sini
   // — bukan hanya rule statis di `ROUTE_PERMISSIONS`.
   ensureResourcesRegistered();
-  const rules = [...ROUTE_PERMISSIONS, ...resourceRoutePermissions()];
 
-  const rule = rules.find(
+  // Route statis dulu; bila tak cocok, resolusi route resource PER-VERB
+  // (`create`→create, `edit`→update, selain itu view) — cegah role ber-`view`
+  // saja men-deep-link `/create` atau `/edit`.
+  const staticRule = ROUTE_PERMISSIONS.find(
     (r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`),
   );
+  const rule = staticRule ?? resolveResourceRoute(pathname);
 
   if (rule && !can(role, rule.permission)) {
     // Tidak berhak → arahkan ke dashboard (selalu boleh untuk semua role).

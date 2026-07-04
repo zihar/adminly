@@ -4,7 +4,6 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { apiClient } from "@/lib/api/client";
 import { buildListSearchParams, normalizeError } from "@/lib/crud/errors";
@@ -89,18 +88,23 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
   }
 
   const useList = (params: ListParams) => useQuery(listQueryOptions(params));
-  const useGetOne = (id: ID) => useQuery(getOneQueryOptions(id));
+  // `useGetOne` menerima `options` (mis. `enabled`) supaya caller bisa memanggil
+  // hook TANPA syarat (aturan React Hooks) lalu men-gate fetch-nya — dipakai
+  // `ResourceForm` untuk mode create (tak ada `id`, `enabled: false`).
+  const useGetOne = (id: ID, options?: { enabled?: boolean }) =>
+    useQuery({ ...getOneQueryOptions(id), ...options });
 
+  // Factory sengaja TOAST-FREE: notifikasi UI adalah keputusan i18n (default
+  // English) yang dipasang di caller ber-`useI18n()` (ResourceForm/ResourceTable).
+  // Di sini cukup invalidate cache; kegagalan tetap dilempar sbg `CrudError`.
   function useCreate() {
     const qc = useQueryClient();
     return useMutation({
       mutationFn: async (values: TNew) =>
         (await req<TItem>("POST", base, { body: values })).data!,
       onSuccess: () => {
-        toast.success("Data tersimpan");
         qc.invalidateQueries({ queryKey: keys.all });
       },
-      onError: (e) => toast.error(e instanceof Error ? e.message : "Gagal menyimpan"),
     });
   }
 
@@ -110,11 +114,9 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
       mutationFn: async ({ id, values }: { id: ID; values: TUpdate }) =>
         (await req<TItem>("PUT", `${base}/${id}`, { body: values })).data!,
       onSuccess: (_d, v) => {
-        toast.success("Perubahan tersimpan");
         qc.invalidateQueries({ queryKey: keys.all });
         qc.invalidateQueries({ queryKey: keys.one(v.id) });
       },
-      onError: (e) => toast.error(e instanceof Error ? e.message : "Gagal menyimpan"),
     });
   }
 
@@ -125,10 +127,8 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
         await req<void>("DELETE", `${base}/${id}`);
       },
       onSuccess: () => {
-        toast.success("Data dihapus");
         qc.invalidateQueries({ queryKey: keys.all });
       },
-      onError: (e) => toast.error(e instanceof Error ? e.message : "Gagal menghapus"),
     });
   }
 
@@ -139,10 +139,8 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
         await req<void>("POST", `${base}/bulk-delete`, { body: { ids } });
       },
       onSuccess: () => {
-        toast.success("Data terpilih dihapus");
         qc.invalidateQueries({ queryKey: keys.all });
       },
-      onError: (e) => toast.error(e instanceof Error ? e.message : "Gagal menghapus"),
     });
   }
 

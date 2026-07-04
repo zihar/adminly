@@ -69,6 +69,33 @@ export function resourceRoutePermissions(): { prefix: string; permission: Permis
   return allResources().map((r) => ({ prefix: `/${r.name}`, permission: r.permissions.view }));
 }
 
+/**
+ * Resolusi permission route resource CRUD secara PER-VERB dari `pathname`:
+ * - `.../create`      → butuh `create`
+ * - `.../<id>/edit`   → butuh `update`
+ * - list / detail lain → butuh `view`
+ *
+ * Tanpa ini, deep-link ke `/items/create` atau `/items/<id>/edit` hanya
+ * dijaga oleh `view` — role dgn `view` tapi tanpa `create`/`update` bisa
+ * membuka & beraksi. Mengembalikan `{ prefix, permission }` (prefix dipakai
+ * `proxy.ts` untuk param `denied`) atau `null` bila bukan route resource.
+ *
+ * Tetap pure (tanpa React/Node) — aman diimpor `proxy.ts`.
+ */
+export function resolveResourceRoute(
+  pathname: string,
+): { prefix: string; permission: Permission } | null {
+  for (const r of allResources()) {
+    const prefix = `/${r.name}`;
+    if (pathname !== prefix && !pathname.startsWith(`${prefix}/`)) continue;
+    const rest = pathname.slice(prefix.length); // "" | "/create" | "/<id>/edit" | "/<id>"
+    if (rest === "/create") return { prefix, permission: r.permissions.create };
+    if (rest.endsWith("/edit")) return { prefix, permission: r.permissions.update };
+    return { prefix, permission: r.permissions.view };
+  }
+  return null;
+}
+
 /** Nama cookie penyimpan role (DEMO — di produksi pakai sesi sungguhan). */
 export const ROLE_COOKIE = "adminly_role";
 export const DEFAULT_ROLE: Role = "Admin";

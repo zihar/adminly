@@ -37,4 +37,43 @@ describe('collection-store', () => {
       expect(row?.nama).toBe('X');
     });
   });
+
+  describe('list sort/order', () => {
+    const seed = [
+      { id: '1', nama: 'Charlie', umur: 30 },
+      { id: '2', nama: 'alpha', umur: 10 },
+      { id: '3', nama: 'Bravo', umur: 20 },
+    ];
+
+    it('mengurutkan string secara ascending (case-insensitive via localeCompare)', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ sort: 'nama', order: 'asc' });
+      expect(data.map((r) => r.nama)).toEqual(['alpha', 'Bravo', 'Charlie']);
+    });
+
+    it('mengurutkan string secara descending', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ sort: 'nama', order: 'desc' });
+      expect(data.map((r) => r.nama)).toEqual(['Charlie', 'Bravo', 'alpha']);
+    });
+
+    it('mengurutkan number secara numerik (bukan leksikografis)', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ sort: 'umur', order: 'asc' });
+      expect(data.map((r) => r.umur)).toEqual([10, 20, 30]);
+    });
+
+    it('tanpa sort: mempertahankan urutan seed', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({});
+      expect(data.map((r) => r.id)).toEqual(['1', '2', '3']);
+    });
+
+    it('tidak memutasi urutan sumber saat sort (pemanggilan berikutnya tetap urutan seed)', () => {
+      const store = createCollectionStore(seed);
+      store.list({ sort: 'nama', order: 'desc' });
+      const { data } = store.list({});
+      expect(data.map((r) => r.id)).toEqual(['1', '2', '3']);
+    });
+  });
 });

@@ -1,9 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { useForm, FormProvider, useWatch } from "react-hook-form";
 import * as React from "react";
 import { AsyncSelectField } from "@/components/crud/fields/async-select-field";
 import { TextField } from "@/components/crud/fields/text-field";
+import { I18nProvider } from "@/components/providers/i18n-provider";
+
+// `I18nProvider` memanggil `useRouter()` (untuk `router.refresh()` saat ganti
+// locale) — di luar App Router (mis. di test) itu butuh mock manual.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 /**
  * Menampilkan nilai RHF `child` sebagai teks. Dipakai alih-alih membaca
@@ -19,12 +26,16 @@ function ChildValueProbe() {
 
 function Harness() {
   const form = useForm({ defaultValues: { parent: "a", child: "existing" } });
+  // `AsyncSelectField` memakai `useI18n()` untuk placeholder select, jadi wajib
+  // dibungkus `I18nProvider`.
   return (
-    <FormProvider {...form}>
-      <TextField name="parent" meta={{ type: "text" }} />
-      <AsyncSelectField name="child" meta={{ type: "async-select", dependsOn: ["parent"] }} />
-      <ChildValueProbe />
-    </FormProvider>
+    <I18nProvider initialLocale="en">
+      <FormProvider {...form}>
+        <TextField name="parent" meta={{ type: "text" }} />
+        <AsyncSelectField name="child" meta={{ type: "async-select", dependsOn: ["parent"] }} />
+        <ChildValueProbe />
+      </FormProvider>
+    </I18nProvider>
   );
 }
 
