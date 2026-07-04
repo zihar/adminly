@@ -1,5 +1,6 @@
 import createClient from "openapi-fetch";
 
+import { getAuthToken } from "@/lib/api/auth";
 import type { paths } from "@/lib/api/schema";
 
 // Base URL client. Di browser pakai relatif "/api" (Route Handler lokal).
@@ -16,3 +17,19 @@ function resolveBaseUrl(): string {
 }
 
 export const apiClient = createClient<paths>({ baseUrl: resolveBaseUrl() });
+
+// Middleware auth (seam D7): sisipkan header Authorization bila ada token,
+// dan redirect ke /login saat 401 — hanya di browser, aman untuk SSR/prefetch.
+apiClient.use({
+  async onRequest({ request }) {
+    const token = await getAuthToken();
+    if (token) request.headers.set("Authorization", `Bearer ${token}`);
+    return request;
+  },
+  onResponse({ response }) {
+    if (response.status === 401 && typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
+    return response;
+  },
+});
