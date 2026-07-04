@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { RbacProvider } from "@/components/providers/rbac-provider";
 import { ScopeProvider } from "@/components/providers/scope-provider";
 import { ROLE_COOKIE, parseRole } from "@/config/rbac";
+import { SCOPE_COOKIE, parseScope } from "@/config/scope";
 import { ensureResourcesRegistered } from "@/config/resources/register";
 
 export default async function AppLayout({
@@ -26,7 +27,7 @@ export default async function AppLayout({
 
   return (
     <RbacProvider initialRole={role}>
-      <ScopeProvider>
+      <ScopeProvider initial={parseScope(cookieStore.get(SCOPE_COOKIE)?.value)}>
         <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
           <SidebarInset>

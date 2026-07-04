@@ -1,29 +1,31 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import * as React from "react";
 import { ScopeProvider, useScope } from "@/components/providers/scope-provider";
 
-// Kunci scope generik (demo: `workspace`) — bukan istilah domain spesifik.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 function Probe() {
   const { scope, setScope } = useScope();
   return (
     <div>
-      <span data-testid="val">{String(scope.workspaceId ?? "")}</span>
-      <button onClick={() => setScope({ workspaceId: 2 })}>set</button>
+      <span data-testid="ws">{String(scope.workspace ?? "-")}</span>
+      <button onClick={() => setScope({ workspace: "w2" })}>set</button>
+      <button onClick={() => setScope({ workspace: "" })}>clear</button>
     </div>
   );
 }
 
-describe("ScopeProvider", () => {
-  it("menyimpan & memperbarui scope", async () => {
-    render(
-      <ScopeProvider initial={{ workspaceId: 1 }}>
-        <Probe />
-      </ScopeProvider>,
-    );
-    expect(screen.getByTestId("val").textContent).toBe("1");
-    await userEvent.click(screen.getByRole("button", { name: "set" }));
-    expect(screen.getByTestId("val").textContent).toBe("2");
+afterEach(() => { document.cookie = "adminly_scope=; path=/; max-age=0"; });
+
+describe("ScopeProvider persistence", () => {
+  it("sets, persists to cookie, and clears a dimension", () => {
+    render(<ScopeProvider initial={{}}><Probe /></ScopeProvider>);
+    expect(screen.getByTestId("ws").textContent).toBe("-");
+    act(() => { screen.getByText("set").click(); });
+    expect(screen.getByTestId("ws").textContent).toBe("w2");
+    expect(document.cookie).toContain("adminly_scope");
+    act(() => { screen.getByText("clear").click(); });
+    expect(screen.getByTestId("ws").textContent).toBe("-");
   });
 });
