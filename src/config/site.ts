@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 
 import type { Permission } from "@/config/rbac";
+import { resourceRoutePermissions } from "@/config/rbac";
+import { allResources } from "@/config/resources/index";
 
 /**
  * Konfigurasi global aplikasi. Ganti nilai-nilai di sini saat memakai
@@ -18,12 +20,18 @@ export const siteConfig = {
     "Generic internal-tool dashboard starter — fork it for each new project.",
 };
 
-/** Kunci label navigasi → dicocokkan ke kamus i18n (`t.nav[key]`). */
+/** Kunci label navigasi statis → dicocokkan ke kamus i18n (`t.nav[key]`). */
 export type NavKey = "dashboard" | "users" | "analytics" | "settings";
 
 export type NavItem = {
-  /** Kunci i18n untuk judul (lihat `t.nav`). */
-  key: NavKey;
+  /**
+   * Untuk item statis: kunci i18n `t.nav[key]` (lihat `NavKey`).
+   * Untuk item resource (dari registry): nama resource, mis. "items" —
+   * di-render lewat `resolveNavLabel(t, key)` dari `@/locales` (lihat
+   * `app-sidebar.tsx` / `site-header.tsx`).
+   * Longgar ke `string` supaya nav bisa digabung dgn resource dinamis.
+   */
+  key: string;
   href: string;
   icon: LucideIcon;
   /** Permission yang dibutuhkan agar item ini tampil di sidebar. */
@@ -37,3 +45,26 @@ export const navMain: NavItem[] = [
   { key: "analytics", href: "/analytics", icon: BarChart3, permission: "analytics:view" },
   { key: "settings", href: "/settings", icon: Settings, permission: "settings:manage" },
 ];
+
+/**
+ * Item navigasi turunan dari resource registry (`allResources()`), supaya
+ * resource CRUD generik (mis. `items`) otomatis muncul di sidebar tanpa
+ * perlu ditambahkan manual ke `navMain`.
+ */
+export function resourceNavItems(): NavItem[] {
+  return allResources().map((r) => ({
+    key: r.name,
+    href: `/${r.name}`,
+    icon: r.nav?.icon ?? LayoutDashboard,
+    permission: r.permissions.view,
+  }));
+}
+
+/**
+ * Re-export dari `@/config/rbac` — didefinisikan di sana (modul pure, tanpa
+ * import React/ikon) supaya `proxy.ts` bisa memakainya langsung tanpa ikut
+ * menarik `lucide-react`. Diekspor ulang di sini agar konsumen nav (mis.
+ * test, sidebar) bisa mengimpor `resourceNavItems` & `resourceRoutePermissions`
+ * dari satu tempat yang sama: `@/config/site`.
+ */
+export { resourceRoutePermissions };

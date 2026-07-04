@@ -20,14 +20,21 @@ import {
 import { NavUser } from "@/components/layout/nav-user";
 import { useRbac } from "@/components/providers/rbac-provider";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { navMain, siteConfig } from "@/config/site";
+import { navMain, resourceNavItems, siteConfig, type NavItem } from "@/config/site";
+import { ensureResourcesRegistered } from "@/config/resources/register";
+import { resolveNavLabel } from "@/locales";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { can } = useRbac();
   const { t } = useI18n();
+  // Registry resource CRUD generik (mis. `items`) — idempotent.
+  ensureResourcesRegistered();
+  // Gabungkan menu statis (`navMain`) dgn menu turunan resource registry,
+  // supaya resource baru otomatis muncul tanpa perlu ubah `site.ts`.
+  const allNav: NavItem[] = [...navMain, ...resourceNavItems()];
   // Hanya tampilkan menu yang boleh diakses role aktif.
-  const visibleNav = navMain.filter(
+  const visibleNav = allNav.filter(
     (item) => !item.permission || can(item.permission),
   );
 
@@ -60,7 +67,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             {visibleNav.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
-              const label = t.nav[item.key];
+              const label = resolveNavLabel(t, item.key);
               return (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton

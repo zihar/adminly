@@ -32,3 +32,16 @@ export function resolveLabel(dict: Dictionary, key: string): string {
   if (typeof current === "string") return current;
   return segments[segments.length - 1] ?? key;
 }
+
+/**
+ * Resolve label item navigasi sidebar/breadcrumb dari `key` (lihat `NavItem`
+ * di `@/config/site`).
+ * - Item statis (key ada di `t.nav`, mis. "dashboard") → `t.nav[key]`.
+ * - Item resource dari registry (key = nama resource, mis. "items") →
+ *   `resolveLabel(t, "<name>.title")`, konsisten dgn pola label resource
+ *   lain (`resource-page.tsx`, dst.).
+ */
+export function resolveNavLabel(dict: Dictionary, key: string): string {
+  if (key in dict.nav) return dict.nav[key as keyof Dictionary["nav"]];
+  return resolveLabel(dict, `${key}.title`);
+}

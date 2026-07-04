@@ -14,12 +14,16 @@ import { ModeToggle } from "@/components/layout/mode-toggle";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { useI18n } from "@/components/providers/i18n-provider";
-import { navMain } from "@/config/site";
+import { navMain, resourceNavItems } from "@/config/site";
+import { ensureResourcesRegistered } from "@/config/resources/register";
+import { resolveNavLabel } from "@/locales";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { t } = useI18n();
-  const current = navMain.find(
+  // Registry resource CRUD generik (mis. `items`) — idempotent.
+  ensureResourcesRegistered();
+  const current = [...navMain, ...resourceNavItems()].find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   );
 
@@ -31,7 +35,7 @@ export function SiteHeader() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {t.nav[current?.key ?? "dashboard"]}
+              {resolveNavLabel(t, current?.key ?? "dashboard")}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

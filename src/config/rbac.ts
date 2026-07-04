@@ -9,6 +9,8 @@
  * - Sesuaikan daftar Permission + pemetaan ROLE_PERMISSIONS sesuai kebutuhan.
  */
 
+import { allResources } from "@/config/resources/index";
+
 export const ROLES = ["Admin", "Editor", "Viewer"] as const;
 export type Role = (typeof ROLES)[number];
 
@@ -53,6 +55,19 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: Permission }[] = [
   { prefix: "/settings", permission: "settings:manage" },
   { prefix: "/dashboard", permission: "dashboard:view" },
 ];
+
+/**
+ * Pemetaan prefix route → permission untuk resource CRUD generik dari
+ * registry (`allResources()`), supaya route `/[resource]` otomatis
+ * terproteksi tanpa perlu didaftarkan manual di `ROUTE_PERMISSIONS`.
+ *
+ * Didefinisikan di sini (bukan `site.ts`) supaya `proxy.ts` bisa
+ * mengimpornya tanpa ikut menarik modul UI (ikon dsb.) — `config/resources`
+ * sendiri adalah registry murni (Map), tanpa import React.
+ */
+export function resourceRoutePermissions(): { prefix: string; permission: Permission }[] {
+  return allResources().map((r) => ({ prefix: `/${r.name}`, permission: r.permissions.view }));
+}
 
 /** Nama cookie penyimpan role (DEMO — di produksi pakai sesi sungguhan). */
 export const ROLE_COOKIE = "adminly_role";

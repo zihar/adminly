@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ROLE_COOKIE, ROUTE_PERMISSIONS, can, parseRole } from "@/config/rbac";
+import { ROLE_COOKIE, ROUTE_PERMISSIONS, can, parseRole, resourceRoutePermissions } from "@/config/rbac";
+import { ensureResourcesRegistered } from "@/config/resources/register";
 
 /**
  * Proteksi route berbasis RBAC.
@@ -15,7 +16,13 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const role = parseRole(request.cookies.get(ROLE_COOKIE)?.value);
 
-  const rule = ROUTE_PERMISSIONS.find(
+  // Isi registry (idempotent) supaya rule permission resource CRUD generik
+  // (mis. `items`, didaftarkan lewat `defineResource`) ikut diperiksa di sini
+  // — bukan hanya rule statis di `ROUTE_PERMISSIONS`.
+  ensureResourcesRegistered();
+  const rules = [...ROUTE_PERMISSIONS, ...resourceRoutePermissions()];
+
+  const rule = rules.find(
     (r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`),
   );
 
@@ -31,10 +38,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/users/:path*",
-    "/analytics/:path*",
-    "/settings/:path*",
-  ],
+  // Matcher statis Next.js tidak bisa dihitung dari registry saat build, jadi
+  // dilebarkan ke semua route KECUALI aset/infra (api, _next, favicon) & rute
+  // publik (login) — permission tetap dicek per-request di atas lewat rule
+  // gabungan (statis + `resourceRoutePermissions()`). Ini yang membuat resource
+  // baru otomatis terproteksi tanpa perlu update matcher secara manual.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
 };
