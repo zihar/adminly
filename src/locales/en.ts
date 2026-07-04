@@ -23,6 +23,15 @@ export const en = {
     saveFailed: "Failed to save",
     deleteFailed: "Failed to delete",
   },
+  // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
+  errors: {
+    badRequest: "Bad request",
+    unauthorized: "You are not signed in",
+    forbidden: "You don't have access",
+    notFound: "Not found",
+    validation: "Validation failed",
+    internal: "Something went wrong. Please try again.",
+  },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {
     title: "Items",

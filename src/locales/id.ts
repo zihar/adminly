@@ -22,6 +22,15 @@ export const id: Dictionary = {
     saveFailed: "Gagal menyimpan",
     deleteFailed: "Gagal menghapus",
   },
+  // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
+  errors: {
+    badRequest: "Permintaan tidak valid",
+    unauthorized: "Anda belum masuk",
+    forbidden: "Anda tidak punya akses",
+    notFound: "Tidak ditemukan",
+    validation: "Validasi gagal",
+    internal: "Terjadi kesalahan. Coba lagi.",
+  },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
   items: {
     title: "Item",
