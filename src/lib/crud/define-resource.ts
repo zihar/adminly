@@ -43,6 +43,34 @@ export type FormDef = {
   fields: Record<string, FieldMeta>;
 };
 
+/** Varian badge yang dipakai `<Badge>` (ui/badge.tsx). */
+type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+
+/** Satu status dalam workflow — dipakai stepper & badge kolom status. */
+export type WorkflowStatus = {
+  value: string;
+  labelKey: string;
+  variant?: BadgeVariant;
+};
+
+/** Satu transisi (aksi) workflow — juga jadi key endpoint action + i18n/audit. */
+export type WorkflowTransition = {
+  action: string; // mis. "approve" — juga endpoint action + i18n/audit key
+  from: string[]; // status asal yang diizinkan utk aksi ini
+  to: string; // status hasil
+  permission: Permission; // menjaga tombol (client) — harus ada di union Permission
+  labelKey: string; // label tombol i18n
+  variant?: "default" | "outline" | "destructive";
+};
+
+/** Definisi workflow deklaratif utk satu resource (opsional). */
+export type WorkflowDef = {
+  field: string; // nama field status pada row (mis. "status")
+  initial: string; // status yang di-stamp saat create
+  statuses: WorkflowStatus[]; // berurutan → dipakai stepper + lookup variant/label badge
+  transitions: WorkflowTransition[];
+};
+
 export type ResourceDef<TItem = unknown, TNew = unknown, TUpdate = unknown> = {
   name: string;
   path: string;
@@ -56,6 +84,7 @@ export type ResourceDef<TItem = unknown, TNew = unknown, TUpdate = unknown> = {
   form: FormDef;
   actions?: (string | { key: string; icon?: LucideIcon; run: (id: string | number) => void })[];
   components?: { list?: React.ComponentType<{ def: ResourceDef }>; form?: React.ComponentType<{ def: ResourceDef; id?: string }> };
+  workflow?: WorkflowDef;
 };
 
 /** Identity + validasi ringan (nama unik dijaga di registry). */

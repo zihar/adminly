@@ -48,6 +48,20 @@ export const en = {
     title: "Regions",
     name: "Regions",
   },
+  // Label workflow generik (status + aksi transisi) — dipakai stepper, badge, dan tombol aksi.
+  workflow: {
+    status: {
+      draft: "Draft",
+      submitted: "Submitted",
+      approved: "Approved",
+      rejected: "Rejected",
+    },
+    action: {
+      submit: "Submit",
+      approve: "Approve",
+      reject: "Reject",
+    },
+  },
   app: {
     tagline: "Dashboard starter",
     sidebarMenu: "Menu",

@@ -45,6 +45,20 @@ export const id: Dictionary = {
     title: "Regions",
     name: "Regions",
   },
+  // Label workflow generik (status + aksi transisi) — dipakai stepper, badge, dan tombol aksi.
+  workflow: {
+    status: {
+      draft: "Draf",
+      submitted: "Diajukan",
+      approved: "Disetujui",
+      rejected: "Ditolak",
+    },
+    action: {
+      submit: "Ajukan",
+      approve: "Setujui",
+      reject: "Tolak",
+    },
+  },
   app: {
     tagline: "Dashboard starter",
     sidebarMenu: "Menu",
