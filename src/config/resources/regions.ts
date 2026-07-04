@@ -3,7 +3,10 @@ import { defineResource } from "@/lib/crud/define-resource";
 import { createResourceApi } from "@/lib/crud/create-resource-api";
 import type { Region } from "@/app/api/regions/_data";
 
-export const regionSchema = z.object({ name: z.string().min(1, "Nama wajib diisi") });
+export const regionSchema = z.object({
+  name: z.string().min(1, "Nama wajib diisi"),
+  parentId: z.string().optional(),
+});
 
 // Resource demo generik: sumber options berjenjang (country → state → city)
 // untuk field bertipe `cascade`. Pakai ulang permission `items:*` supaya
