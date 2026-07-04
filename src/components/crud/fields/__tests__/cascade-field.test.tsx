@@ -45,9 +45,9 @@ const server = setupServer(
 const cascadeMeta: FieldMeta = {
   type: "cascade",
   cascade: [
-    { key: "country", labelKey: "regions.country", optionsFrom: "regions" },
-    { key: "state", labelKey: "regions.state", optionsFrom: "regions" },
-    { key: "city", labelKey: "regions.city", optionsFrom: "regions" },
+    { key: "country", labelKey: "items.country", optionsFrom: "regions" },
+    { key: "state", labelKey: "items.state", optionsFrom: "regions" },
+    { key: "city", labelKey: "items.city", optionsFrom: "regions" },
   ],
 };
 
@@ -153,6 +153,15 @@ describe("CascadeField", () => {
     await waitFor(() => expect(within(stateSelect).getAllByRole("option")).toHaveLength(3));
     fireEvent.change(stateSelect, { target: { value: "s1" } });
     expect(screen.getByTestId("state-value")).toHaveTextContent("s1");
+
+    // Isi juga level cucu (city) supaya reset 2-hop benar-benar teruji — tanpa
+    // ini, `city` tak pernah bernilai non-kosong dan assertion di bawah lolos
+    // meski reset cucu rusak. Tunggu opsi city (anak s1) selesai fetch dulu
+    // (sama seperti pola tunggu opsi root/country di atas).
+    const citySelect = screen.getByLabelText(/city/i) as HTMLSelectElement;
+    await waitFor(() => expect(within(citySelect).getAllByRole("option")).toHaveLength(2)); // placeholder + t1
+    fireEvent.change(citySelect, { target: { value: "t1" } });
+    expect(screen.getByTestId("city-value")).toHaveTextContent("t1");
 
     fireEvent.change(countrySelect, { target: { value: "c2" } });
     expect(screen.getByTestId("state-value")).toHaveTextContent("");

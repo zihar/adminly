@@ -79,7 +79,13 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
             <TabsContent key={tab.tabKey} value={tab.tabKey} className="space-y-4">
               {tab.fields.map((f) => (
                 <div key={f} className="space-y-1">
-                  <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
+                  {/* Field `cascade` render label per-levelnya sendiri (tiap
+                      `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
+                      htmlFor={f}>` di sini akan menggantung (tak ada elemen
+                      dengan `id={f}`), jadi dilewati khusus untuk tipe ini. */}
+                  {def.form.fields[f]?.type !== "cascade" && (
+                    <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
+                  )}
                   <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
                   <p className="text-sm text-destructive">
                     {form.formState.errors[f]?.message as string | undefined}
