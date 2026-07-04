@@ -55,6 +55,45 @@ paths:
           description: Deleted
         "404":
           description: Not found
+  /items:
+    get:
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: per_page, in: query, schema: { type: integer } }
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        "200":
+          content: { application/json: { schema: { $ref: "#/components/schemas/ItemList" } } }
+    post:
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/NewItem" } } }
+      responses:
+        "201":
+          content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } }
+  /items/{id}:
+    get:
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } } }
+    put:
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/NewItem" } } }
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } } }
+    delete:
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      responses: { "204": { description: No Content } }
+  /items/bulk-delete:
+    post:
+      requestBody:
+        content: { application/json: { schema: { type: object, properties: { ids: { type: array, items: { type: string } } } } } }
+      responses: { "204": { description: No Content } }
+  /items/options:
+    get:
+      parameters: [ { name: q, in: query, schema: { type: string } } ]
+      responses:
+        "200": { content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } }
 components:
   schemas:
     User:
@@ -76,3 +115,32 @@ components:
         name: { type: string }
         email: { type: string }
         role: { type: string }
+    Item:
+      type: object
+      required: [id, nama]
+      properties:
+        id: { type: string }
+        nama: { type: string }
+    NewItem:
+      type: object
+      required: [nama]
+      properties:
+        nama: { type: string }
+    ItemList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Item" } }
+        meta:
+          type: object
+          required: [total, page, per_page]
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            per_page: { type: integer }
+    Option:
+      type: object
+      required: [value, label]
+      properties:
+        value: { type: string }
+        label: { type: string }
