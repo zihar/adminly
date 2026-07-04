@@ -58,6 +58,10 @@ export const id: Dictionary = {
       approve: "Setujui",
       reject: "Tolak",
     },
+    // Toast generik hasil transisi (dipakai `ResourceTable` — bukan per-aksi
+    // supaya satu key cukup untuk submit/approve/reject apa pun).
+    done: "Berhasil",
+    failed: "Gagal mengubah status",
   },
   app: {
     tagline: "Dashboard starter",

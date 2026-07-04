@@ -2,9 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { ResourceTable } from "@/components/crud/resource-table";
@@ -66,10 +67,11 @@ let defPaged: ResourceDef;
 // `defPaged`) sengaja TIDAK punya `scope` — memverifikasi injeksi ini murni
 // opt-in per resource.
 let defScoped: ResourceDef;
-// Def khusus test kolom badge: punya `workflow.statuses` + kolom
-// `{field:"status", render:"badge"}` — memverifikasi `ResourceTable` merender
-// `<Badge>` berisi label i18n status, BUKAN nilai mentahnya (lihat
-// resource-table.tsx, factory kolom `columns`).
+// Def khusus test kolom badge & aksi transisi baris: punya `workflow.statuses`
+// + `workflow.transitions` (identik dgn konfigurasi resource `items` asli) +
+// kolom `{field:"status", render:"badge"}` — memverifikasi `ResourceTable`
+// merender `<Badge>` berisi label i18n status (bukan nilai mentah) DAN tombol
+// aksi transisi per-baris ter-gate `<Can>` sesuai `from`/`permission`.
 let defWorkflow: ResourceDef;
 
 beforeAll(async () => {
@@ -136,8 +138,14 @@ beforeAll(async () => {
       statuses: [
         { value: "draft", labelKey: "workflow.status.draft" },
         { value: "submitted", labelKey: "workflow.status.submitted" },
+        { value: "approved", labelKey: "workflow.status.approved" },
+        { value: "rejected", labelKey: "workflow.status.rejected" },
       ],
-      transitions: [],
+      transitions: [
+        { action: "submit", from: ["draft"], to: "submitted", permission: "items:update", labelKey: "workflow.action.submit" },
+        { action: "approve", from: ["submitted"], to: "approved", permission: "items:approve", labelKey: "workflow.action.approve", variant: "default" },
+        { action: "reject", from: ["submitted"], to: "rejected", permission: "items:approve", labelKey: "workflow.action.reject", variant: "destructive" },
+      ],
     },
   });
 });
@@ -426,5 +434,69 @@ describe("ResourceTable", () => {
 
     expect(await screen.findByText("Submitted")).toBeInTheDocument();
     expect(screen.queryByText("submitted")).not.toBeInTheDocument();
+  });
+
+  it("menampilkan tombol aksi transisi yang diizinkan dari status baris (gated <Can>), TIDAK menampilkan yang tak diizinkan", async () => {
+    // Baris "submitted" -> transisi diizinkan: approve+reject (butuh
+    // `items:approve`, dipunyai Admin). Baris "approved" -> tak ada transisi
+    // (`from` tak ada yg memuat "approved") sehingga TIDAK ada tombol aksi.
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", status: "submitted" },
+            { id: "2", status: "approved" },
+          ],
+          meta: { total: 2, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defWorkflow} />, { role: "Admin" });
+
+    // Tunggu data sungguhan (bukan skeleton loading) sebelum memetik baris —
+    // `findAllByRole("row")` tanpa ini bisa resolve ke baris skeleton tunggal.
+    await screen.findByText("Submitted");
+    const rows = screen.getAllByRole("row");
+    // rows[0] = header; rows[1] = baris "submitted"; rows[2] = baris "approved".
+    const submittedRow = rows[1];
+    const approvedRow = rows[2];
+
+    expect(within(submittedRow).getByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(within(submittedRow).getByRole("button", { name: "Reject" })).toBeInTheDocument();
+    expect(within(approvedRow).queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+    expect(within(approvedRow).queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
+  });
+
+  it("klik tombol transisi memanggil endpoint transisi (MSW) dan menampilkan toast sukses", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", status: "submitted" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    let transitionBody: { action: string } | undefined;
+    server.use(
+      http.post("http://localhost:3000/api/items/:id/transition", async ({ request, params }) => {
+        transitionBody = (await request.json()) as { action: string };
+        return HttpResponse.json({ id: params.id, status: "approved" });
+      }),
+    );
+
+    // Harness tak memasang `<Toaster/>` (lihat `wrap()` di atas) — panggilan
+    // `sonner` tak pernah muncul di DOM tanpa itu, jadi verifikasi toast
+    // lewat spy pada modul `sonner`, bukan query teks.
+    const successSpy = vi.spyOn(toast, "success");
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={defWorkflow} />, { role: "Admin" });
+
+    const approveButton = await screen.findByRole("button", { name: "Approve" });
+    await user.click(approveButton);
+
+    await waitFor(() => expect(transitionBody).toEqual({ action: "approve" }));
+    await waitFor(() => expect(successSpy).toHaveBeenCalledWith("Done"));
+    successSpy.mockRestore();
   });
 });

@@ -61,6 +61,10 @@ export const en = {
       approve: "Approve",
       reject: "Reject",
     },
+    // Toast generik hasil transisi (dipakai `ResourceTable` — bukan per-aksi
+    // supaya satu key cukup untuk submit/approve/reject apa pun).
+    done: "Done",
+    failed: "Failed to change status",
   },
   app: {
     tagline: "Dashboard starter",

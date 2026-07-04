@@ -89,6 +89,10 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
 
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const removeMany = def.api.useRemoveMany();
+  // Hook transisi diambil SEKALI di top level (bukan di dalam map per-baris) —
+  // wajib mengikuti Rules of Hooks; instance yang sama dipakai semua tombol
+  // transisi tiap baris (lihat filter `allowedTransitions` di bawah).
+  const transition = def.api.useTransition();
 
   // Input pencarian dikontrol lokal (bukan `defaultValue`) — Base UI `Input`
   // memperlakukan `defaultValue` sebagai nilai awal murni; mengubahnya di
@@ -260,6 +264,14 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           )}
           {table.getRowModel().rows.map((row) => {
             const id = row.id;
+            // Transisi yang diizinkan dari status baris ini (`row.original[field]`)
+            // — dihitung per-baris di dalam `.map` biasa (BUKAN hook), jadi aman
+            // dari Rules of Hooks; hook `useTransition()` sendiri sudah dipanggil
+            // sekali di atas.
+            const wf = def.workflow;
+            const allowedTransitions = wf
+              ? wf.transitions.filter((tr) => tr.from.includes(String(row.original[wf.field])))
+              : [];
             return (
               <TableRow key={id}>
                 <TableCell>
@@ -276,11 +288,34 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                   </TableCell>
                 ))}
                 <TableCell>
-                  <Can permission={def.permissions.update}>
-                    <Button variant="ghost" size="sm" render={<Link href={`/${def.name}/${id}/edit`} />}>
-                      {t.common.edit}
-                    </Button>
-                  </Can>
+                  <div className="flex items-center gap-2">
+                    <Can permission={def.permissions.update}>
+                      <Button variant="ghost" size="sm" render={<Link href={`/${def.name}/${id}/edit`} />}>
+                        {t.common.edit}
+                      </Button>
+                    </Can>
+                    {allowedTransitions.map((tr) => (
+                      <Can key={tr.action} permission={tr.permission}>
+                        <Button
+                          size="sm"
+                          variant={tr.variant ?? "outline"}
+                          onClick={() =>
+                            transition.mutate(
+                              { id, action: tr.action },
+                              {
+                                // Toast i18n dipasang di caller (bukan factory) —
+                                // sama seperti pola `removeMany` di atas.
+                                onSuccess: () => toast.success(t.workflow.done),
+                                onError: () => toast.error(t.workflow.failed),
+                              },
+                            )
+                          }
+                        >
+                          {resolveLabel(t, tr.labelKey)}
+                        </Button>
+                      </Can>
+                    ))}
+                  </div>
                 </TableCell>
               </TableRow>
             );
