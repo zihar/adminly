@@ -2,9 +2,9 @@
 import * as React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { getResource } from "@/config/resources/index";
-import type { FieldMeta } from "@/lib/crud/define-resource";
+import type { FieldProps } from "./index";
 
-export function AsyncSelectField({ name, meta }: { name: string; meta: FieldMeta }) {
+export function AsyncSelectField({ name, meta }: FieldProps) {
   const { setValue, register } = useFormContext();
   const parentValues = useWatch({ name: meta.dependsOn ?? [] });
   const source = meta.optionsFrom ? getResource(meta.optionsFrom) : undefined;
@@ -14,8 +14,18 @@ export function AsyncSelectField({ name, meta }: { name: string; meta: FieldMeta
   }, {});
   const query = source?.api.useOptions({ parent: parent as Record<string, string> });
 
+  // Efek ini juga terpicu saat mount pertama; ref `mounted` memastikan reset
+  // hanya berjalan saat parent BERUBAH (bukan saat form baru dirender), supaya
+  // value yang sudah terisi (mis. form edit) tidak ikut terhapus.
   const parentKey = JSON.stringify(parent);
-  React.useEffect(() => { setValue(name, ""); }, [name, setValue, parentKey]); // reset saat parent berubah
+  const mounted = React.useRef(false);
+  React.useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    setValue(name, "");
+  }, [name, setValue, parentKey]); // reset saat parent berubah
 
   return (
     <select {...register(name)} className="border rounded px-2 py-1">

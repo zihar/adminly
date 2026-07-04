@@ -2,9 +2,9 @@
 import * as React from "react";
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import type { FieldMeta } from "@/lib/crud/define-resource";
+import type { FieldProps } from "./index";
 
-export function TextField({ name }: { name: string; meta: FieldMeta }) {
+export function TextField({ name }: FieldProps) {
   const { register } = useFormContext();
   return <Input {...register(name)} />;
 }
