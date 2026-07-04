@@ -355,4 +355,33 @@ describe("ResourceTable", () => {
 
     expect(capturedSearch?.has("scope[workspaceId]")).toBe(false);
   });
+
+  it("TIDAK mengirim `scope[...]` sama sekali saat def.scope dideklarasikan tapi belum ada nilai scope aktif (default state)", async () => {
+    // Regresi query-key alignment: sebelum fix, `scopedFilter` selalu berupa
+    // objek (`Object.fromEntries([])` == `{}`) walau kosong, sehingga
+    // `useList({ scope: {} })` menghasilkan query key BEDA dari prefetch RSC
+    // (`initialListParams` yang men-drop `scope` seluruhnya bila kosong) —
+    // cache prefetch terbuang & skeleton berkedip. Tes ini membuktikan pada
+    // request SUNGGUHAN (lewat MSW) bahwa default no-scope state (baik tanpa
+    // `<ScopeProvider>` sama sekali maupun dgn scope objek kosong) tak pernah
+    // mengirim param `scope[...]` — sama seperti resource tanpa `def.scope`.
+    let capturedSearch: URLSearchParams | undefined;
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        capturedSearch = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          data: [{ id: "1", nama: "Alpha" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        });
+      }),
+    );
+
+    // Tanpa `scope` opt di `wrap` → tanpa `<ScopeProvider>` sama sekali,
+    // `useScope()` fallback ke `{ scope: {}, setScope: () => {} }`.
+    wrap(<ResourceTable def={defScoped} />);
+    await screen.findByText("Alpha");
+
+    expect(capturedSearch?.has("scope[workspaceId]")).toBe(false);
+    expect([...(capturedSearch?.keys() ?? [])].some((k) => k.startsWith("scope["))).toBe(false);
+  });
 });

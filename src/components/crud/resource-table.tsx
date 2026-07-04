@@ -61,9 +61,20 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
 
   // Suntik scope global (mis. `workspace`) ke query list HANYA jika resource
   // mendeklarasikan `def.scope` — resource tanpa itu tak terpengaruh.
+  // `undefined`/`""` di-drop (samakan dgn `initialListParams`), dan hasil
+  // kosong di-resolve ke `undefined` (BUKAN `{}`) — supaya query key `useList`
+  // di render pertama (tanpa scope aktif) hash-equal dgn prefetch RSC yang
+  // meng-omit `scope` sepenuhnya. Kalau tetap `{}`, TanStack Query menganggap
+  // `{ scope: {} }` beda dgn `{}` (tanpa key `scope`) → cache prefetch
+  // terbuang & skeleton berkedip di paint pertama.
   const { scope } = useScope();
-  const scopedFilter = def.scope?.length
-    ? Object.fromEntries(def.scope.map((k) => [k, scope[k]]).filter(([, v]) => v !== undefined))
+  const scopedEntries = def.scope?.length
+    ? def.scope
+        .map((k) => [k, scope[k]] as const)
+        .filter(([, v]) => v !== undefined && v !== "")
+    : [];
+  const scopedFilter = scopedEntries.length
+    ? Object.fromEntries(scopedEntries)
     : undefined;
 
   const query = def.api.useList({
