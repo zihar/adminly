@@ -43,5 +43,13 @@ export const config = {
   // publik (login) — permission tetap dicek per-request di atas lewat rule
   // gabungan (statis + `resourceRoutePermissions()`). Ini yang membuat resource
   // baru otomatis terproteksi tanpa perlu update matcher secara manual.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
+  //
+  // `api` & `login` dicocokkan sebagai SEGMEN path utuh (`(?:/|$)`), bukan
+  // prefix string biasa — tanpa ini, rute masa depan seperti `/login-audit`
+  // atau `/apikeys` ikut ke-exclude dari matcher (lolos tanpa dicek RBAC sama
+  // sekali) hanya karena kebetulan diawali huruf yang sama. `_next/static`,
+  // `_next/image`, & `favicon.ico` tidak diubah — sudah cukup spesifik
+  // (multi-segmen / nama file utuh) & `_next` adalah prefix reserved
+  // framework, jadi risiko tabrakan prefix yang sama tidak berlaku di situ.
+  matcher: ["/((?!api(?:/|$)|_next/static|_next/image|favicon.ico|login(?:/|$)).*)"],
 };
