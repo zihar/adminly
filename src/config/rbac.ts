@@ -16,13 +16,26 @@ export type Permission =
   | "dashboard:view"
   | "analytics:view"
   | "users:manage"
-  | "settings:manage";
+  | "settings:manage"
+  | "items:view"
+  | "items:create"
+  | "items:update"
+  | "items:delete";
 
 /** Permission yang dimiliki tiap role. Admin = superset. */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  Admin: ["dashboard:view", "analytics:view", "users:manage", "settings:manage"],
-  Editor: ["dashboard:view", "analytics:view"],
-  Viewer: ["dashboard:view"],
+  Admin: [
+    "dashboard:view",
+    "analytics:view",
+    "users:manage",
+    "settings:manage",
+    "items:view",
+    "items:create",
+    "items:update",
+    "items:delete",
+  ],
+  Editor: ["dashboard:view", "analytics:view", "items:view", "items:create", "items:update"],
+  Viewer: ["dashboard:view", "items:view"],
 };
 
 /** Apakah `role` punya `permission`? */
