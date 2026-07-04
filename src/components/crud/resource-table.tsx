@@ -13,6 +13,7 @@ import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 
 import { Can } from "@/components/auth/can";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { useScope } from "@/components/providers/scope-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,12 +53,20 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
   const perPage = def.list?.perPage ?? 20;
   const primaryKey = def.primaryKey ?? "id";
 
+  // Suntik scope global (mis. `workspace`) ke query list HANYA jika resource
+  // mendeklarasikan `def.scope` — resource tanpa itu tak terpengaruh.
+  const { scope } = useScope();
+  const scopedFilter = def.scope?.length
+    ? Object.fromEntries(def.scope.map((k) => [k, scope[k]]).filter(([, v]) => v !== undefined))
+    : undefined;
+
   const query = def.api.useList({
     page: state.page,
     perPage,
     q: state.q || undefined,
     sort: state.sort || undefined,
     order: state.order === "desc" ? "desc" : "asc",
+    scope: scopedFilter,
   });
 
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
