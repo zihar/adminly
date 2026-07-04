@@ -1,15 +1,15 @@
 # Desain: Lapisan CRUD Generik adminly
 
-- **Tanggal:** 2026-07-03
-- **Status:** Draft — menunggu review user
-- **Branch terkait:** `feat/tanstack-query-openapi` (fondasi data layer sudah ada)
+- **Tanggal:** 2026-07-03 (difinalisasi 2026-07-04)
+- **Status:** ✅ Approved — asumsi & pertanyaan terbuka sudah dikonfirmasi user
+- **Fondasi:** data layer sudah ada di `main` (openapi-fetch typed client + TanStack Query + RSC prefetch/hydrate, lihat `docs/.../2026-07-03-tanstack-query-openapi-client-design.md`).
 - **Konteks pemicu:** membangun ulang sistem sekolah Edelweiss (~90 modul CRUD) di atas adminly. Lapisan ini generik (bukan khusus Edelweiss); Edelweiss = fork yang mengonfigurasinya.
 
-## ⚠️ Asumsi yang diambil saat user away (konfirmasi ulang saat review)
-1. **Arah data layer diselaraskan ke OpenAPI-first** (bukan abstraksi `DataProvider` terpisah). Ini **merevisi jawaban Q3** sebelumnya, karena kode di branch sudah OpenAPI-first (`openapi-fetch`) — spec mengikuti kode yang sudah ada.
-2. **Bentuk response list = wrapper paginated** `{ data: T[], meta: { total, page, per_page } }`; endpoint objek tunggal tetap polos.
-
-Jika salah satu asumsi ditolak, bagian §3–§4 perlu disesuaikan.
+## Keputusan yang dikonfirmasi (2026-07-04)
+1. ✅ **OpenAPI-first** — generalisasi hooks di atas `openapi-fetch` yang sudah ada (bukan abstraksi `DataProvider` terpisah). Kode di `main` sudah OpenAPI-first, spec mengikutinya.
+2. ✅ **List = wrapper paginated** `{ data: T[], meta: { total, page, per_page } }`; endpoint objek tunggal tetap polos.
+3. ✅ **Auth = seam `getAuthToken()`** — adminly ekspos provider/hook dgn default no-op; fork menyambungkan strategi auth-nya. Tak mengunci JWT/session. (lihat §4)
+4. ✅ **URL-state via `nuqs`** — state tabel (page/sort/filter) sinkron ke query string. (lihat §6, §8)
 
 ---
 
@@ -29,8 +29,10 @@ Jika salah satu asumsi ditolak, bagian §3–§4 perlu disesuaikan.
 | D2 | **Hybrid**: auto-generate dari config, bisa **eject** per resource | Q2 |
 | D3 | **OpenAPI-first** — generalisasi hooks di atas `openapi-fetch` + TanStack Query (revisi Q3) | Q3 + kode branch |
 | D4 | **Core CRUD fokus**; workflow/import/PDF = spec lanjutan | Q4 |
-| D5 | List = **wrapper paginated** `{data, meta}`; objek tunggal polos | asumsi |
+| D5 | List = **wrapper paginated** `{data, meta}`; objek tunggal polos | konfirmasi user |
 | D6 | Rendering **RSC prefetch + hydrate** lalu tabel interaktif client | kode branch |
+| D7 | Auth = **seam `getAuthToken()`** (default no-op; fork wire) | konfirmasi user |
+| D8 | URL-state tabel via **`nuqs`** | konfirmasi user |
 
 ## 3. Arsitektur & Lapisan
 
@@ -87,7 +89,17 @@ function createResourceApi<TItem, TNew, TUpdate>(cfg: ResourceApiConfig<...>) {
 
 **Error handling:** hasil `openapi-fetch` (`{data,error}`) + HTTP dinormalkan ke `CrudError { httpStatus, message, fieldErrors? }`. `422` → `fieldErrors` dipetakan ke `setError` RHF; `401` → redirect login (via middleware auth); `403` → UI "tidak berwenang"; `5xx`/tak dikenal → toast generik + retry. **Stack trace tak pernah sampai UI.**
 
-**Auth:** tambahkan **middleware `openapi-fetch`** pada `apiClient` untuk menyuntik `Authorization: Bearer <token>` (token dari layer auth adminly) dan menangkap `401`. `apiClient` saat ini belum ber-auth — ini penambahan terhadap `src/lib/api/client.ts`.
+**Auth (seam `getAuthToken`):** tambahkan **middleware `openapi-fetch`** pada `apiClient` yang memanggil sebuah seam yang bisa dikonfigurasi fork:
+
+```ts
+// src/lib/api/auth.ts — default no-op; fork override via setAuthTokenProvider()
+type TokenProvider = () => string | null | Promise<string | null>;
+let provider: TokenProvider = () => null;               // default: tanpa auth
+export function setAuthTokenProvider(p: TokenProvider) { provider = p; }
+export async function getAuthToken() { return provider(); }
+```
+
+Middleware `onRequest` menyuntik `Authorization: Bearer <token>` bila `getAuthToken()` mengembalikan token; `onResponse` menangkap `401` → redirect login. **adminly kirim seam ber-default no-op** (starter tetap jalan tanpa auth); fork memanggil `setAuthTokenProvider(() => sesiku.accessToken)`. Ini penambahan terhadap `src/lib/api/client.ts` (+ file `auth.ts` baru) — tidak mengunci strategi auth (JWT/session/keduanya sah).
 
 ## 5. Resource Definition — `defineResource`
 
@@ -153,7 +165,7 @@ defineResource({
 ## 8. Dependensi
 
 - **Sudah ada:** `@tanstack/react-query`(+devtools), `openapi-fetch`, `openapi-typescript`, `sonner`, shadcn/ui.
-- **Ditambah:** `@tanstack/react-table`, `react-hook-form`, `@hookform/resolvers`, `zod`. Opsional: `nuqs` (URL-state), `msw` (mock test).
+- **Ditambah:** `@tanstack/react-table`, `react-hook-form`, `@hookform/resolvers`, `zod`, `nuqs` (URL-state tabel). Opsional: `msw` (mock test; Route Handler juga cukup).
 
 ## 9. Lokasi Folder
 
@@ -168,10 +180,24 @@ src/app/(app)/[resource]/→ page.tsx, create/page.tsx, [id]/edit/page.tsx      
 src/app/api/<resource>/  → route handler mock (pola users-store)                  [BARU per resource]
 ```
 
-## 10. Pertanyaan Terbuka
-1. Konfirmasi 2 asumsi di atas (arah OpenAPI-first + wrapper paginated).
-2. Sumber token auth di adminly (sesi/JWT) untuk middleware `apiClient` — saat ini role masih cookie demo.
-3. Perlukah `nuqs` untuk URL-state, atau state tabel cukup di memori? (default: pakai `nuqs`).
+## 10. Pertanyaan Terbuka — RESOLVED (2026-07-04)
+1. ✅ Asumsi dikonfirmasi: OpenAPI-first + wrapper paginated `{data,meta}`.
+2. ✅ Auth = seam `getAuthToken()` (default no-op; fork wire ke sesi/JWT). Lihat §4.
+3. ✅ URL-state pakai `nuqs`.
+
+Tidak ada blocker tersisa. Spec siap dipecah menjadi rencana implementasi (§11).
+
+## 11. Fase Implementasi (decomposition)
+
+Scope ini **terlalu besar untuk satu rencana**. Dipecah menjadi fase yang masing-masing menghasilkan software jalan & teruji sendiri. Tiap fase = satu siklus spec-ringkas → plan → implement. **Fase 1 divalidasi oleh resource `agama`** (satu field) sebelum menambah kompleksitas.
+
+- **Fase 1 — Vertical slice minimal (`agama`).** `createResourceApi` (list/getOne/create/update/remove, buka `{data,meta}`, `CrudError`), `defineResource` minimal + registry, `<ResourceTable>` (pagination/sort/search + URL-state `nuqs`), `<ResourceForm>` (RHF+Zod, field `text`), route `[resource]` prefetch+hydrate, Route Handler mock generik. Auth seam no-op. **DoD:** `agama` CRUD penuh hanya via `defineResource`.
+- **Fase 2 — Field & kolom registry lengkap + bulk + column visibility.** Sisa tipe field (`number/select/date/checkbox/textarea/file/…`) & render kolom (`badge/date/currency/boolean/image`), `useRemoveMany` + bulk-select, 422→fieldErrors mapping matang.
+- **Fase 3 — Relasi & cascade.** `async-select` + `useOptions` + debounce, `dependsOn` (cascade wilayah), render kolom `relation`. **Validasi:** relasi `siswa.id_program`.
+- **Fase 4 — Scope & tab & file.** `<ScopeProvider>`/`useScope` (tahun ajaran) + injeksi `scope[]`, form multi-tab, field `file` (upload). **Validasi:** `siswa` (3 tab + relasi + scope + foto), `kehadiran`/`daftarnilai` (filter + scope).
+- **Fase 5 — Eject & polish.** Jalur `components.list/form` kustom, aksi kustom `{key,icon,run}`, Storybook field registry, guard "perubahan belum disimpan", empty/error baku.
+
+Auth middleware nyata (§4) bisa masuk kapan saja setelah Fase 1 karena seam sudah ada sejak Fase 1.
 
 ---
 
