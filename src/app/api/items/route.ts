@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { itemsStore } from "@/app/api/items/_data";
 import { withErrorEnvelope } from "@/lib/api/handler";
-import { itemSchema } from "@/config/resources/items";
+import { itemSchema, itemsResource } from "@/config/resources/items";
 
 export const GET = withErrorEnvelope(async (req: NextRequest) => {
   const sp = req.nextUrl.searchParams;
@@ -17,6 +17,12 @@ export const GET = withErrorEnvelope(async (req: NextRequest) => {
 export const POST = withErrorEnvelope(async (req: NextRequest) => {
   // Validasi body dgn Zod — invalid → ZodError → 422 lewat withErrorEnvelope.
   const body = itemSchema.parse(await req.json());
-  const created = itemsStore.create({ id: `itm-${Date.now()}`, ...body });
+  // Item baru selalu di-stamp status awal workflow ("draft") — abaikan
+  // `status` dari body (transisi hanya lewat endpoint `/transition`).
+  const created = itemsStore.create({
+    id: `itm-${Date.now()}`,
+    ...body,
+    status: itemsResource.workflow?.initial ?? "draft",
+  });
   return NextResponse.json(created, { status: 201 });
 });

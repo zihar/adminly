@@ -134,6 +134,8 @@ components:
         country: { type: string }
         state: { type: string }
         city: { type: string }
+        # Demo workflow approval (P3): draft -> submitted -> approved/rejected.
+        status: { type: string }
     NewItem:
       type: object
       required: [nama]
@@ -142,6 +144,7 @@ components:
         country: { type: string }
         state: { type: string }
         city: { type: string }
+        status: { type: string }
     ItemList:
       type: object
       required: [data, meta]

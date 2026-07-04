@@ -281,12 +281,14 @@ export interface components {
             country?: string;
             state?: string;
             city?: string;
+            status?: string;
         };
         NewItem: {
             nama: string;
             country?: string;
             state?: string;
             city?: string;
+            status?: string;
         };
         ItemList: {
             data: components["schemas"]["Item"][];

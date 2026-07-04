@@ -13,6 +13,9 @@ export const itemSchema = z.object({
   country: z.string().optional(),
   state: z.string().optional(),
   city: z.string().optional(),
+  // Status workflow (draft/submitted/approved/rejected) — opsional di form,
+  // diisi/diubah lewat endpoint transisi, bukan lewat form biasa.
+  status: z.string().optional(),
 });
 
 export const itemsResource = defineResource<Item, NewItem, NewItem>({
@@ -27,6 +30,24 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
   // & `resource-page.tsx`). Mock store `items` mengabaikan `scope[...]` yang
   // tak dikenalinya — aman, murni demo pengkabelan.
   scope: ["workspace"],
+  // Demo workflow (P3): draft -> submitted -> approved/rejected. `submit`
+  // butuh `items:update` (Editor bisa ajukan), `approve`/`reject` butuh
+  // `items:approve` (Admin saja — lihat ROLE_PERMISSIONS di rbac.ts).
+  workflow: {
+    field: "status",
+    initial: "draft",
+    statuses: [
+      { value: "draft", labelKey: "workflow.status.draft", variant: "secondary" },
+      { value: "submitted", labelKey: "workflow.status.submitted", variant: "default" },
+      { value: "approved", labelKey: "workflow.status.approved", variant: "default" },
+      { value: "rejected", labelKey: "workflow.status.rejected", variant: "destructive" },
+    ],
+    transitions: [
+      { action: "submit", from: ["draft"], to: "submitted", permission: "items:update", labelKey: "workflow.action.submit" },
+      { action: "approve", from: ["submitted"], to: "approved", permission: "items:approve", labelKey: "workflow.action.approve", variant: "default" },
+      { action: "reject", from: ["submitted"], to: "rejected", permission: "items:approve", labelKey: "workflow.action.reject", variant: "destructive" },
+    ],
+  },
   form: {
     schema: itemSchema,
     // Tab terpisah "region" untuk field `cascade` demo — pseudo-key "region"
