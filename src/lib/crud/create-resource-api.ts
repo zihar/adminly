@@ -14,7 +14,10 @@ import type {
   ListResult,
   Option,
   ListEnvelope,
+  AuditRow,
 } from "@/lib/crud/types";
+
+export type { AuditRow };
 
 type Cfg = { resource: string; path: string; primaryKey?: string };
 
@@ -61,6 +64,7 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
     list: (params: ListParams) => [cfg.resource, "list", params] as const,
     one: (id: ID) => [cfg.resource, "one", id] as const,
     options: (params: OptionParams) => [cfg.resource, "options", params] as const,
+    audit: (id: ID) => [cfg.resource, "audit", id] as const,
   };
 
   function listQueryOptions(params: ListParams) {
@@ -87,12 +91,21 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
     });
   }
 
+  function auditQueryOptions(id: ID) {
+    return queryOptions({
+      queryKey: keys.audit(id),
+      queryFn: async () => (await req<AuditRow[]>("GET", `${base}/${id}/audit`)).data ?? [],
+      enabled: !!id,
+    });
+  }
+
   const useList = (params: ListParams) => useQuery(listQueryOptions(params));
   // `useGetOne` menerima `options` (mis. `enabled`) supaya caller bisa memanggil
   // hook TANPA syarat (aturan React Hooks) lalu men-gate fetch-nya — dipakai
   // `ResourceForm` untuk mode create (tak ada `id`, `enabled: false`).
   const useGetOne = (id: ID, options?: { enabled?: boolean }) =>
     useQuery({ ...getOneQueryOptions(id), ...options });
+  const useAudit = (id: ID) => useQuery(auditQueryOptions(id));
 
   // Factory sengaja TOAST-FREE: notifikasi UI adalah keputusan i18n (default
   // English) yang dipasang di caller ber-`useI18n()` (ResourceForm/ResourceTable).
@@ -116,6 +129,22 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
       onSuccess: (_d, v) => {
         qc.invalidateQueries({ queryKey: keys.all });
         qc.invalidateQueries({ queryKey: keys.one(v.id) });
+      },
+    });
+  }
+
+  // Transisi status (mis. draft -> review) via endpoint approval workflow.
+  // Menginvalidate keys.all + keys.one(id) (spt useUpdate) DAN keys.audit(id)
+  // karena tiap transisi menambah baris baru di jejak audit entity tsb.
+  function useTransition() {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: async ({ id, action }: { id: ID; action: string }) =>
+        (await req<TItem>("POST", `${base}/${id}/transition`, { body: { action } })).data!,
+      onSuccess: (_d, v) => {
+        qc.invalidateQueries({ queryKey: keys.all });
+        qc.invalidateQueries({ queryKey: keys.one(v.id) });
+        qc.invalidateQueries({ queryKey: keys.audit(v.id) });
       },
     });
   }
@@ -170,9 +199,12 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
     useGetOne,
     useCreate,
     useUpdate,
+    useTransition,
     useRemove,
     useRemoveMany,
     useOptions,
+    auditQueryOptions,
+    useAudit,
   };
 }
 

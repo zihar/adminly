@@ -21,3 +21,15 @@ export type ListEnvelope<T> = { data: T[]; meta: { total: number; page: number; 
 
 /** Envelope error opsional dari backend. */
 export type ErrorEnvelope = { code?: number; status?: string; message?: string; data?: Record<string, string[]> | null };
+
+/** Satu baris jejak audit (riwayat transisi status) suatu entity. */
+export type AuditRow = {
+  id: string;
+  entityId: string;
+  action: string;
+  from: string;
+  to: string;
+  actor: string;
+  at: string;
+  reason?: string | null;
+};

@@ -183,6 +183,53 @@ describe("createResourceApi.useRemoveMany", () => {
   });
 });
 
+describe("createResourceApi.useTransition", () => {
+  it("POST transition dengan {action} lalu invalidate list/one/audit", async () => {
+    let transitionBody: { action: string } | null = null;
+    let getOneCallCount = 0;
+    server.use(
+      http.post("http://localhost:3000/api/items/1/transition", async ({ request }) => {
+        transitionBody = (await request.json()) as { action: string };
+        return HttpResponse.json({ id: "1", nama: "A" });
+      }),
+      http.get("http://localhost:3000/api/items/1", () => {
+        getOneCallCount += 1;
+        return HttpResponse.json({ id: "1", nama: "A" });
+      }),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const w = wrapperWithClient(qc);
+
+    const one = renderHook(() => api.useGetOne("1"), { wrapper: w });
+    await waitFor(() => expect(one.result.current.isSuccess).toBe(true));
+    expect(getOneCallCount).toBe(1);
+
+    const transition = renderHook(() => api.useTransition(), { wrapper: w });
+    transition.result.current.mutate({ id: "1", action: "submit" });
+    await waitFor(() => expect(transition.result.current.isSuccess).toBe(true));
+
+    expect(transitionBody).toEqual({ action: "submit" });
+    // Invalidation of `keys.all`/`keys.one(id)` must trigger (>=1) refetch of the still-mounted getOne query.
+    await waitFor(() => expect(getOneCallCount).toBeGreaterThan(1));
+  });
+});
+
+describe("createResourceApi.useAudit", () => {
+  it("mengambil audit trail berdasarkan id", async () => {
+    const rows = [
+      { id: "a1", entityId: "1", action: "submit", from: "draft", to: "review", actor: "u1", at: "2026-07-01T00:00:00Z" },
+    ];
+    server.use(
+      http.get("http://localhost:3000/api/items/1/audit", () => HttpResponse.json(rows)),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useAudit("1"), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(rows);
+  });
+});
+
 describe("createResourceApi.useOptions", () => {
   it("cascade guard: tidak fetch saat parent belum lengkap", async () => {
     let called = false;
