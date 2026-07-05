@@ -8,6 +8,7 @@ type TNew = components["schemas"]["NewTahunAjaran"];
 
 export const tahunajaranSchema = z.object({
   tahun_ajaran: z.string().min(1, "Wajib diisi"),
+  is_active: z.boolean().optional(),
 });
 
 export const tahunajaranResource = defineResource<T, TNew, TNew>({
@@ -27,7 +28,10 @@ export const tahunajaranResource = defineResource<T, TNew, TNew>({
   list: { defaultSort: "tahun_ajaran", perPage: 20 },
   form: {
     schema: tahunajaranSchema,
-    layout: [{ tabKey: "umum", fields: ["tahun_ajaran"] }],
-    fields: { tahun_ajaran: { type: "text", labelKey: "tahunajaran.tahun_ajaran" } },
+    layout: [{ tabKey: "umum", fields: ["tahun_ajaran", "is_active"] }],
+    fields: {
+      tahun_ajaran: { type: "text", labelKey: "tahunajaran.tahun_ajaran" },
+      is_active: { type: "checkbox", labelKey: "tahunajaran.is_active" },
+    },
   },
 });
