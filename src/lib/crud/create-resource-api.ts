@@ -173,8 +173,11 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
     });
   }
 
-  function useOptions(params: OptionParams) {
-    return useQuery({
+  // Dipisah dari `useOptions` supaya path export (client-side) bisa memakai
+  // `qc.fetchQuery(optionsQueryOptions(params))` dengan queryKey PERSIS SAMA
+  // dengan yang dipakai tabel — cache tersebut jadi bisa dipakai bersama.
+  function optionsQueryOptions(params: OptionParams) {
+    return queryOptions({
       queryKey: keys.options(params),
       queryFn: async (): Promise<Option[]> => {
         const sp = new URLSearchParams();
@@ -190,6 +193,10 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
     });
   }
 
+  function useOptions(params: OptionParams) {
+    return useQuery(optionsQueryOptions(params));
+  }
+
   return {
     pk,
     keys,
@@ -202,6 +209,7 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
     useTransition,
     useRemove,
     useRemoveMany,
+    optionsQueryOptions,
     useOptions,
     auditQueryOptions,
     useAudit,

@@ -275,3 +275,45 @@ describe("createResourceApi.useOptions", () => {
     expect(result.current.data).toEqual([{ value: "1", label: "A" }]);
   });
 });
+
+describe("createResourceApi.optionsQueryOptions", () => {
+  it("queryKey sama dengan keys.options(params)", () => {
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    expect(api.optionsQueryOptions({}).queryKey).toEqual(api.keys.options({}));
+  });
+
+  it("queryFn (via qc.fetchQuery) mengembalikan Option[]", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items/options", () =>
+        HttpResponse.json([{ value: "1", label: "A" }]),
+      ),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const data = await qc.fetchQuery(api.optionsQueryOptions({}));
+    expect(data).toEqual([{ value: "1", label: "A" }]);
+  });
+
+  it("parent menghasilkan queryKey berbeda & queryFn menambah parent[k]=v", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items/options", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("parent[parentId]")).toBe("x");
+        return HttpResponse.json([{ value: "1", label: "A" }]);
+      }),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const emptyOpts = api.optionsQueryOptions({});
+    const parentOpts = api.optionsQueryOptions({ parent: { parentId: "x" } });
+    expect(parentOpts.queryKey).not.toEqual(emptyOpts.queryKey);
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const data = await qc.fetchQuery(parentOpts);
+    expect(data).toEqual([{ value: "1", label: "A" }]);
+  });
+
+  it("enabled false saat ada parent dengan nilai kosong", () => {
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    expect(api.optionsQueryOptions({ parent: { id_kelas: "" } }).enabled).toBe(false);
+  });
+});
