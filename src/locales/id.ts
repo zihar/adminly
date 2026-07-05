@@ -21,6 +21,8 @@ export const id: Dictionary = {
     deleted: "Data dihapus",
     saveFailed: "Gagal menyimpan",
     deleteFailed: "Gagal menghapus",
+    yes: "Ya",
+    no: "Tidak",
   },
   // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
   errors: {
@@ -35,6 +37,11 @@ export const id: Dictionary = {
   items: {
     title: "Item",
     nama: "Nama",
+    detailTab: "Detail",
+    catatan: "Catatan",
+    tanggal: "Tanggal",
+    aktif: "Aktif",
+    prioritas: "Prioritas",
     regionTab: "Wilayah",
     region: "Wilayah",
     country: "Negara",

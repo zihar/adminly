@@ -4,6 +4,16 @@ import type { FieldMeta, FieldType } from "@/lib/crud/define-resource";
 import { TextField } from "./text-field";
 import { AsyncSelectField } from "./async-select-field";
 import { CascadeField } from "./cascade-field";
+import { TextareaField } from "./textarea-field";
+import { NumberField } from "./number-field";
+import { HiddenField } from "./hidden-field";
+import { SelectField } from "./select-field";
+import { RadioField } from "./radio-field";
+import { CheckboxField } from "./checkbox-field";
+import { DateField } from "./date-field";
+import { DateTimeField } from "./datetime-field";
+import { FileField } from "./file-field";
+import { RichtextField } from "./richtext-field";
 
 /** Props publik bersama untuk semua komponen field (Task 5 deliverable). */
 export type FieldProps = { name: string; meta: FieldMeta };
@@ -17,6 +27,16 @@ export function registerField(type: FieldType, component: FieldComponent) { REGI
 registerField("text", TextField);
 registerField("async-select", AsyncSelectField);
 registerField("cascade", CascadeField);
+registerField("textarea", TextareaField);
+registerField("number", NumberField);
+registerField("hidden", HiddenField);
+registerField("select", SelectField);
+registerField("radio", RadioField);
+registerField("checkbox", CheckboxField);
+registerField("date", DateField);
+registerField("datetime", DateTimeField);
+registerField("file", FileField);
+registerField("richtext", RichtextField);
 
 export function FieldRenderer({ name, meta }: FieldProps) {
   const Comp = REGISTRY[meta.type] ?? TextField;

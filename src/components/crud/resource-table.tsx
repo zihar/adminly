@@ -115,11 +115,11 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         accessorFn: (row: Row) => row[c.field],
         header: resolveLabel(t, c.labelKey),
         enableSorting: !!c.sortable,
-        // `c.render === "badge"`: cocokkan nilai sel ke `def.workflow.statuses`
-        // lalu render `<Badge>` langsung (BUKAN lewat lookup komponen dinamis
-        // dari `Map`/objek — itu memicu eslint-plugin-react-hooks
-        // `static-components` karena identitas komponen dianggap berubah tiap
-        // render). Render lain (belum diimplementasi) tetap fallback `String`.
+        // Tiap `c.render` di-cocokkan lalu elemen dirender LANGSUNG (BUKAN
+        // lewat lookup komponen dinamis dari `Map`/objek — itu memicu
+        // eslint-plugin-react-hooks `static-components` karena identitas
+        // komponen dianggap berubah tiap render). Fallback akhir: `String`
+        // mentah (dipakai render "text"/tak diset).
         cell: (info) => {
           const value = info.getValue();
           if (c.render === "badge") {
@@ -131,6 +131,46 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                 </Badge>
               );
             }
+          }
+          if (c.render === "date") {
+            // Guard: nilai kosong/bukan string-atau-angka/Date invalid → "".
+            if (typeof value === "string" || typeof value === "number") {
+              const date = new Date(value);
+              if (!Number.isNaN(date.getTime())) return date.toLocaleDateString();
+            }
+            return "";
+          }
+          if (c.render === "boolean") {
+            return resolveLabel(t, value ? "common.yes" : "common.no");
+          }
+          if (c.render === "currency") {
+            // Format generik (demo) — mata uang default USD, deterministik
+            // (bukan bergantung locale khusus proyek).
+            const amount = Number(value);
+            if (Number.isNaN(amount)) return "";
+            return new Intl.NumberFormat(undefined, {
+              style: "currency",
+              currency: "USD",
+            }).format(amount);
+          }
+          if (c.render === "image") {
+            if (typeof value === "string" && value.length > 0) {
+              // `<img>` biasa (BUKAN `next/image`) sengaja dipakai — sumber
+              // `value` bebas per-resource (domain eksternal apa pun, tak
+              // diketahui saat build) & tak ada dimensi tetap yang bisa
+              // dijamin utk tiap sel, dua prasyarat yang diwajibkan
+              // `next/image`.
+              // eslint-disable-next-line @next/next/no-img-element
+              return <img src={value} alt="" className="h-8 w-8 rounded object-cover" />;
+            }
+            return "";
+          }
+          if (c.render === "relation") {
+            // Pakai field denormalisasi `<field>_label` dari baris kalau ada
+            // (TIDAK fetch options per-sel) — jatuh ke nilai mentah kalau tak
+            // ada.
+            const label = info.row.original[`${c.field}_label`];
+            return label !== undefined ? String(label) : String(value ?? "");
           }
           return String(value ?? "");
         },

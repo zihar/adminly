@@ -22,6 +22,8 @@ export const en = {
     deleted: "Deleted",
     saveFailed: "Failed to save",
     deleteFailed: "Failed to delete",
+    yes: "Yes",
+    no: "No",
   },
   // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
   errors: {
@@ -36,6 +38,12 @@ export const en = {
   items: {
     title: "Items",
     nama: "Name",
+    // Demo field baru (Task 6): textarea/date/checkbox/select generik.
+    detailTab: "Details",
+    catatan: "Notes",
+    tanggal: "Date",
+    aktif: "Active",
+    prioritas: "Priority",
     // Demo field `cascade` (Task 6/7): region berjenjang country → state → city.
     regionTab: "Region",
     region: "Region",
