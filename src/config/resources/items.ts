@@ -43,7 +43,9 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
     // label i18n common.yes/no alih-alih true/false mentah.
     { field: "aktif", labelKey: "items.aktif", render: "boolean" },
   ],
-  list: { defaultSort: "nama", perPage: 10 },
+  // `filters: ["prioritas"]` — demo filter dropdown (Filter UI Task 1/2):
+  // pakai opsi statis dari field form `prioritas` (lihat `form.fields.prioritas`).
+  list: { defaultSort: "nama", perPage: 10, filters: ["prioritas"] },
   // Contoh demo: `items` ikut scope global `workspace` supaya list-nya
   // terlihat refetch saat workspace picker diganti (lihat `resource-table.tsx`
   // & `resource-page.tsx`). Mock store `items` mengabaikan `scope[...]` yang

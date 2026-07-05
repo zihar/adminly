@@ -14,6 +14,18 @@ describe("items route", () => {
     expect(Array.isArray(json.data)).toBe(true);
   });
 
+  it("GET dgn filter[prioritas] hanya mengembalikan baris yang cocok", async () => {
+    const res = await GET(
+      new NextRequest("http://localhost/api/items?filter[prioritas]=high"),
+    );
+    const json = await res.json();
+    expect(Array.isArray(json.data)).toBe(true);
+    expect(json.data.length).toBeGreaterThan(0);
+    for (const row of json.data as { prioritas?: string }[]) {
+      expect(row.prioritas).toBe("high");
+    }
+  });
+
   it("POST membuat item baru (201)", async () => {
     const res = await POST(
       new NextRequest("http://localhost/api/items", {

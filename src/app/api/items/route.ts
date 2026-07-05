@@ -11,7 +11,14 @@ export const GET = withErrorEnvelope(async (req: NextRequest) => {
   const q = sp.get("q") ?? "";
   const sort = sp.get("sort") ?? undefined;
   const order = sp.get("order") === "desc" ? "desc" : "asc";
-  return NextResponse.json(itemsStore.list({ page, perPage, q, sort, order }));
+  // Kumpulkan semua `filter[<field>]=value` jadi objek `filters` (mis.
+  // `filter[prioritas]=high` -> { prioritas: "high" }) — lihat `buildListSearchParams`.
+  const filters: Record<string, string> = {};
+  for (const [k, v] of sp.entries()) {
+    const m = k.match(/^filter\[(.+)\]$/);
+    if (m) filters[m[1]] = v;
+  }
+  return NextResponse.json(itemsStore.list({ page, perPage, q, sort, order, filters }));
 });
 
 export const POST = withErrorEnvelope(async (req: NextRequest) => {

@@ -76,4 +76,48 @@ describe('collection-store', () => {
       expect(data.map((r) => r.id)).toEqual(['1', '2', '3']);
     });
   });
+
+  describe('list filters', () => {
+    const seed = [
+      { id: '1', nama: 'Charlie', prioritas: 'high' },
+      { id: '2', nama: 'alpha', prioritas: 'low' },
+      { id: '3', nama: 'Bravo', prioritas: 'high' },
+    ];
+
+    it('hanya mengembalikan baris yang cocok dgn filter (equality, stringified)', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ filters: { prioritas: 'high' } });
+      expect(data.map((r) => r.id)).toEqual(['1', '3']);
+    });
+
+    it('filter kosong ("") diabaikan — semua baris dikembalikan', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ filters: { prioritas: '' } });
+      expect(data.map((r) => r.id)).toEqual(['1', '2', '3']);
+    });
+
+    it('tanpa filters sama sekali — semua baris dikembalikan', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({});
+      expect(data.map((r) => r.id)).toEqual(['1', '2', '3']);
+    });
+
+    it('filter undefined/null diabaikan', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ filters: { prioritas: undefined } });
+      expect(data.map((r) => r.id)).toEqual(['1', '2', '3']);
+    });
+
+    it('kombinasi filters + q tetap benar', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ filters: { prioritas: 'high' }, q: 'bravo' });
+      expect(data.map((r) => r.id)).toEqual(['3']);
+    });
+
+    it('kombinasi filters + sort tetap benar', () => {
+      const store = createCollectionStore(seed);
+      const { data } = store.list({ filters: { prioritas: 'high' }, sort: 'nama', order: 'asc' });
+      expect(data.map((r) => r.nama)).toEqual(['Bravo', 'Charlie']);
+    });
+  });
 });

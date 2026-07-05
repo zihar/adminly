@@ -23,5 +23,7 @@ export type ItemRow = {
 
 export const itemsStore = createCollectionStore<ItemRow>([
   { id: "itm-1", nama: "Contoh A", status: "draft", tanggal: "2024-01-15", aktif: true, prioritas: "high" },
-  { id: "itm-2", nama: "Contoh B", status: "draft" },
+  // `prioritas: "low"` — beda dgn `itm-1` ("high") supaya tes filter
+  // `filter[prioritas]` (Task 1 Filter UI) bermakna (bukan cuma 1 nilai unik).
+  { id: "itm-2", nama: "Contoh B", status: "draft", prioritas: "low" },
 ]);

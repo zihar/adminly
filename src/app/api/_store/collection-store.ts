@@ -9,18 +9,33 @@ export function createCollectionStore<T extends { id: string }>(seed: T[]) {
       q = "",
       sort,
       order = "asc",
+      filters,
     }: {
       page?: number;
       perPage?: number;
       q?: string;
       sort?: string;
       order?: "asc" | "desc";
+      filters?: Record<string, unknown>;
     }) {
-      const filtered = q
+      const searched = q
         ? rows.filter((r) =>
             JSON.stringify(r).toLowerCase().includes(q.toLowerCase()),
           )
         : rows;
+      // Filter per-field (`filter[field]=value`), equality — nilai dibandingkan
+      // sbg string (`String(row[k]) === String(v)`). Entry dgn nilai kosong/
+      // undefined/null diabaikan (tak menyaring apa pun).
+      const filterEntries = Object.entries(filters ?? {}).filter(
+        ([, v]) => v !== undefined && v !== null && v !== "",
+      );
+      const filtered = filterEntries.length
+        ? searched.filter((r) =>
+            filterEntries.every(
+              ([k, v]) => String((r as Record<string, unknown>)[k]) === String(v),
+            ),
+          )
+        : searched;
       // Urutkan bila `sort` diberikan. Salin dulu (`[...]`) supaya tidak
       // memutasi `rows` sumber; `Array.prototype.sort` stabil (spec ES2019)
       // sehingga baris dgn nilai sama menjaga urutan asal. Number-aware:
