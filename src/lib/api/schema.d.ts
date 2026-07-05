@@ -287,6 +287,7 @@ export interface components {
             aktif?: boolean;
             prioritas?: string;
             lampiran?: string;
+            regionId?: string;
         };
         NewItem: {
             nama: string;
@@ -299,6 +300,7 @@ export interface components {
             aktif?: boolean;
             prioritas?: string;
             lampiran?: string;
+            regionId?: string;
         };
         ItemList: {
             data: components["schemas"]["Item"][];

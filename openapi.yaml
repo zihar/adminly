@@ -144,6 +144,9 @@ components:
         prioritas: { type: string }
         # Demo field `file` (Task 5) — URL hasil unggah `/api/uploads` (Task 1).
         lampiran: { type: string }
+        # Demo kolom `render:"relation"` (Task 4, rencana `relation-label`) —
+        # id region top-level (`parentId === ""` di `regions/_data.ts`).
+        regionId: { type: string }
     NewItem:
       type: object
       required: [nama]
@@ -158,6 +161,7 @@ components:
         aktif: { type: boolean }
         prioritas: { type: string }
         lampiran: { type: string }
+        regionId: { type: string }
     ItemList:
       type: object
       required: [data, meta]

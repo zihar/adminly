@@ -27,6 +27,10 @@ export const itemSchema = z.object({
   // Demo field `file` (Task 5) — dropzone upload (Task 2) menyimpan URL hasil
   // unggah `/api/uploads` (Task 1) sebagai string, bukan isi file itu sendiri.
   lampiran: z.string().optional(),
+  // Demo kolom `render:"relation"` (Task 4, rencana `relation-label`) —
+  // id region TOP-LEVEL (lihat komentar `ItemRow.regionId` di `_data.ts`),
+  // dipilih lewat `AsyncSelectField` (`optionsFrom:"regions"`).
+  regionId: z.string().optional(),
 });
 
 export const itemsResource = defineResource<Item, NewItem, NewItem>({
@@ -42,6 +46,10 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
     // Demo kolom renderer baru (Task 6) — `render:"boolean"` menampilkan
     // label i18n common.yes/no alih-alih true/false mentah.
     { field: "aktif", labelKey: "items.aktif", render: "boolean" },
+    // Demo kolom `render:"relation"` (Task 4, rencana `relation-label`) —
+    // `RelationCell` me-resolve `regionId` (id region top-level, lihat
+    // komentar `ItemRow.regionId`) jadi nama region lewat resource `regions`.
+    { field: "regionId", labelKey: "items.region", render: "relation", relation: "regions" },
   ],
   // `filters: ["prioritas"]` — demo filter dropdown (Filter UI Task 1/2):
   // pakai opsi statis dari field form `prioritas` (lihat `form.fields.prioritas`).
@@ -79,7 +87,10 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
       // Tab terpisah untuk demo field baru (Task 6): textarea/date/checkbox/
       // select — lihat komentar `itemSchema` di atas soal alasan pemisahan tab.
       { tabKey: "items.detailTab", fields: ["catatan", "tanggal", "aktif", "prioritas", "lampiran"] },
-      { tabKey: "items.regionTab", fields: ["region"] },
+      // `regionId` (Task 4, demo `render:"relation"`) ditaruh di tab yang
+      // sama dengan `region` (cascade) — keduanya soal region, hanya beda
+      // cara pilih (single async-select vs cascade 3 level).
+      { tabKey: "items.regionTab", fields: ["region", "regionId"] },
     ],
     fields: {
       nama: { type: "text", labelKey: "items.nama" },
@@ -107,6 +118,10 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
           { key: "city", labelKey: "items.city", optionsFrom: "regions", parentParam: "parentId" },
         ],
       },
+      // Demo field `render:"relation"` (Task 4, rencana `relation-label`) —
+      // single async-select ke resource `regions` TANPA `parent` (lihat
+      // komentar `ItemRow.regionId`), jadi opsinya cuma region top-level.
+      regionId: { type: "async-select", labelKey: "items.region", optionsFrom: "regions" },
     },
   },
 });
