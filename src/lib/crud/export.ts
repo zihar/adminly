@@ -1,16 +1,22 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-
 /** Kolom untuk ekspor CSV/PDF: header tampilan + nama field pada row. */
 export type ExportColumn = { header: string; field: string };
 
 // Karakter yang memaksa sebuah sel CSV dibungkus tanda kutip (RFC 4180-ish).
 const NEEDS_QUOTE = /[",\r\n]/;
 
+// Karakter awal yang membuat Excel/Sheets membaca sel sebagai formula
+// (formula injection). Sel yang diawali salah satu ini diberi prefiks `'`
+// agar dibaca sebagai teks literal, bukan dieksekusi.
+const FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
 /** Escape satu nilai sel CSV: bungkus kutip + gandakan `"` internal bila perlu. */
 function escapeCsvCell(value: string): string {
-  if (!NEEDS_QUOTE.test(value)) return value;
-  return `"${value.replaceAll('"', '""')}"`;
+  // Cegah formula injection dulu, sebelum cek kebutuhan quoting — sel yang
+  // sudah diberi prefiks `'` bisa saja tetap butuh dibungkus kutip (mis. bila
+  // ia juga mengandung koma).
+  const safeValue = FORMULA_PREFIX.test(value) ? `'${value}` : value;
+  if (!NEEDS_QUOTE.test(safeValue)) return safeValue;
+  return `"${safeValue.replaceAll('"', '""')}"`;
 }
 
 /**
@@ -47,15 +53,20 @@ export function downloadBlob(filename: string, mime: string, content: BlobPart):
 
 /**
  * Ekspor kolom + baris data ke PDF (tabel via jspdf-autotable) lalu simpan
- * sebagai file. Browser-oriented — tak diuji unit secara ketat, hanya
- * dipastikan tak melempar error (lihat `resource-table.tsx`/manual test).
+ * sebagai file. `jspdf`/`jspdf-autotable` di-import secara dinamis (lazy)
+ * agar library besar ini tak ikut ter-bundle ke initial chunk halaman list —
+ * hanya dimuat saat pengguna benar-benar mengklik ekspor PDF. Browser-
+ * oriented — tak diuji unit secara ketat, hanya dipastikan tak melempar
+ * error (lihat `resource-table.tsx`/manual test).
  */
-export function exportPdf(
+export async function exportPdf(
   columns: ExportColumn[],
   rows: Record<string, unknown>[],
   title: string,
   filename: string,
-): void {
+): Promise<void> {
+  const { jsPDF } = await import("jspdf");
+  const autoTable = (await import("jspdf-autotable")).default;
   const doc = new jsPDF();
   doc.text(title, 14, 15);
   autoTable(doc, {

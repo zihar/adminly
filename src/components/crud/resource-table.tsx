@@ -146,7 +146,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
       if (kind === "csv") {
         downloadBlob(`${def.name}.csv`, "text/csv;charset=utf-8", toCsv(cols, exportRows));
       } else {
-        exportPdf(cols, exportRows, def.name, `${def.name}.pdf`);
+        await exportPdf(cols, exportRows, def.name, `${def.name}.pdf`);
       }
     } catch {
       toast.error(t.common.exportFailed);
