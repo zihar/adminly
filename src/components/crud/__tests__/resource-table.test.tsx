@@ -73,6 +73,12 @@ let defScoped: ResourceDef;
 // merender `<Badge>` berisi label i18n status (bukan nilai mentah) DAN tombol
 // aksi transisi per-baris ter-gate `<Can>` sesuai `from`/`permission`.
 let defWorkflow: ResourceDef;
+// Def khusus test render kolom non-badge (Task 5): satu kolom per tipe render
+// (`date`/`boolean`/`currency`/`image`/`relation`) — memverifikasi cell factory
+// `ResourceTable` merender tiap tipe secara benar (bukan fallback `String`
+// mentah), termasuk fallback relation ke nilai mentah saat `<field>_label`
+// tak ada di baris.
+let defRenderers: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -146,6 +152,25 @@ beforeAll(async () => {
         { action: "approve", from: ["submitted"], to: "approved", permission: "items:approve", labelKey: "workflow.action.approve", variant: "default" },
         { action: "reject", from: ["submitted"], to: "rejected", permission: "items:approve", labelKey: "workflow.action.reject", variant: "destructive" },
       ],
+    },
+  });
+  defRenderers = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [
+      { field: "tanggal", labelKey: "items.nama", render: "date" },
+      { field: "aktif", labelKey: "items.nama", render: "boolean" },
+      { field: "harga", labelKey: "items.nama", render: "currency" },
+      { field: "foto", labelKey: "items.nama", render: "image" },
+      { field: "pemilikId", labelKey: "items.nama", render: "relation" },
+    ],
+    list: { perPage: 10 },
+    form: {
+      schema: z.object({ nama: z.string() }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text" } },
     },
   });
 });
@@ -498,5 +523,86 @@ describe("ResourceTable", () => {
     await waitFor(() => expect(transitionBody).toEqual({ action: "approve" }));
     await waitFor(() => expect(successSpy).toHaveBeenCalledWith("Done"));
     successSpy.mockRestore();
+  });
+
+  it("merender kolom date/boolean/currency/image/relation sesuai `render` masing-masing (bukan `String` mentah)", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "1",
+              tanggal: "2024-01-15T00:00:00.000Z",
+              aktif: true,
+              harga: 1234.5,
+              foto: "https://example.com/img.png",
+              pemilikId: "5",
+              pemilikId_label: "Alice",
+            },
+          ],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defRenderers} />);
+    await screen.findByText("Alice");
+
+    // `date`: diformat lewat `Date#toLocaleDateString()` yang sama dgn
+    // implementasi — deterministik di proses test yang sama, terlepas locale
+    // OS/CI (bukan mengasumsikan format string tertentu).
+    const expectedDate = new Date("2024-01-15T00:00:00.000Z").toLocaleDateString();
+    expect(screen.getByText(expectedDate)).toBeInTheDocument();
+
+    // `boolean`: label i18n (bukan "true"/"false" mentah).
+    expect(screen.getByText("Yes")).toBeInTheDocument();
+    expect(screen.queryByText("true")).not.toBeInTheDocument();
+
+    // `currency`: format `Intl.NumberFormat` (USD, generik/demo).
+    const expectedCurrency = new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+    }).format(1234.5);
+    expect(screen.getByText(expectedCurrency)).toBeInTheDocument();
+
+    // `image`: elemen `<img>` sungguhan dgn `src` dari nilai sel.
+    // `alt=""` (dekoratif) → dicari lewat `getByAltText("")`, BUKAN
+    // `getByRole("img")` (img ber-`alt=""` di-map ke role "presentation").
+    const img = screen.getByAltText("");
+    expect(img.tagName).toBe("IMG");
+    expect(img).toHaveAttribute("src", "https://example.com/img.png");
+
+    // `relation`: pakai `<field>_label` yang didenormalisasi di baris, BUKAN
+    // nilai id mentah.
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+    expect(screen.queryByText("5")).not.toBeInTheDocument();
+  });
+
+  it("merender boolean `false` sbg \"No\" dan `relation` fallback ke nilai mentah saat `<field>_label` tak ada di baris", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: "1",
+              tanggal: "",
+              aktif: false,
+              harga: 0,
+              foto: "",
+              pemilikId: "7",
+            },
+          ],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defRenderers} />);
+
+    expect(await screen.findByText("No")).toBeInTheDocument();
+    // Tanpa `pemilikId_label` → fallback ke nilai id mentah.
+    expect(screen.getByText("7")).toBeInTheDocument();
+    // `foto` kosong → tak ada `<img>` yang dirender.
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });

@@ -22,6 +22,8 @@ export const en = {
     deleted: "Deleted",
     saveFailed: "Failed to save",
     deleteFailed: "Failed to delete",
+    yes: "Yes",
+    no: "No",
   },
   // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
   errors: {
