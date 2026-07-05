@@ -57,6 +57,8 @@ export const id: Dictionary = {
     country: "Negara",
     state: "Provinsi",
     city: "Kota",
+    // Demo field `file` (Task 5) — dropzone upload.
+    lampiran: "Lampiran",
   },
   regions: {
     title: "Regions",

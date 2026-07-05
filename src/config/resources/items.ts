@@ -24,6 +24,9 @@ export const itemSchema = z.object({
   tanggal: z.string().optional(),
   aktif: z.boolean().optional(),
   prioritas: z.string().optional(),
+  // Demo field `file` (Task 5) — dropzone upload (Task 2) menyimpan URL hasil
+  // unggah `/api/uploads` (Task 1) sebagai string, bukan isi file itu sendiri.
+  lampiran: z.string().optional(),
 });
 
 export const itemsResource = defineResource<Item, NewItem, NewItem>({
@@ -73,7 +76,7 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
       { tabKey: "umum", fields: ["nama"] },
       // Tab terpisah untuk demo field baru (Task 6): textarea/date/checkbox/
       // select — lihat komentar `itemSchema` di atas soal alasan pemisahan tab.
-      { tabKey: "items.detailTab", fields: ["catatan", "tanggal", "aktif", "prioritas"] },
+      { tabKey: "items.detailTab", fields: ["catatan", "tanggal", "aktif", "prioritas", "lampiran"] },
       { tabKey: "items.regionTab", fields: ["region"] },
     ],
     fields: {
@@ -91,6 +94,8 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
           { value: "high", label: "High" },
         ],
       },
+      // Demo field `file` (Task 5) — lihat komentar `itemSchema.lampiran` di atas.
+      lampiran: { type: "file", labelKey: "items.lampiran", accept: "image/*" },
       region: {
         type: "cascade",
         labelKey: "items.region",

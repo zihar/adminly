@@ -142,6 +142,8 @@ components:
         tanggal: { type: string }
         aktif: { type: boolean }
         prioritas: { type: string }
+        # Demo field `file` (Task 5) — URL hasil unggah `/api/uploads` (Task 1).
+        lampiran: { type: string }
     NewItem:
       type: object
       required: [nama]
@@ -155,6 +157,7 @@ components:
         tanggal: { type: string }
         aktif: { type: boolean }
         prioritas: { type: string }
+        lampiran: { type: string }
     ItemList:
       type: object
       required: [data, meta]

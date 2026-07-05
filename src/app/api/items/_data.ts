@@ -16,6 +16,9 @@ export type ItemRow = {
   tanggal?: string;
   aktif?: boolean;
   prioritas?: string;
+  // Demo field `file` (Task 5) — URL hasil unggah `/api/uploads` (Task 1),
+  // disimpan lewat dropzone `FileField` (Task 2).
+  lampiran?: string;
 };
 
 export const itemsStore = createCollectionStore<ItemRow>([

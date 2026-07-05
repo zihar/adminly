@@ -286,6 +286,7 @@ export interface components {
             tanggal?: string;
             aktif?: boolean;
             prioritas?: string;
+            lampiran?: string;
         };
         NewItem: {
             nama: string;
@@ -297,6 +298,7 @@ export interface components {
             tanggal?: string;
             aktif?: boolean;
             prioritas?: string;
+            lampiran?: string;
         };
         ItemList: {
             data: components["schemas"]["Item"][];

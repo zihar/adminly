@@ -60,6 +60,8 @@ export const en = {
     country: "Country",
     state: "State",
     city: "City",
+    // Demo field `file` (Task 5) — dropzone upload.
+    lampiran: "Attachment",
   },
   // Label demo untuk resource generik `regions` (sumber options berjenjang).
   regions: {
