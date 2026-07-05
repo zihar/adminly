@@ -17,6 +17,7 @@ import { Can } from "@/components/auth/can";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { getResource } from "@/config/resources/index";
+import { RelationCell } from "@/components/crud/relation-cell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -296,11 +297,22 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             return "";
           }
           if (c.render === "relation") {
-            // Pakai field denormalisasi `<field>_label` dari baris kalau ada
-            // (TIDAK fetch options per-sel) — jatuh ke nilai mentah kalau tak
-            // ada.
-            const label = info.row.original[`${c.field}_label`];
-            return label !== undefined ? String(label) : String(value ?? "");
+            // `RelationCell` (komponen module-level, lihat file-nya) yang
+            // menangani hybrid: pakai `<field>_label` denormalisasi dari baris
+            // kalau ada (TIDAK fetch), kalau tidak & `c.relation` (nama
+            // resource sumber) diset → resolve id->label lewat `useOptions`
+            // resource itu, jatuh ke nilai mentah kalau tak ketemu/tak ada
+            // resource sama sekali. Dirender sbg elemen (BUKAN dipanggil sbg
+            // fungsi) krn cell factory ini berjalan di dalam `useMemo` — hook
+            // di dalam `RelationCell`/`ResolvedRelation` tak boleh terpanggil
+            // di sini.
+            return (
+              <RelationCell
+                resource={c.relation}
+                value={value}
+                denormLabel={info.row.original[`${c.field}_label`]}
+              />
+            );
           }
           return String(value ?? "");
         },

@@ -75,6 +75,15 @@ const server = setupServer(
       { value: "high", label: "High (async)" },
     ]),
   ),
+  // Sumber opsi resource `regions` — dipakai kolom `render:"relation"
+  // relation:"regions"` (`defRelation`, lihat di bawah) utk membuktikan
+  // wiring `ColumnDef.relation` -> `RelationCell` -> `getResource` ->
+  // `useOptions` benar2 tersambung ujung-ke-ujung lewat `ResourceTable`
+  // sungguhan (bukan tes unit `RelationCell` yang terisolasi, itu ada di
+  // `relation-cell.test.tsx`).
+  http.get("http://localhost:3000/api/regions/options", () =>
+    HttpResponse.json([{ value: "r1", label: "Jawa Barat" }]),
+  ),
 );
 
 // `apiClient` menangkap `globalThis.fetch` & base URL saat modulnya pertama kali
@@ -123,6 +132,12 @@ let defPagedFiltered: ResourceDef;
 // (sama seperti `AsyncSelectField`/`CascadeField`) tersambung ujung-ke-ujung
 // di `ResourceFilter`, bukan hanya opsi statis yang sudah dites `defFiltered`.
 let defAsyncFiltered: ResourceDef;
+// Def khusus test wiring `RelationCell` (Task 2): kolom `render:"relation"
+// relation:"regions"` — memverifikasi `ResourceTable` meneruskan
+// `ColumnDef.relation` ke `RelationCell`, yang lalu me-resolve id->label
+// lewat `useOptions` resource "regions" (didaftarkan di registry lewat
+// `registerResources` di bawah, sama pola dgn `priorityOptions`).
+let defRelation: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -275,7 +290,28 @@ beforeAll(async () => {
       columns: [{ field: "label", labelKey: "items.nama" }],
       form: { schema: z.object({ label: z.string() }), layout: [{ tabKey: "umum", fields: ["label"] }], fields: { label: { type: "text" } } },
     }),
+    defineResource({
+      name: "regions",
+      path: "/regions",
+      api: createResourceApi({ resource: "regions", path: "/regions" }),
+      permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+      columns: [{ field: "name", labelKey: "regions.name" }],
+      form: { schema: z.object({ name: z.string() }), layout: [{ tabKey: "umum", fields: ["name"] }], fields: { name: { type: "text" } } },
+    }),
   ]);
+  defRelation = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "regionId", labelKey: "items.nama", render: "relation", relation: "regions" }],
+    list: { perPage: 10 },
+    form: {
+      schema: z.object({ nama: z.string() }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text" } },
+    },
+  });
   defAsyncFiltered = defineResource({
     name: "items",
     path: "/items",
@@ -728,6 +764,27 @@ describe("ResourceTable", () => {
     expect(screen.getByText("7")).toBeInTheDocument();
     // `foto` kosong → tak ada `<img>` yang dirender.
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("kolom `render:\"relation\" relation:\"regions\"` me-resolve id->label lewat `useOptions` resource sumber (wiring `ColumnDef.relation` -> `RelationCell`)", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", regionId: "r1" },
+            { id: "2", regionId: "tak-ada" },
+          ],
+          meta: { total: 2, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defRelation} />);
+
+    // Baris 1: id "r1" ketemu di options `/api/regions/options` -> label.
+    expect(await screen.findByText("Jawa Barat")).toBeInTheDocument();
+    // Baris 2: id "tak-ada" tak ketemu di options -> fallback nilai mentah.
+    expect(screen.getByText("tak-ada")).toBeInTheDocument();
   });
 
   it("klik Export -> CSV mengambil SEMUA baris (perPage besar) lalu memanggil downloadBlob dgn CSV berisi header+nilai baris", async () => {
