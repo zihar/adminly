@@ -7,6 +7,9 @@ import { CascadeField } from "./cascade-field";
 import { TextareaField } from "./textarea-field";
 import { NumberField } from "./number-field";
 import { HiddenField } from "./hidden-field";
+import { SelectField } from "./select-field";
+import { RadioField } from "./radio-field";
+import { CheckboxField } from "./checkbox-field";
 
 /** Props publik bersama untuk semua komponen field (Task 5 deliverable). */
 export type FieldProps = { name: string; meta: FieldMeta };
@@ -23,6 +26,9 @@ registerField("cascade", CascadeField);
 registerField("textarea", TextareaField);
 registerField("number", NumberField);
 registerField("hidden", HiddenField);
+registerField("select", SelectField);
+registerField("radio", RadioField);
+registerField("checkbox", CheckboxField);
 
 export function FieldRenderer({ name, meta }: FieldProps) {
   const Comp = REGISTRY[meta.type] ?? TextField;
