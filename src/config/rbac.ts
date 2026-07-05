@@ -116,7 +116,27 @@ export function resolveResourceRoute(
   return null;
 }
 
-/** Nama cookie penyimpan role (DEMO — di produksi pakai sesi sungguhan). */
+/** Cookie sesi Edelweiss (F2): token JWT + daftar permission dari /auth/login. */
+export const TOKEN_COOKIE = "edelweiss_token";
+export const PERMS_COOKIE = "edelweiss_perms";
+
+/** Parse cookie permission (JSON array) → string[] aman. */
+export function parsePermissions(value: string | undefined | null): string[] {
+  if (!value) return [];
+  try {
+    const a: unknown = JSON.parse(value);
+    return Array.isArray(a) ? (a as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Apakah daftar permission sesi memenuhi `permission` (`*` = superadmin). */
+export function hasPermission(perms: string[], permission: Permission): boolean {
+  return perms.includes("*") || perms.includes(permission);
+}
+
+/** Nama cookie penyimpan role (DEMO lama — tak dipakai lagi setelah F2). */
 export const ROLE_COOKIE = "adminly_role";
 export const DEFAULT_ROLE: Role = "Admin";
 

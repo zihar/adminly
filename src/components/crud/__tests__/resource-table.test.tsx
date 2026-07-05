@@ -199,7 +199,7 @@ function wrap(
   return render(
     <QueryClientProvider client={qc}>
       <I18nProvider initialLocale="en">
-        <RbacProvider initialRole={opts?.role ?? "Admin"}>
+        <RbacProvider initialPermissions={["*"]}>
           {/* `hasMemory`: tanpa ini, NuqsTestingAdapter "membekukan" search params ke
               nilai awal — `setState` di komponen ter-reconcile balik ke default pada
               render berikutnya. `hasMemory: true` mensimulasikan adapter sungguhan

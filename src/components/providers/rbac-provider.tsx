@@ -3,49 +3,51 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  ROLE_COOKIE,
-  can as roleCan,
-  type Permission,
-  type Role,
-} from "@/config/rbac";
+import { hasPermission, type Permission } from "@/config/rbac";
+import { setAuthTokenProvider } from "@/lib/api/auth";
+import { getToken, getSessionPermissions, clearSession } from "@/lib/session";
 
 type RbacContextValue = {
-  role: Role;
-  setRole: (role: Role) => void;
+  permissions: string[];
   can: (permission: Permission) => boolean;
+  logout: () => void;
 };
 
 const RbacContext = React.createContext<RbacContextValue | null>(null);
 
 /**
- * Menyediakan role aktif ke seluruh UI. `initialRole` di-seed dari cookie di
- * server (lihat `(app)/layout.tsx`) supaya konsisten dengan `proxy.ts`.
+ * Menyediakan permission sesi (dari /auth/login, disimpan di cookie) ke seluruh
+ * UI. `initialPermissions` di-seed dari cookie di server (lihat `(app)/layout.tsx`)
+ * agar konsisten dengan `proxy.ts`. Juga menyambungkan token JWT ke apiClient.
  */
 export function RbacProvider({
-  initialRole,
+  initialPermissions,
   children,
 }: {
-  initialRole: Role;
+  initialPermissions: string[];
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [role, setRoleState] = React.useState<Role>(initialRole);
+  const [permissions, setPermissions] = React.useState<string[]>(initialPermissions);
 
-  const setRole = React.useCallback(
-    (next: Role) => {
-      setRoleState(next);
-      // Simpan ke cookie agar proxy & Server Component ikut memakai role baru.
-      document.cookie = `${ROLE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
-      // Re-render route saat ini agar proteksi route dievaluasi ulang.
-      router.refresh();
-    },
-    [router],
-  );
+  React.useEffect(() => {
+    // apiClient (client) mengirim Bearer dari cookie token pada tiap request.
+    setAuthTokenProvider(() => getToken());
+    // Sinkronkan dari cookie (mis. sesaat setelah login di tab yang sama).
+    const fromCookie = getSessionPermissions();
+    if (fromCookie.length) setPermissions(fromCookie);
+  }, []);
+
+  const logout = React.useCallback(() => {
+    clearSession();
+    setPermissions([]);
+    router.push("/login");
+    router.refresh();
+  }, [router]);
 
   const value = React.useMemo<RbacContextValue>(
-    () => ({ role, setRole, can: (permission) => roleCan(role, permission) }),
-    [role, setRole],
+    () => ({ permissions, can: (permission) => hasPermission(permissions, permission), logout }),
+    [permissions, logout],
   );
 
   return <RbacContext.Provider value={value}>{children}</RbacContext.Provider>;

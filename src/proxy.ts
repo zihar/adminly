@@ -1,36 +1,42 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ROLE_COOKIE, ROUTE_PERMISSIONS, can, parseRole, resolveResourceRoute } from "@/config/rbac";
+import {
+  ROUTE_PERMISSIONS,
+  PERMS_COOKIE,
+  parsePermissions,
+  hasPermission,
+  resolveResourceRoute,
+} from "@/config/rbac";
 import { ensureResourcesRegistered } from "@/config/resources/register";
 
 /**
- * Proteksi route berbasis RBAC.
+ * Proteksi route berbasis RBAC (F2): permission sesi dari cookie (di-set saat
+ * /auth/login). Belum login → /login; login tapi tak berhak → /dashboard.
  *
- * Catatan: di Next.js 16 `middleware` di-deprecate & diganti `proxy`
- * (fungsi diekspor sebagai `proxy`, default Node.js runtime).
- *
- * Di project nyata: jangan hanya andalkan proxy — verifikasi juga otorisasi
- * di Server Component / Server Action (lihat docs Data Security).
+ * Catatan: proxy = pengganti middleware (Next 16). Enforcement asli tetap di
+ * backend (PermissionGuard) — ini hanya UX gating.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const role = parseRole(request.cookies.get(ROLE_COOKIE)?.value);
+  const perms = parsePermissions(request.cookies.get(PERMS_COOKIE)?.value);
 
-  // Isi registry (idempotent) supaya rule permission resource CRUD generik
-  // (mis. `items`, didaftarkan lewat `defineResource`) ikut diperiksa di sini
-  // — bukan hanya rule statis di `ROUTE_PERMISSIONS`.
   ensureResourcesRegistered();
 
-  // Route statis dulu; bila tak cocok, resolusi route resource PER-VERB
-  // (`create`→create, `edit`→update, selain itu view) — cegah role ber-`view`
-  // saja men-deep-link `/create` atau `/edit`.
   const staticRule = ROUTE_PERMISSIONS.find(
     (r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`),
   );
   const rule = staticRule ?? resolveResourceRoute(pathname);
 
-  if (rule && !can(role, rule.permission)) {
-    // Tidak berhak → arahkan ke dashboard (selalu boleh untuk semua role).
+  // Rute terproteksi tapi belum login → arahkan ke login.
+  if (rule && perms.length === 0) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // Login tapi tak punya permission → dashboard (selalu boleh) + tanda denied.
+  if (rule && !hasPermission(perms, rule.permission)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = `?denied=${encodeURIComponent(rule.prefix.slice(1))}`;
@@ -41,18 +47,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Matcher statis Next.js tidak bisa dihitung dari registry saat build, jadi
-  // dilebarkan ke semua route KECUALI aset/infra (api, _next, favicon) & rute
-  // publik (login) — permission tetap dicek per-request di atas lewat rule
-  // gabungan (statis + `resourceRoutePermissions()`). Ini yang membuat resource
-  // baru otomatis terproteksi tanpa perlu update matcher secara manual.
-  //
-  // `api` & `login` dicocokkan sebagai SEGMEN path utuh (`(?:/|$)`), bukan
-  // prefix string biasa — tanpa ini, rute masa depan seperti `/login-audit`
-  // atau `/apikeys` ikut ke-exclude dari matcher (lolos tanpa dicek RBAC sama
-  // sekali) hanya karena kebetulan diawali huruf yang sama. `_next/static`,
-  // `_next/image`, & `favicon.ico` tidak diubah — sudah cukup spesifik
-  // (multi-segmen / nama file utuh) & `_next` adalah prefix reserved
-  // framework, jadi risiko tabrakan prefix yang sama tidak berlaku di situ.
   matcher: ["/((?!api(?:/|$)|_next/static|_next/image|favicon.ico|login(?:/|$)).*)"],
 };

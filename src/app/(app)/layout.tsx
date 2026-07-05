@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { RbacProvider } from "@/components/providers/rbac-provider";
 import { ScopeProvider } from "@/components/providers/scope-provider";
-import { ROLE_COOKIE, parseRole } from "@/config/rbac";
+import { PERMS_COOKIE, parsePermissions } from "@/config/rbac";
 import { SCOPE_COOKIE, parseScope } from "@/config/scope";
 import { ensureResourcesRegistered } from "@/config/resources/register";
 
@@ -22,11 +22,11 @@ export default async function AppLayout({
   // Pertahankan state buka/tutup sidebar antar reload via cookie.
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
-  // Role aktif (DEMO) di-seed dari cookie agar konsisten dengan proxy.ts.
-  const role = parseRole(cookieStore.get(ROLE_COOKIE)?.value);
+  // Permission sesi di-seed dari cookie agar konsisten dengan proxy.ts.
+  const permissions = parsePermissions(cookieStore.get(PERMS_COOKIE)?.value);
 
   return (
-    <RbacProvider initialRole={role}>
+    <RbacProvider initialPermissions={permissions}>
       <ScopeProvider initial={parseScope(cookieStore.get(SCOPE_COOKIE)?.value)}>
         <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
