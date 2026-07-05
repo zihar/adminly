@@ -82,6 +82,36 @@ describe("WorkflowTransitionButton", () => {
     await waitFor(() => expect(screen.queryByLabelText("Reason")).not.toBeInTheDocument());
   });
 
+  it("transisi requiresReason: Cancel me-reset alasan — dialog dibuka ulang textarea kosong & Konfirmasi disabled lagi", async () => {
+    const user = userEvent.setup();
+    const mutation = mockMutation();
+    wrap(
+      <WorkflowTransitionButton
+        transition={reasonTransition}
+        id="1"
+        mutation={mutation as never}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Reject" }));
+    const textarea = await screen.findByLabelText("Reason");
+    await user.type(textarea, "Alasan yang akan dibatalkan");
+    expect(screen.getByRole("button", { name: "Confirm" })).not.toBeDisabled();
+
+    // Batalkan lewat tombol Cancel — dialog tertutup TANPA memanggil mutate.
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByLabelText("Reason")).not.toBeInTheDocument());
+    expect(mutation.mutate).not.toHaveBeenCalled();
+
+    // Buka ulang dialog — alasan lama TIDAK boleh nempel (bug T3 review: reset
+    // hanya terjadi di `onSuccess`, jadi Cancel/Escape/backdrop lalu buka ulang
+    // sebelumnya masih menampilkan alasan basi + Konfirmasi ter-enable).
+    await user.click(screen.getByRole("button", { name: "Reject" }));
+    const reopenedTextarea = await screen.findByLabelText("Reason");
+    expect(reopenedTextarea).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
+  });
+
   it("transisi tanpa requiresReason: klik tombol langsung memanggil mutate tanpa membuka dialog", async () => {
     const user = userEvent.setup();
     const mutation = mockMutation();

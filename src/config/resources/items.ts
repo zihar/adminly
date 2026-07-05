@@ -74,7 +74,9 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
     transitions: [
       { action: "submit", from: ["draft"], to: "submitted", permission: "items:update", labelKey: "workflow.action.submit" },
       { action: "approve", from: ["submitted"], to: "approved", permission: "items:approve", labelKey: "workflow.action.approve", variant: "default" },
-      { action: "reject", from: ["submitted"], to: "rejected", permission: "items:approve", labelKey: "workflow.action.reject", variant: "destructive" },
+      // `requiresReason:true` (demo) — reject butuh alasan wajib lewat dialog
+      // `WorkflowTransitionButton`; submit/approve tetap satu-klik.
+      { action: "reject", from: ["submitted"], to: "rejected", permission: "items:approve", labelKey: "workflow.action.reject", variant: "destructive", requiresReason: true },
     ],
   },
   form: {

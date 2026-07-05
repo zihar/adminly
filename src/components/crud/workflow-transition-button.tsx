@@ -79,7 +79,16 @@ export function WorkflowTransitionButton({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        // Reset alasan setiap dialog TERTUTUP (Cancel/Escape/backdrop), bukan
+        // hanya saat sukses — mencegah alasan lama "nempel" (dan Konfirmasi
+        // pre-enabled) bila dialog dibuka ulang setelah dibatalkan.
+        if (!v) setReason("");
+      }}
+    >
       <DialogTrigger
         render={
           <Button size="sm" variant={transition.variant ?? "outline"} disabled={mutation.isPending} />
