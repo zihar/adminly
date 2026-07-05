@@ -25,6 +25,12 @@ export const en = {
     yes: "Yes",
     no: "No",
   },
+  // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
+  field: {
+    dropzone: "Drop a file or click to upload",
+    uploading: "Uploading…",
+    uploadFailed: "Upload failed",
+  },
   // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
   errors: {
     badRequest: "Bad request",

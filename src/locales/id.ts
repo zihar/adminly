@@ -24,6 +24,12 @@ export const id: Dictionary = {
     yes: "Ya",
     no: "Tidak",
   },
+  // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
+  field: {
+    dropzone: "Letakkan berkas atau klik untuk unggah",
+    uploading: "Mengunggah…",
+    uploadFailed: "Gagal mengunggah",
+  },
   // Pesan error API generik — dipetakan dari `withErrorEnvelope` (src/lib/api/handler.ts).
   errors: {
     badRequest: "Permintaan tidak valid",
