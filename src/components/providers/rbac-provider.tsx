@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { hasPermission, type Permission } from "@/config/rbac";
 import { setAuthTokenProvider } from "@/lib/api/auth";
-import { getToken, getSessionPermissions, clearSession } from "@/lib/session";
+import { getToken, clearSession } from "@/lib/session";
 
 type RbacContextValue = {
   permissions: string[];
@@ -16,9 +16,10 @@ type RbacContextValue = {
 const RbacContext = React.createContext<RbacContextValue | null>(null);
 
 /**
- * Menyediakan permission sesi (dari /auth/login, disimpan di cookie) ke seluruh
- * UI. `initialPermissions` di-seed dari cookie di server (lihat `(app)/layout.tsx`)
- * agar konsisten dengan `proxy.ts`. Juga menyambungkan token JWT ke apiClient.
+ * Menyediakan permission sesi ke seluruh UI. `initialPermissions` di-seed dari
+ * cookie di server (`(app)/layout.tsx`) — setelah login, `router.refresh()`
+ * membuat server membaca cookie baru → prop ini ikut ter-update. Juga
+ * menyambungkan token JWT ke apiClient.
  */
 export function RbacProvider({
   initialPermissions,
@@ -28,26 +29,25 @@ export function RbacProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [permissions, setPermissions] = React.useState<string[]>(initialPermissions);
 
   React.useEffect(() => {
     // apiClient (client) mengirim Bearer dari cookie token pada tiap request.
     setAuthTokenProvider(() => getToken());
-    // Sinkronkan dari cookie (mis. sesaat setelah login di tab yang sama).
-    const fromCookie = getSessionPermissions();
-    if (fromCookie.length) setPermissions(fromCookie);
   }, []);
 
   const logout = React.useCallback(() => {
     clearSession();
-    setPermissions([]);
     router.push("/login");
     router.refresh();
   }, [router]);
 
   const value = React.useMemo<RbacContextValue>(
-    () => ({ permissions, can: (permission) => hasPermission(permissions, permission), logout }),
-    [permissions, logout],
+    () => ({
+      permissions: initialPermissions,
+      can: (permission) => hasPermission(initialPermissions, permission),
+      logout,
+    }),
+    [initialPermissions, logout],
   );
 
   return <RbacContext.Provider value={value}>{children}</RbacContext.Provider>;
