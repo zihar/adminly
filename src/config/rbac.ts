@@ -14,20 +14,20 @@ import { allResources } from "@/config/resources/index";
 export const ROLES = ["Admin", "Editor", "Viewer"] as const;
 export type Role = (typeof ROLES)[number];
 
+// Permission non-resource eksplisit + pola resource `<name>:<aksi>` (template-literal)
+// sehingga tiap resource F1 tak perlu didaftarkan manual ke union.
+type ResourcePermission =
+  | `${string}:view`
+  | `${string}:create`
+  | `${string}:update`
+  | `${string}:delete`
+  | `${string}:approve`;
 export type Permission =
   | "dashboard:view"
   | "analytics:view"
   | "users:manage"
   | "settings:manage"
-  | "items:view"
-  | "items:create"
-  | "items:update"
-  | "items:delete"
-  | "items:approve"
-  | "agama:view"
-  | "agama:create"
-  | "agama:update"
-  | "agama:delete";
+  | ResourcePermission;
 
 /** Permission yang dimiliki tiap role. Admin = superset. */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -59,8 +59,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   Viewer: ["dashboard:view", "items:view", "agama:view"],
 };
 
-/** Apakah `role` punya `permission`? */
+/** Apakah `role` punya `permission`? Admin = superadmin (semua). */
 export function can(role: Role, permission: Permission): boolean {
+  if (role === "Admin") return true;
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
 
