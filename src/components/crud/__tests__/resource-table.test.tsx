@@ -93,6 +93,12 @@ let defWorkflow: ResourceDef;
 // mentah), termasuk fallback relation ke nilai mentah saat `<field>_label`
 // tak ada di baris.
 let defRenderers: ResourceDef;
+// Def khusus test kontrol filter (Task 2 Filter UI): mendeklarasikan
+// `list.filters: ["prioritas"]` + field form `prioritas` bertipe `select`
+// dgn `options` statis — memverifikasi `ResourceTable` merender dropdown
+// filter (All + opsi), menyinkronnya ke URL (nuqs), dan mengirim
+// `filter[prioritas]=<value>` pada request list sungguhan (lewat MSW).
+let defFiltered: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -185,6 +191,29 @@ beforeAll(async () => {
       schema: z.object({ nama: z.string() }),
       layout: [{ tabKey: "umum", fields: ["nama"] }],
       fields: { nama: { type: "text" } },
+    },
+  });
+  defFiltered = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
+    list: { perPage: 10, filters: ["prioritas"] },
+    form: {
+      schema: z.object({ nama: z.string(), prioritas: z.string().optional() }),
+      layout: [{ tabKey: "umum", fields: ["nama", "prioritas"] }],
+      fields: {
+        nama: { type: "text" },
+        prioritas: {
+          type: "select",
+          labelKey: "items.prioritas",
+          options: [
+            { value: "low", label: "Low" },
+            { value: "high", label: "High" },
+          ],
+        },
+      },
     },
   });
 });
@@ -717,5 +746,67 @@ describe("ResourceTable", () => {
     await waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to export data"));
     expect(downloadBlob).not.toHaveBeenCalled();
     errorSpy.mockRestore();
+  });
+
+  it("merender dropdown filter (All + opsi statis field) utk tiap `def.list.filters`, memilih opsi mengirim `filter[prioritas]=<value>` (URL+request sungguhan) dan menyempitkan hasil, memilih All menghapusnya lagi", async () => {
+    const capturedSearches: URLSearchParams[] = [];
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        capturedSearches.push(url.searchParams);
+        const filterPrioritas = url.searchParams.get("filter[prioritas]");
+        const all = [
+          { id: "1", nama: "Alpha", prioritas: "low" },
+          { id: "2", nama: "Beta", prioritas: "high" },
+        ];
+        const rows = filterPrioritas ? all.filter((r) => r.prioritas === filterPrioritas) : all;
+        return HttpResponse.json({
+          data: rows,
+          meta: { total: rows.length, page: 1, per_page: 10 },
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    wrap(<ResourceTable def={defFiltered} />, { onUrlUpdate });
+    await screen.findByText("Alpha");
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+
+    // Dropdown filter di-label via `resolveLabel(t, meta.labelKey)` ("items.prioritas" -> "Priority").
+    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    // Opsi "All" (t.common.all) + opsi statis field (Low/High).
+    expect(within(filterSelect).getByRole("option", { name: "All" })).toBeInTheDocument();
+    expect(within(filterSelect).getByRole("option", { name: "Low" })).toBeInTheDocument();
+    expect(within(filterSelect).getByRole("option", { name: "High" })).toBeInTheDocument();
+
+    await user.selectOptions(filterSelect, "high");
+
+    await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument());
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    const filteredSearch = capturedSearches.at(-1);
+    expect(filteredSearch?.get("filter[prioritas]")).toBe("high");
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("filter_prioritas=high");
+    });
+
+    // Pilih "All" lagi -> filter dihapus dari URL & request, kedua baris kembali.
+    await user.selectOptions(filterSelect, "");
+
+    await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    const clearedSearch = capturedSearches.at(-1);
+    expect(clearedSearch?.has("filter[prioritas]")).toBe(false);
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).not.toContain("filter_prioritas");
+    });
+  });
+
+  it("resource tanpa `def.list.filters` TIDAK merender dropdown filter apa pun", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    expect(screen.queryByLabelText("Priority")).not.toBeInTheDocument();
   });
 });

@@ -27,6 +27,9 @@ export const id: Dictionary = {
     exportCsv: "Ekspor sebagai CSV",
     exportPdf: "Ekspor sebagai PDF",
     exportFailed: "Gagal mengekspor data",
+    // Opsi "semua" pada dropdown filter kolom (Filter UI Task 2) — mengosongkan
+    // filter field terkait.
+    all: "Semua",
   },
   // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
   field: {

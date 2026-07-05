@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Can } from "@/components/auth/can";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
+import { getResource } from "@/config/resources/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,62 @@ const EXPORT_PAGE_SIZE = 10000;
 
 type Row = Record<string, unknown>;
 
+// Key nuqs per field filter — prefix `filter_` (BUKAN bentuk bracket
+// `filter[x]`) supaya tetap valid sbg satu segmen query-string biasa; nilai
+// ini dipetakan ke `ListParams.filters` (bentuk `filter[x]=v` di request
+// sungguhan, lihat `buildListSearchParams`) HANYA saat dikirim ke backend.
+function filterKey(field: string): string {
+  return `filter_${field}`;
+}
+
+/**
+ * Kontrol filter satu field, dipisah dari `ResourceTable` sbg komponen anak
+ * yang stabil per field — WAJIB, supaya hook `useOptions` (dipakai filter
+ * `optionsFrom`/async-select) dipanggil di top level komponennya sendiri,
+ * bukan di dalam `.map` induk (rules-of-hooks: hook tak boleh dipanggil di
+ * loop/kondisi).
+ */
+function ResourceFilter({
+  def,
+  field,
+  value,
+  onChange,
+}: {
+  def: ResourceDef;
+  field: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const { t } = useI18n();
+  const meta = def.form.fields[field];
+  const label = resolveLabel(t, meta?.labelKey ?? field);
+  const source = meta?.optionsFrom ? getResource(meta.optionsFrom) : undefined;
+  // Sama seperti pola `AsyncSelectField`: hook tetap dipanggil di top level
+  // walau `source` bisa `undefined` (field filter statis) — `useOptions`
+  // sendiri yang men-skip fetch lewat `enabled` saat tak relevan.
+  const asyncOptions = source?.api.useOptions({});
+  const options: { value: string | number; label: string }[] =
+    meta?.options ?? asyncOptions?.data ?? [];
+
+  return (
+    <label className="flex items-center gap-1 text-sm">
+      {label}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="border rounded px-2 py-1"
+      >
+        <option value="">{t.common.all}</option>
+        {options.map((o) => (
+          <option key={String(o.value)} value={String(o.value)}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 /**
  * Tabel data generik untuk satu resource CRUD.
  *
@@ -75,6 +132,23 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
   const perPage = initial.perPage;
   const primaryKey = def.primaryKey ?? "id";
 
+  // Filter per-kolom (Filter UI Task 2): satu param nuqs (`filter_<field>`)
+  // per field yang dideklarasikan `def.list.filters`. Dipanggil lewat
+  // `useQueryStates` TERPISAH dari state page/q/sort/order di atas (BUKAN
+  // digabung ke satu objek config) — menghindari percampuran tipe parser
+  // number (`page`) dgn parser string dinamis dlm satu literal objek yang
+  // bikin TypeScript memaksakan index signature seragam. Config-nya sendiri
+  // di-memo (stabil selama daftar field filter resource tak berubah) supaya
+  // `useQueryStates` tak menerima objek baru tiap render.
+  const filterFields = def.list?.filters ?? [];
+  const filterParsersConfig = React.useMemo(
+    () =>
+      Object.fromEntries(filterFields.map((f) => [filterKey(f), parseAsString.withDefault("")])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- key stabil by-value (join), bukan by-reference
+    [filterFields.join(",")],
+  );
+  const [filterState, setFilterState] = useQueryStates(filterParsersConfig);
+
   // Suntik scope global (mis. `workspace`) ke query list HANYA jika resource
   // mendeklarasikan `def.scope` — resource tanpa itu tak terpengaruh.
   // `undefined`/`""` di-drop (samakan dgn `initialListParams`), dan hasil
@@ -93,16 +167,27 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
     ? Object.fromEntries(scopedEntries)
     : undefined;
 
-  // Params list "aktif" (page/perPage/q/sort/order/scope) — SATU objek yang
-  // sama dipakai `useList` (paginasi tampilan) DAN ekspor (Task 4, hanya
-  // `page`/`perPage` di-override) supaya hasil ekspor selalu konsisten dgn
-  // filter/sort/scope yang sedang terlihat di layar.
+  // Nilai filter aktif (non-kosong saja) — sama alasannya dgn `scopedFilter`
+  // di atas: kalau selalu jadi `{}` (bukan `undefined`) saat tak ada filter
+  // aktif, query key `useList` di render pertama beda dari `initialListParams`
+  // (prefetch RSC, yang meng-omit `filters` sepenuhnya) → cache prefetch
+  // terbuang & skeleton berkedip.
+  const activeFilters = Object.fromEntries(
+    filterFields.map((f) => [f, filterState[filterKey(f)]]).filter(([, v]) => v),
+  );
+  const filters = Object.keys(activeFilters).length ? activeFilters : undefined;
+
+  // Params list "aktif" (page/perPage/q/sort/order/filters/scope) — SATU
+  // objek yang sama dipakai `useList` (paginasi tampilan) DAN ekspor (Task 4,
+  // hanya `page`/`perPage` di-override) supaya hasil ekspor selalu konsisten
+  // dgn filter/sort/scope yang sedang terlihat di layar.
   const listParams: ListParams = {
     page: state.page,
     perPage,
     q: state.q || undefined,
     sort: state.sort || undefined,
     order: state.order === "desc" ? "desc" : "asc",
+    filters,
     scope: scopedFilter,
   };
   const query = def.api.useList(listParams);
@@ -266,6 +351,15 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           }}
           className="max-w-sm"
         />
+        {filterFields.map((field) => (
+          <ResourceFilter
+            key={field}
+            def={def}
+            field={field}
+            value={filterState[filterKey(field)] ?? ""}
+            onChange={(value) => void setFilterState({ [filterKey(field)]: value || null })}
+          />
+        ))}
         <Can permission={def.permissions.create}>
           <Button render={<Link href={`/${def.name}/create`} />}>{t.common.create}</Button>
         </Can>

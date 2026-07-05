@@ -28,6 +28,9 @@ export const en = {
     exportCsv: "Export as CSV",
     exportPdf: "Export as PDF",
     exportFailed: "Failed to export data",
+    // Opsi "semua" pada dropdown filter kolom (Filter UI Task 2) — mengosongkan
+    // filter field terkait.
+    all: "All",
   },
   // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
   field: {
