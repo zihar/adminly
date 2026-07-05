@@ -1,34 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { {{camelCase name}}Store } from "@/app/api/{{name}}/_data";
+import { withErrorEnvelope, notFound } from "@/lib/api/handler";
+import { {{camelCase name}}Schema } from "@/config/resources/{{name}}";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
+// Tipe ctx inline (bukan `RouteContext<...>`): tipe global RouteContext baru
+// tersedia setelah `next build`/`dev` men-generate `.next/types`, sehingga
+// resource yang baru di-scaffold akan gagal `tsc --noEmit` sampai di-build.
+// Bentuk inline ini langsung kompilasi & kompatibel dgn RouteHandler<C>.
+type Ctx = { params: Promise<{ id: string }> };
+
+export const GET = withErrorEnvelope(async (_req: NextRequest, ctx?: Ctx) => {
+  const { id } = await ctx!.params;
   const row = {{camelCase name}}Store.get(id);
-  return row
-    ? NextResponse.json(row)
-    : NextResponse.json({ message: "Tidak ditemukan" }, { status: 404 });
-}
+  if (!row) throw notFound();
+  return NextResponse.json(row);
+});
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  const row = {{camelCase name}}Store.update(id, await req.json());
-  return row
-    ? NextResponse.json(row)
-    : NextResponse.json({ message: "Tidak ditemukan" }, { status: 404 });
-}
+export const PUT = withErrorEnvelope(async (req: NextRequest, ctx?: Ctx) => {
+  const { id } = await ctx!.params;
+  // Validasi body dgn Zod — invalid → ZodError → 422 lewat withErrorEnvelope.
+  const body = {{camelCase name}}Schema.parse(await req.json());
+  const row = {{camelCase name}}Store.update(id, body);
+  if (!row) throw notFound();
+  return NextResponse.json(row);
+});
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
+export const DELETE = withErrorEnvelope(async (_req: NextRequest, ctx?: Ctx) => {
+  const { id } = await ctx!.params;
   {{camelCase name}}Store.remove(id);
   return new NextResponse(null, { status: 204 });
-}
+});
