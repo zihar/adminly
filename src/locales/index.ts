@@ -41,7 +41,39 @@ export function resolveLabel(dict: Dictionary, key: string): string {
  *   `resolveLabel(t, "<name>.title")`, konsisten dgn pola label resource
  *   lain (`resource-page.tsx`, dst.).
  */
+/** Label tampilan resource Edelweiss (nav sidebar & breadcrumb). */
+const RESOURCE_LABELS: Record<string, string> = {
+  agama: "Agama",
+  bahasarumah: "Bahasa Rumah",
+  kewarganegaraan: "Kewarganegaraan",
+  pekerjaan: "Pekerjaan",
+  pendidikan: "Pendidikan",
+  penilaian: "Penilaian",
+  situasibelajar: "Situasi Belajar",
+  slider: "Slider",
+  sumber: "Sumber Silabus",
+  semester: "Semester",
+  unit: "Unit",
+  jenisprogram: "Jenis Program",
+  tahunajaran: "Tahun Ajaran",
+  program: "Program",
+  provinsi: "Provinsi",
+  kabupaten: "Kabupaten",
+  kecamatan: "Kecamatan",
+  kelurahan: "Kelurahan",
+  kelas: "Kelas",
+  jambelajar: "Jam Belajar",
+  menumobile: "Menu Mobile",
+  parameter: "Parameter",
+  paramjabatan: "Parameter Jabatan",
+  silabusindikator: "Silabus Indikator",
+  roles: "Role",
+  staff: "Staff",
+  users: "Pengguna",
+};
+
 export function resolveNavLabel(dict: Dictionary, key: string): string {
   if (key in dict.nav) return dict.nav[key as keyof Dictionary["nav"]];
+  if (key in RESOURCE_LABELS) return RESOURCE_LABELS[key];
   return resolveLabel(dict, `${key}.title`);
 }

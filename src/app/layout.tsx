@@ -21,11 +21,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Adminly",
-    template: "%s · Adminly",
+    default: "Edelweiss",
+    template: "%s · Edelweiss",
   },
-  description:
-    "Generic internal-tool dashboard starter — fork it for each new project.",
+  description: "Sistem informasi sekolah Edelweiss",
 };
 
 export default async function RootLayout({

@@ -73,7 +73,7 @@ export const id: Dictionary = {
     failed: "Gagal mengubah status",
   },
   app: {
-    tagline: "Dashboard starter",
+    tagline: "Sistem Sekolah",
     sidebarMenu: "Menu",
     description:
       "Starter dashboard generik untuk internal tool — siap di-fork tiap project baru.",

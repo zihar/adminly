@@ -77,7 +77,7 @@ export const en = {
     failed: "Failed to change status",
   },
   app: {
-    tagline: "Dashboard starter",
+    tagline: "School system",
     sidebarMenu: "Menu",
     description:
       "Generic internal-tool dashboard starter — fork it for each new project.",

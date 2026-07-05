@@ -15,9 +15,8 @@ import { allResources } from "@/config/resources/index";
  * starter ini untuk project baru — selebihnya UI ikut menyesuaikan.
  */
 export const siteConfig = {
-  name: "Adminly",
-  description:
-    "Generic internal-tool dashboard starter — fork it for each new project.",
+  name: "Edelweiss",
+  description: "Sistem informasi sekolah Edelweiss",
 };
 
 /** Kunci label navigasi statis → dicocokkan ke kamus i18n (`t.nav[key]`). */
