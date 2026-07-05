@@ -228,7 +228,34 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         header: resolveLabel(t, c.labelKey),
         field: c.field,
       }));
-      const exportRows = rows as Row[];
+      // Kolom `render:"relation"` diekspor sbg LABEL (bukan id mentah) —
+      // Map id->label per resource sumber di-fetch SEKALI (paralel) lewat
+      // `optionsQueryOptions` (Task 1), cache-nya sama dgn yang dipakai
+      // `RelationCell` di tabel (Task 2), jadi biasanya sudah warm.
+      const relationCols = def.columns.filter((c) => c.render === "relation" && c.relation);
+      const relMaps: Record<string, Map<string, string>> = {};
+      await Promise.all(
+        relationCols.map(async (c) => {
+          const src = getResource(c.relation!);
+          if (!src) return;
+          const opts = await qc.fetchQuery(src.api.optionsQueryOptions({}));
+          relMaps[c.field] = new Map(opts.map((o) => [String(o.value), o.label]));
+        }),
+      );
+      const exportRows = (rows as Row[]).map((row) => {
+        if (relationCols.length === 0) return row;
+        const copy: Row = { ...row };
+        for (const c of relationCols) {
+          // Denormalisasi `<field>_label` di baris menang (sama prioritas dgn
+          // `RelationCell`), lalu Map hasil options, terakhir fallback nilai mentah.
+          const denorm = row[`${c.field}_label`];
+          copy[c.field] =
+            denorm !== undefined && denorm !== null
+              ? String(denorm)
+              : relMaps[c.field]?.get(String(row[c.field])) ?? row[c.field];
+        }
+        return copy;
+      });
       if (kind === "csv") {
         downloadBlob(`${def.name}.csv`, "text/csv;charset=utf-8", toCsv(cols, exportRows));
       } else {

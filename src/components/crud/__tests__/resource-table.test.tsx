@@ -787,6 +787,41 @@ describe("ResourceTable", () => {
     expect(screen.getByText("tak-ada")).toBeInTheDocument();
   });
 
+  it("klik Export -> CSV me-resolve kolom `render:\"relation\"` ke label (BUKAN id mentah), memakai `<field>_label` denormalisasi bila ada (shared options cache Task 1)", async () => {
+    // Baris 1: `regionId` TANPA `_label` -> hrs di-resolve lewat
+    // `optionsQueryOptions("regions")` (fetch `/api/regions/options`, sama
+    // handler yang dipakai tes wiring `RelationCell` di atas). Baris 2: PUNYA
+    // `regionId_label` -> denorm menang, TIDAK boleh jatuh ke hasil fetch
+    // options (yang notabene tak punya entry utk "r2").
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", regionId: "r1" },
+            { id: "2", regionId: "r2", regionId_label: "Sumatra Utara" },
+          ],
+          meta: { total: 2, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={defRelation} />);
+    // Tunggu tabel selesai resolve relation (Task 2) dulu sblm klik ekspor.
+    await screen.findByText("Jawa Barat");
+
+    await user.click(screen.getByRole("button", { name: "Export" }));
+    const csvItem = await screen.findByRole("menuitem", { name: "Export as CSV" });
+    await user.click(csvItem);
+
+    await waitFor(() => expect(downloadBlob).toHaveBeenCalledTimes(1));
+    const [, , content] = vi.mocked(downloadBlob).mock.calls[0];
+    expect(String(content)).toContain("Jawa Barat");
+    expect(String(content)).not.toContain("r1");
+    expect(String(content)).toContain("Sumatra Utara");
+    expect(String(content)).not.toContain("r2");
+  });
+
   it("klik Export -> CSV mengambil SEMUA baris (perPage besar) lalu memanggil downloadBlob dgn CSV berisi header+nilai baris", async () => {
     // Tangkap querystring request `/api/items` yang dipicu ekspor — harus
     // membawa `per_page` besar & `page=1` (fetch semua baris cocok filter),
