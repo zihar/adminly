@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Activity, DollarSign, Users, CreditCard } from "lucide-react";
+import { CalendarCheck, GraduationCap, UserPlus, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -27,10 +27,10 @@ export default async function DashboardPage() {
       <PageHeader title={t.dashboard.title} description={t.dashboard.description} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title={s.revenue.title} value={s.revenue.value} delta={12.5} hint={s.revenue.hint} icon={DollarSign} />
-        <StatCard title={s.activeUsers.title} value={s.activeUsers.value} delta={5.1} hint={s.activeUsers.hint} icon={Users} />
-        <StatCard title={s.transactions.title} value={s.transactions.value} delta={-2.4} hint={s.transactions.hint} icon={CreditCard} />
-        <StatCard title={s.uptime.title} value={s.uptime.value} delta={0.1} hint={s.uptime.hint} icon={Activity} />
+        <StatCard title={s.totalPendaftar.title} value={s.totalPendaftar.value} delta={12.5} hint={s.totalPendaftar.hint} icon={UserPlus} tone="blue" />
+        <StatCard title={s.totalSiswa.title} value={s.totalSiswa.value} delta={5.1} hint={s.totalSiswa.hint} icon={GraduationCap} tone="green" />
+        <StatCard title={s.totalStaff.title} value={s.totalStaff.value} delta={2.4} hint={s.totalStaff.hint} icon={Users} tone="purple" />
+        <StatCard title={s.kehadiran.title} value={s.kehadiran.value} delta={0.3} hint={s.kehadiran.hint} icon={CalendarCheck} tone="amber" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
