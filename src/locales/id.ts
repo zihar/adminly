@@ -37,6 +37,11 @@ export const id: Dictionary = {
   items: {
     title: "Item",
     nama: "Nama",
+    detailTab: "Detail",
+    catatan: "Catatan",
+    tanggal: "Tanggal",
+    aktif: "Aktif",
+    prioritas: "Prioritas",
     regionTab: "Wilayah",
     region: "Wilayah",
     country: "Negara",

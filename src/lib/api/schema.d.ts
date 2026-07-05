@@ -282,6 +282,10 @@ export interface components {
             state?: string;
             city?: string;
             status?: string;
+            catatan?: string;
+            tanggal?: string;
+            aktif?: boolean;
+            prioritas?: string;
         };
         NewItem: {
             nama: string;
@@ -289,6 +293,10 @@ export interface components {
             state?: string;
             city?: string;
             status?: string;
+            catatan?: string;
+            tanggal?: string;
+            aktif?: boolean;
+            prioritas?: string;
         };
         ItemList: {
             data: components["schemas"]["Item"][];

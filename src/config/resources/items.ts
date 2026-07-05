@@ -16,6 +16,14 @@ export const itemSchema = z.object({
   // Status workflow (draft/submitted/approved/rejected) — opsional di form,
   // diisi/diubah lewat endpoint transisi, bukan lewat form biasa.
   status: z.string().optional(),
+  // Demo field baru (Task 6) — menunjukkan tipe textarea/date/checkbox/select
+  // dipakai nyata di form `items`. Semua opsional, ditaruh di tab terpisah
+  // ("items.detailTab") supaya tak menambah <textbox> di tab default "umum"
+  // (jaga e2e existing yang mengandalkan satu-satunya textbox = `nama`).
+  catatan: z.string().optional(),
+  tanggal: z.string().optional(),
+  aktif: z.boolean().optional(),
+  prioritas: z.string().optional(),
 });
 
 export const itemsResource = defineResource<Item, NewItem, NewItem>({
@@ -28,6 +36,9 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
     // Kolom status workflow (Task 7) — dirender sebagai badge oleh `resource-table`
     // lewat lookup `def.workflow.statuses` (lihat komentar `render === "badge"` di sana).
     { field: "status", labelKey: "workflow.statusHeader", render: "badge" },
+    // Demo kolom renderer baru (Task 6) — `render:"boolean"` menampilkan
+    // label i18n common.yes/no alih-alih true/false mentah.
+    { field: "aktif", labelKey: "items.aktif", render: "boolean" },
   ],
   list: { defaultSort: "nama", perPage: 10 },
   // Contoh demo: `items` ikut scope global `workspace` supaya list-nya
@@ -60,10 +71,26 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
     // level (`country`/`state`/`city`) mendaftarkan field RHF-nya sendiri.
     layout: [
       { tabKey: "umum", fields: ["nama"] },
+      // Tab terpisah untuk demo field baru (Task 6): textarea/date/checkbox/
+      // select — lihat komentar `itemSchema` di atas soal alasan pemisahan tab.
+      { tabKey: "items.detailTab", fields: ["catatan", "tanggal", "aktif", "prioritas"] },
       { tabKey: "items.regionTab", fields: ["region"] },
     ],
     fields: {
       nama: { type: "text", labelKey: "items.nama" },
+      catatan: { type: "textarea", labelKey: "items.catatan" },
+      tanggal: { type: "date", labelKey: "items.tanggal" },
+      aktif: { type: "checkbox", labelKey: "items.aktif" },
+      prioritas: {
+        type: "select",
+        labelKey: "items.prioritas",
+        // Opsi statis (label sudah final, lihat komentar `select-field.tsx`).
+        options: [
+          { value: "low", label: "Low" },
+          { value: "medium", label: "Medium" },
+          { value: "high", label: "High" },
+        ],
+      },
       region: {
         type: "cascade",
         labelKey: "items.region",

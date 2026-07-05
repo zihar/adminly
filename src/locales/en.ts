@@ -38,6 +38,12 @@ export const en = {
   items: {
     title: "Items",
     nama: "Name",
+    // Demo field baru (Task 6): textarea/date/checkbox/select generik.
+    detailTab: "Details",
+    catatan: "Notes",
+    tanggal: "Date",
+    aktif: "Active",
+    prioritas: "Priority",
     // Demo field `cascade` (Task 6/7): region berjenjang country → state → city.
     regionTab: "Region",
     region: "Region",

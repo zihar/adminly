@@ -136,6 +136,12 @@ components:
         city: { type: string }
         # Demo workflow approval (P3): draft -> submitted -> approved/rejected.
         status: { type: string }
+        # Demo field baru (Task 6): textarea/date/checkbox/select generik —
+        # menunjukkan tiap tipe field baru dipakai nyata di form `items`.
+        catatan: { type: string }
+        tanggal: { type: string }
+        aktif: { type: boolean }
+        prioritas: { type: string }
     NewItem:
       type: object
       required: [nama]
@@ -145,6 +151,10 @@ components:
         state: { type: string }
         city: { type: string }
         status: { type: string }
+        catatan: { type: string }
+        tanggal: { type: string }
+        aktif: { type: boolean }
+        prioritas: { type: string }
     ItemList:
       type: object
       required: [data, meta]
