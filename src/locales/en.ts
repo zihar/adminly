@@ -6,6 +6,7 @@ export const en = {
   common: {
     save: "Save",
     cancel: "Cancel",
+    confirm: "Confirm",
     create: "Create",
     edit: "Edit",
     actions: "Actions",
@@ -90,6 +91,10 @@ export const en = {
     // supaya satu key cukup untuk submit/approve/reject apa pun).
     done: "Done",
     failed: "Failed to change status",
+    // Dialog alasan (Task 1) — dipakai transisi dgn `requiresReason: true`.
+    reasonLabel: "Reason",
+    reasonPlaceholder: "Enter a reason…",
+    reasonRequired: "Reason is required",
   },
   app: {
     tagline: "Dashboard starter",

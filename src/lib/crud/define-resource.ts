@@ -61,6 +61,7 @@ export type WorkflowTransition = {
   permission: Permission; // menjaga tombol (client) — harus ada di union Permission
   labelKey: string; // label tombol i18n
   variant?: "default" | "outline" | "destructive";
+  requiresReason?: boolean; // wajib isi alasan lewat dialog sebelum transisi dieksekusi
 };
 
 /** Definisi workflow deklaratif utk satu resource (opsional). */

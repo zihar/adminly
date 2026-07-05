@@ -5,6 +5,7 @@ export const id: Dictionary = {
   common: {
     save: "Simpan",
     cancel: "Batal",
+    confirm: "Konfirmasi",
     create: "Buat",
     edit: "Edit",
     actions: "Aksi",
@@ -86,6 +87,10 @@ export const id: Dictionary = {
     // supaya satu key cukup untuk submit/approve/reject apa pun).
     done: "Berhasil",
     failed: "Gagal mengubah status",
+    // Dialog alasan (Task 1) — dipakai transisi dgn `requiresReason: true`.
+    reasonLabel: "Alasan",
+    reasonPlaceholder: "Masukkan alasan…",
+    reasonRequired: "Alasan wajib diisi",
   },
   app: {
     tagline: "Dashboard starter",
