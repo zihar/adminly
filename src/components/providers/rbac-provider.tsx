@@ -15,6 +15,11 @@ type RbacContextValue = {
 
 const RbacContext = React.createContext<RbacContextValue | null>(null);
 
+// Set saat module-load (client): apiClient membawa Bearer dari cookie SEBELUM
+// fetch pertama → hindari race 401→/login. Di server getToken()=null (SSR
+// prefetch tanpa token → 401, tapi client refetch bawa token).
+setAuthTokenProvider(() => getToken());
+
 /**
  * Menyediakan permission sesi ke seluruh UI. `initialPermissions` di-seed dari
  * cookie di server (`(app)/layout.tsx`) — setelah login, `router.refresh()`
@@ -29,11 +34,6 @@ export function RbacProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-
-  React.useEffect(() => {
-    // apiClient (client) mengirim Bearer dari cookie token pada tiap request.
-    setAuthTokenProvider(() => getToken());
-  }, []);
 
   const logout = React.useCallback(() => {
     clearSession();
