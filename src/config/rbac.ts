@@ -23,7 +23,11 @@ export type Permission =
   | "items:create"
   | "items:update"
   | "items:delete"
-  | "items:approve";
+  | "items:approve"
+  | "agama:view"
+  | "agama:create"
+  | "agama:update"
+  | "agama:delete";
 
 /** Permission yang dimiliki tiap role. Admin = superset. */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -37,9 +41,22 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "items:update",
     "items:delete",
     "items:approve",
+    "agama:view",
+    "agama:create",
+    "agama:update",
+    "agama:delete",
   ],
-  Editor: ["dashboard:view", "analytics:view", "items:view", "items:create", "items:update"],
-  Viewer: ["dashboard:view", "items:view"],
+  Editor: [
+    "dashboard:view",
+    "analytics:view",
+    "items:view",
+    "items:create",
+    "items:update",
+    "agama:view",
+    "agama:create",
+    "agama:update",
+  ],
+  Viewer: ["dashboard:view", "items:view", "agama:view"],
 };
 
 /** Apakah `role` punya `permission`? */

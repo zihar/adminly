@@ -1,16 +1,13 @@
 import { registerResources } from "@/config/resources/index";
-import { itemsResource } from "@/config/resources/items";
-import { regionsResource } from "@/config/resources/regions";
+import { agamaResource } from "@/config/resources/agama";
 
 /**
- * Registrasi semua resource CRUD generik ke registry, sekali per proses
- * server. Dipanggil dari route dinamis `[resource]`/layout app — modul route
- * bisa dieksekusi berkali-kali dalam siklus hidup server yang sama, jadi
- * guard `done` mencegah `registerResources` melempar "Resource duplikat".
+ * Registrasi resource CRUD Edelweiss ke registry, sekali per proses server.
+ * Guard `done` mencegah "Resource duplikat" saat modul route dieksekusi ulang.
  */
 let done = false;
 export function ensureResourcesRegistered() {
   if (done) return;
-  registerResources([itemsResource, regionsResource]);
+  registerResources([agamaResource]);
   done = true;
 }

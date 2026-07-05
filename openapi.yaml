@@ -1,192 +1,1469 @@
 openapi: 3.1.0
 info:
-  title: Adminly API
-  version: 1.0.0
-  description: >-
-    Self-contained contract for the starter. Route Handlers under src/app/api
-    implement it against an in-memory store. Swap `servers.url` + the generated
-    schema for your real backend (Go/Huma, NestJS+Swagger, ...).
-servers:
-  - url: /api
+  title: Edelweiss API
+  version: 0.0.0
 paths:
-  /users:
+  /program:
     get:
-      operationId: listUsers
-      summary: List users
-      responses:
-        "200":
-          description: List of users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
-    post:
-      operationId: createUser
-      summary: Create a user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewUser"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-  /users/{id}:
-    delete:
-      operationId: deleteUser
-      summary: Delete a user
+      operationId: listProgram
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
       responses:
-        "204":
-          description: Deleted
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /items:
-    get:
-      parameters:
-        - { name: page, in: query, schema: { type: integer } }
-        - { name: per_page, in: query, schema: { type: integer } }
-        - { name: q, in: query, schema: { type: string } }
-      responses:
-        "200":
-          content: { application/json: { schema: { $ref: "#/components/schemas/ItemList" } } }
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ProgramList" } } } }
     post:
-      requestBody:
-        content: { application/json: { schema: { $ref: "#/components/schemas/NewItem" } } }
+      operationId: createProgram
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewProgram" } } } }
       responses:
-        "201":
-          content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } }
-        "422":
-          $ref: "#/components/responses/ValidationError"
-  /items/{id}:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Program" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /program/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
     get:
-      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
-      responses:
-        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } } }
-        "404":
-          $ref: "#/components/responses/NotFound"
+      operationId: getProgram
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Program" } } } } }
     put:
-      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
-      requestBody:
-        content: { application/json: { schema: { $ref: "#/components/schemas/NewItem" } } }
-      responses:
-        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Item" } } } }
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
+      operationId: updateProgram
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewProgram" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Program" } } } } }
     delete:
-      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      operationId: deleteProgram
       responses: { "204": { description: No Content } }
-  /items/bulk-delete:
+  /program/bulk-delete:
     post:
-      requestBody:
-        content: { application/json: { schema: { type: object, properties: { ids: { type: array, items: { type: string } } } } } }
+      operationId: bulkDeleteProgram
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
       responses: { "204": { description: No Content } }
-  /items/options:
+  /program/options:
     get:
-      parameters: [ { name: q, in: query, schema: { type: string } } ]
+      operationId: optionsProgram
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /tahunajaran:
+    get:
+      operationId: listTahunAjaran
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
       responses:
-        "200": { content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } }
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/TahunAjaranList" } } } }
+    post:
+      operationId: createTahunAjaran
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewTahunAjaran" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/TahunAjaran" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /tahunajaran/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getTahunAjaran
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/TahunAjaran" } } } } }
+    put:
+      operationId: updateTahunAjaran
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewTahunAjaran" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/TahunAjaran" } } } } }
+    delete:
+      operationId: deleteTahunAjaran
+      responses: { "204": { description: No Content } }
+  /tahunajaran/bulk-delete:
+    post:
+      operationId: bulkDeleteTahunAjaran
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /tahunajaran/options:
+    get:
+      operationId: optionsTahunAjaran
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /agama:
+    get:
+      operationId: listAgama
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AgamaList" } } } }
+    post:
+      operationId: createAgama
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewAgama" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Agama" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /agama/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getAgama
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Agama" } } } } }
+    put:
+      operationId: updateAgama
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewAgama" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Agama" } } } } }
+    delete:
+      operationId: deleteAgama
+      responses: { "204": { description: No Content } }
+  /agama/bulk-delete:
+    post:
+      operationId: bulkDeleteAgama
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /agama/options:
+    get:
+      operationId: optionsAgama
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /kewarganegaraan:
+    get:
+      operationId: listKewarganegaraan
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/KewarganegaraanList" } } } }
+    post:
+      operationId: createKewarganegaraan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKewarganegaraan" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Kewarganegaraan" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /kewarganegaraan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getKewarganegaraan
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kewarganegaraan" } } } } }
+    put:
+      operationId: updateKewarganegaraan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKewarganegaraan" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kewarganegaraan" } } } } }
+    delete:
+      operationId: deleteKewarganegaraan
+      responses: { "204": { description: No Content } }
+  /kewarganegaraan/bulk-delete:
+    post:
+      operationId: bulkDeleteKewarganegaraan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /kewarganegaraan/options:
+    get:
+      operationId: optionsKewarganegaraan
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /pekerjaan:
+    get:
+      operationId: listPekerjaan
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/PekerjaanList" } } } }
+    post:
+      operationId: createPekerjaan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewPekerjaan" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Pekerjaan" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /pekerjaan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getPekerjaan
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Pekerjaan" } } } } }
+    put:
+      operationId: updatePekerjaan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewPekerjaan" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Pekerjaan" } } } } }
+    delete:
+      operationId: deletePekerjaan
+      responses: { "204": { description: No Content } }
+  /pekerjaan/bulk-delete:
+    post:
+      operationId: bulkDeletePekerjaan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /pekerjaan/options:
+    get:
+      operationId: optionsPekerjaan
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /pendidikan:
+    get:
+      operationId: listPendidikan
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/PendidikanList" } } } }
+    post:
+      operationId: createPendidikan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewPendidikan" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Pendidikan" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /pendidikan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getPendidikan
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Pendidikan" } } } } }
+    put:
+      operationId: updatePendidikan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewPendidikan" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Pendidikan" } } } } }
+    delete:
+      operationId: deletePendidikan
+      responses: { "204": { description: No Content } }
+  /pendidikan/bulk-delete:
+    post:
+      operationId: bulkDeletePendidikan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /pendidikan/options:
+    get:
+      operationId: optionsPendidikan
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /bahasarumah:
+    get:
+      operationId: listBahasaRumah
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/BahasaRumahList" } } } }
+    post:
+      operationId: createBahasaRumah
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewBahasaRumah" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/BahasaRumah" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /bahasarumah/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getBahasaRumah
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/BahasaRumah" } } } } }
+    put:
+      operationId: updateBahasaRumah
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewBahasaRumah" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/BahasaRumah" } } } } }
+    delete:
+      operationId: deleteBahasaRumah
+      responses: { "204": { description: No Content } }
+  /bahasarumah/bulk-delete:
+    post:
+      operationId: bulkDeleteBahasaRumah
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /bahasarumah/options:
+    get:
+      operationId: optionsBahasaRumah
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /situasibelajar:
+    get:
+      operationId: listSituasiBelajar
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SituasiBelajarList" } } } }
+    post:
+      operationId: createSituasiBelajar
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSituasiBelajar" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/SituasiBelajar" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /situasibelajar/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getSituasiBelajar
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SituasiBelajar" } } } } }
+    put:
+      operationId: updateSituasiBelajar
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSituasiBelajar" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SituasiBelajar" } } } } }
+    delete:
+      operationId: deleteSituasiBelajar
+      responses: { "204": { description: No Content } }
+  /situasibelajar/bulk-delete:
+    post:
+      operationId: bulkDeleteSituasiBelajar
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /situasibelajar/options:
+    get:
+      operationId: optionsSituasiBelajar
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /unit:
+    get:
+      operationId: listUnit
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/UnitList" } } } }
+    post:
+      operationId: createUnit
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewUnit" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Unit" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /unit/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getUnit
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Unit" } } } } }
+    put:
+      operationId: updateUnit
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewUnit" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Unit" } } } } }
+    delete:
+      operationId: deleteUnit
+      responses: { "204": { description: No Content } }
+  /unit/bulk-delete:
+    post:
+      operationId: bulkDeleteUnit
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /unit/options:
+    get:
+      operationId: optionsUnit
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /jenisprogram:
+    get:
+      operationId: listJenisProgram
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/JenisProgramList" } } } }
+    post:
+      operationId: createJenisProgram
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewJenisProgram" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/JenisProgram" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /jenisprogram/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getJenisProgram
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/JenisProgram" } } } } }
+    put:
+      operationId: updateJenisProgram
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewJenisProgram" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/JenisProgram" } } } } }
+    delete:
+      operationId: deleteJenisProgram
+      responses: { "204": { description: No Content } }
+  /jenisprogram/bulk-delete:
+    post:
+      operationId: bulkDeleteJenisProgram
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /jenisprogram/options:
+    get:
+      operationId: optionsJenisProgram
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /kelas:
+    get:
+      operationId: listKelas
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/KelasList" } } } }
+    post:
+      operationId: createKelas
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKelas" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Kelas" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /kelas/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getKelas
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kelas" } } } } }
+    put:
+      operationId: updateKelas
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKelas" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kelas" } } } } }
+    delete:
+      operationId: deleteKelas
+      responses: { "204": { description: No Content } }
+  /kelas/bulk-delete:
+    post:
+      operationId: bulkDeleteKelas
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /kelas/options:
+    get:
+      operationId: optionsKelas
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /semester:
+    get:
+      operationId: listSemester
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SemesterList" } } } }
+    post:
+      operationId: createSemester
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSemester" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Semester" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /semester/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getSemester
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Semester" } } } } }
+    put:
+      operationId: updateSemester
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSemester" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Semester" } } } } }
+    delete:
+      operationId: deleteSemester
+      responses: { "204": { description: No Content } }
+  /semester/bulk-delete:
+    post:
+      operationId: bulkDeleteSemester
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /semester/options:
+    get:
+      operationId: optionsSemester
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /jambelajar:
+    get:
+      operationId: listJamBelajar
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/JamBelajarList" } } } }
+    post:
+      operationId: createJamBelajar
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewJamBelajar" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/JamBelajar" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /jambelajar/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getJamBelajar
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/JamBelajar" } } } } }
+    put:
+      operationId: updateJamBelajar
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewJamBelajar" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/JamBelajar" } } } } }
+    delete:
+      operationId: deleteJamBelajar
+      responses: { "204": { description: No Content } }
+  /jambelajar/bulk-delete:
+    post:
+      operationId: bulkDeleteJamBelajar
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /jambelajar/options:
+    get:
+      operationId: optionsJamBelajar
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /penilaian:
+    get:
+      operationId: listPenilaian
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/PenilaianList" } } } }
+    post:
+      operationId: createPenilaian
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewPenilaian" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Penilaian" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /penilaian/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getPenilaian
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Penilaian" } } } } }
+    put:
+      operationId: updatePenilaian
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewPenilaian" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Penilaian" } } } } }
+    delete:
+      operationId: deletePenilaian
+      responses: { "204": { description: No Content } }
+  /penilaian/bulk-delete:
+    post:
+      operationId: bulkDeletePenilaian
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /penilaian/options:
+    get:
+      operationId: optionsPenilaian
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /sumber:
+    get:
+      operationId: listSumber
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SumberList" } } } }
+    post:
+      operationId: createSumber
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSumber" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Sumber" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /sumber/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getSumber
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Sumber" } } } } }
+    put:
+      operationId: updateSumber
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSumber" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Sumber" } } } } }
+    delete:
+      operationId: deleteSumber
+      responses: { "204": { description: No Content } }
+  /sumber/bulk-delete:
+    post:
+      operationId: bulkDeleteSumber
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /sumber/options:
+    get:
+      operationId: optionsSumber
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /silabusindikator:
+    get:
+      operationId: listSilabusIndikator
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SilabusIndikatorList" } } } }
+    post:
+      operationId: createSilabusIndikator
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSilabusIndikator" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/SilabusIndikator" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /silabusindikator/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getSilabusIndikator
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SilabusIndikator" } } } } }
+    put:
+      operationId: updateSilabusIndikator
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSilabusIndikator" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SilabusIndikator" } } } } }
+    delete:
+      operationId: deleteSilabusIndikator
+      responses: { "204": { description: No Content } }
+  /silabusindikator/bulk-delete:
+    post:
+      operationId: bulkDeleteSilabusIndikator
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /silabusindikator/options:
+    get:
+      operationId: optionsSilabusIndikator
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /parameter:
+    get:
+      operationId: listParameter
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ParameterList" } } } }
+    post:
+      operationId: createParameter
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewParameter" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Parameter" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /parameter/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getParameter
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Parameter" } } } } }
+    put:
+      operationId: updateParameter
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewParameter" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Parameter" } } } } }
+    delete:
+      operationId: deleteParameter
+      responses: { "204": { description: No Content } }
+  /parameter/bulk-delete:
+    post:
+      operationId: bulkDeleteParameter
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /parameter/options:
+    get:
+      operationId: optionsParameter
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /paramjabatan:
+    get:
+      operationId: listParamJabatan
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ParamJabatanList" } } } }
+    post:
+      operationId: createParamJabatan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewParamJabatan" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/ParamJabatan" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /paramjabatan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getParamJabatan
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ParamJabatan" } } } } }
+    put:
+      operationId: updateParamJabatan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewParamJabatan" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ParamJabatan" } } } } }
+    delete:
+      operationId: deleteParamJabatan
+      responses: { "204": { description: No Content } }
+  /paramjabatan/bulk-delete:
+    post:
+      operationId: bulkDeleteParamJabatan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /paramjabatan/options:
+    get:
+      operationId: optionsParamJabatan
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /slider:
+    get:
+      operationId: listSlider
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SliderList" } } } }
+    post:
+      operationId: createSlider
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSlider" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Slider" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /slider/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getSlider
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Slider" } } } } }
+    put:
+      operationId: updateSlider
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewSlider" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Slider" } } } } }
+    delete:
+      operationId: deleteSlider
+      responses: { "204": { description: No Content } }
+  /slider/bulk-delete:
+    post:
+      operationId: bulkDeleteSlider
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /slider/options:
+    get:
+      operationId: optionsSlider
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /menumobile:
+    get:
+      operationId: listMenuMobile
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/MenuMobileList" } } } }
+    post:
+      operationId: createMenuMobile
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewMenuMobile" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/MenuMobile" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /menumobile/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getMenuMobile
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/MenuMobile" } } } } }
+    put:
+      operationId: updateMenuMobile
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewMenuMobile" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/MenuMobile" } } } } }
+    delete:
+      operationId: deleteMenuMobile
+      responses: { "204": { description: No Content } }
+  /menumobile/bulk-delete:
+    post:
+      operationId: bulkDeleteMenuMobile
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /menumobile/options:
+    get:
+      operationId: optionsMenuMobile
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /provinsi:
+    get:
+      operationId: listProvinsi
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/ProvinsiList" } } } }
+    post:
+      operationId: createProvinsi
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewProvinsi" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Provinsi" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /provinsi/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getProvinsi
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Provinsi" } } } } }
+    put:
+      operationId: updateProvinsi
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewProvinsi" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Provinsi" } } } } }
+    delete:
+      operationId: deleteProvinsi
+      responses: { "204": { description: No Content } }
+  /provinsi/bulk-delete:
+    post:
+      operationId: bulkDeleteProvinsi
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /provinsi/options:
+    get:
+      operationId: optionsProvinsi
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /kabupaten:
+    get:
+      operationId: listKabupaten
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/KabupatenList" } } } }
+    post:
+      operationId: createKabupaten
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKabupaten" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Kabupaten" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /kabupaten/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getKabupaten
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kabupaten" } } } } }
+    put:
+      operationId: updateKabupaten
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKabupaten" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kabupaten" } } } } }
+    delete:
+      operationId: deleteKabupaten
+      responses: { "204": { description: No Content } }
+  /kabupaten/bulk-delete:
+    post:
+      operationId: bulkDeleteKabupaten
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /kabupaten/options:
+    get:
+      operationId: optionsKabupaten
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /kecamatan:
+    get:
+      operationId: listKecamatan
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/KecamatanList" } } } }
+    post:
+      operationId: createKecamatan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKecamatan" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Kecamatan" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /kecamatan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getKecamatan
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kecamatan" } } } } }
+    put:
+      operationId: updateKecamatan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKecamatan" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kecamatan" } } } } }
+    delete:
+      operationId: deleteKecamatan
+      responses: { "204": { description: No Content } }
+  /kecamatan/bulk-delete:
+    post:
+      operationId: bulkDeleteKecamatan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /kecamatan/options:
+    get:
+      operationId: optionsKecamatan
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
+  /kelurahan:
+    get:
+      operationId: listKelurahan
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Q"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/KelurahanList" } } } }
+    post:
+      operationId: createKelurahan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKelurahan" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Kelurahan" } } } }
+        "422": { description: Validasi, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } } }
+  /kelurahan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get:
+      operationId: getKelurahan
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kelurahan" } } } } }
+    put:
+      operationId: updateKelurahan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/NewKelurahan" } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Kelurahan" } } } } }
+    delete:
+      operationId: deleteKelurahan
+      responses: { "204": { description: No Content } }
+  /kelurahan/bulk-delete:
+    post:
+      operationId: bulkDeleteKelurahan
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/BulkDeleteRequest" } } } }
+      responses: { "204": { description: No Content } }
+  /kelurahan/options:
+    get:
+      operationId: optionsKelurahan
+      parameters: [ { $ref: "#/components/parameters/Q" } ]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Option" } } } } } }
 components:
+  parameters:
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    PerPage: { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 20 } }
+    Sort: { name: sort, in: query, schema: { type: string } }
+    Order: { name: order, in: query, schema: { type: string, enum: [asc, desc], default: asc } }
+    Q: { name: q, in: query, schema: { type: string } }
   schemas:
-    User:
+    Meta:
       type: object
-      required: [id, name, email, role, status, createdAt]
+      required: [total, page, per_page]
       properties:
-        id: { type: string }
-        name: { type: string }
-        email: { type: string }
-        role: { type: string }
-        status:
-          type: string
-          enum: [active, invited, suspended]
-        createdAt: { type: string }
-    NewUser:
+        total: { type: integer }
+        page: { type: integer }
+        per_page: { type: integer }
+    ErrorEnvelope:
       type: object
-      required: [name, email, role]
+      required: [code, status, message]
       properties:
-        name: { type: string }
-        email: { type: string }
-        role: { type: string }
-    Item:
-      type: object
-      required: [id, nama]
-      properties:
-        id: { type: string }
-        nama: { type: string }
-        # Demo `cascade` field (Task 6/7): region berjenjang country → state →
-        # city, opsional — sumber opsinya resource generik `regions`.
-        country: { type: string }
-        state: { type: string }
-        city: { type: string }
-        # Demo workflow approval (P3): draft -> submitted -> approved/rejected.
-        status: { type: string }
-    NewItem:
-      type: object
-      required: [nama]
-      properties:
-        nama: { type: string }
-        country: { type: string }
-        state: { type: string }
-        city: { type: string }
-        status: { type: string }
-    ItemList:
-      type: object
-      required: [data, meta]
-      properties:
-        data: { type: array, items: { $ref: "#/components/schemas/Item" } }
-        meta:
+        code: { type: string, example: "99" }
+        status: { type: string, example: error }
+        message: { type: string }
+        errors:
           type: object
-          required: [total, page, per_page]
-          properties:
-            total: { type: integer }
-            page: { type: integer }
-            per_page: { type: integer }
+          additionalProperties: { type: array, items: { type: string } }
     Option:
       type: object
       required: [value, label]
       properties:
-        value: { type: string }
+        value: { oneOf: [ { type: string }, { type: integer } ] }
         label: { type: string }
-    Error:
+    BulkDeleteRequest:
       type: object
-      required: [code, status, message, data]
+      required: [ids]
       properties:
-        code: { type: integer }
-        status:
-          type: string
-          enum: [error]
-        message: { type: string }
-        data:
-          type: [object, "null"]
-          additionalProperties:
-            type: array
-            items: { type: string }
-  responses:
-    NotFound:
-      description: Not found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-    ValidationError:
-      description: Validation error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+        ids: { type: array, items: { oneOf: [ { type: string }, { type: integer } ] } }
+    AuditFields:
+      type: object
+      properties:
+        entry_by: { type: ["integer", "null"] }
+        entry_on: { type: ["string", "null"], format: date-time }
+        update_by: { type: ["integer", "null"] }
+        update_on: { type: ["string", "null"], format: date-time }
+    Program:
+      allOf:
+        - $ref: "#/components/schemas/AuditFields"
+        - type: object
+          required: [id, id_jenis_program, kd_program, program]
+          properties:
+            id: { type: integer }
+            id_jenis_program: { type: integer }
+            kd_program: { type: string }
+            program: { type: string }
+            is_dokumen: { type: boolean }
+            is_tertulis: { type: boolean }
+            is_psikologi: { type: boolean }
+            is_wawancara: { type: boolean }
+    NewProgram:
+      type: object
+      required: [id_jenis_program, kd_program, program]
+      properties:
+        id_jenis_program: { type: integer }
+        kd_program: { type: string }
+        program: { type: string }
+        is_dokumen: { type: boolean }
+        is_tertulis: { type: boolean }
+        is_psikologi: { type: boolean }
+        is_wawancara: { type: boolean }
+    ProgramList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Program" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    TahunAjaran:
+      type: object
+      required: [id, tahun_ajaran]
+      properties:
+        id: { type: integer }
+        tahun_ajaran: { type: string }
+        is_active: { type: boolean }
+    NewTahunAjaran:
+      type: object
+      required: [tahun_ajaran]
+      properties:
+        tahun_ajaran: { type: string }
+        is_active: { type: boolean }
+    TahunAjaranList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/TahunAjaran" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Agama:
+      type: object
+      required: [id, agama]
+      properties:
+        id: { type: integer }
+        agama: { type: string }
+    NewAgama:
+      type: object
+      required: [agama]
+      properties:
+        agama: { type: string }
+    AgamaList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Agama" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Kewarganegaraan:
+      type: object
+      required: [id, kewarganegaraan]
+      properties:
+        id: { type: integer }
+        kewarganegaraan: { type: string }
+    NewKewarganegaraan:
+      type: object
+      required: [kewarganegaraan]
+      properties:
+        kewarganegaraan: { type: string }
+    KewarganegaraanList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Kewarganegaraan" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Pekerjaan:
+      type: object
+      required: [id, pekerjaan]
+      properties:
+        id: { type: integer }
+        pekerjaan: { type: string }
+    NewPekerjaan:
+      type: object
+      required: [pekerjaan]
+      properties:
+        pekerjaan: { type: string }
+    PekerjaanList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Pekerjaan" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Pendidikan:
+      type: object
+      required: [id, pendidikan]
+      properties:
+        id: { type: integer }
+        pendidikan: { type: string }
+    NewPendidikan:
+      type: object
+      required: [pendidikan]
+      properties:
+        pendidikan: { type: string }
+    PendidikanList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Pendidikan" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    BahasaRumah:
+      type: object
+      required: [id, bahasa_rumah]
+      properties:
+        id: { type: integer }
+        bahasa_rumah: { type: string }
+    NewBahasaRumah:
+      type: object
+      required: [bahasa_rumah]
+      properties:
+        bahasa_rumah: { type: string }
+    BahasaRumahList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/BahasaRumah" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    SituasiBelajar:
+      type: object
+      required: [id, sts_belajar]
+      properties:
+        id: { type: integer }
+        sts_belajar: { type: string }
+    NewSituasiBelajar:
+      type: object
+      required: [sts_belajar]
+      properties:
+        sts_belajar: { type: string }
+    SituasiBelajarList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/SituasiBelajar" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Unit:
+      allOf:
+        - $ref: "#/components/schemas/AuditFields"
+        - type: object
+          required: [id, unit]
+          properties:
+            id: { type: integer }
+            unit: { type: string }
+    NewUnit:
+      type: object
+      required: [unit]
+      properties:
+        unit: { type: string }
+    UnitList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Unit" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    JenisProgram:
+      allOf:
+        - $ref: "#/components/schemas/AuditFields"
+        - type: object
+          required: [id, jenis_program]
+          properties:
+            id: { type: integer }
+            jenis_program: { type: string }
+    NewJenisProgram:
+      type: object
+      required: [jenis_program]
+      properties:
+        jenis_program: { type: string }
+    JenisProgramList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/JenisProgram" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Kelas:
+      allOf:
+        - $ref: "#/components/schemas/AuditFields"
+        - type: object
+          required: [id, id_unit, id_tahun_ajaran, nama_kelas]
+          properties:
+            id: { type: integer }
+            id_unit: { type: integer }
+            id_tahun_ajaran: { type: integer }
+            nama_kelas: { type: string }
+            tingkat: { type: ["integer", "null"] }
+            fase: { type: ["string", "null"] }
+    NewKelas:
+      type: object
+      required: [id_unit, id_tahun_ajaran, nama_kelas]
+      properties:
+        id_unit: { type: integer }
+        id_tahun_ajaran: { type: integer }
+        nama_kelas: { type: string }
+        tingkat: { type: ["integer", "null"] }
+        fase: { type: ["string", "null"] }
+    KelasList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Kelas" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Semester:
+      type: object
+      required: [id, semester]
+      properties:
+        id: { type: integer }
+        semester: { type: string }
+    NewSemester:
+      type: object
+      required: [semester]
+      properties:
+        semester: { type: string }
+    SemesterList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Semester" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    JamBelajar:
+      type: object
+      required: [id, jam_belajar, waktu_mulai, waktu_selesai]
+      properties:
+        id: { type: integer }
+        jam_belajar: { type: string }
+        waktu_mulai: { type: string, format: time }
+        waktu_selesai: { type: string, format: time }
+    NewJamBelajar:
+      type: object
+      required: [jam_belajar, waktu_mulai, waktu_selesai]
+      properties:
+        jam_belajar: { type: string }
+        waktu_mulai: { type: string, format: time }
+        waktu_selesai: { type: string, format: time }
+    JamBelajarList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/JamBelajar" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Penilaian:
+      type: object
+      required: [id, penilaian]
+      properties:
+        id: { type: integer }
+        penilaian: { type: string }
+    NewPenilaian:
+      type: object
+      required: [penilaian]
+      properties:
+        penilaian: { type: string }
+    PenilaianList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Penilaian" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Sumber:
+      type: object
+      required: [id, sumber]
+      properties:
+        id: { type: integer }
+        sumber: { type: string }
+    NewSumber:
+      type: object
+      required: [sumber]
+      properties:
+        sumber: { type: string }
+    SumberList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Sumber" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    SilabusIndikator:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
+        id_mapel: { type: ["integer", "null"] }
+        indikator: { type: ["string", "null"] }
+    NewSilabusIndikator:
+      type: object
+      properties:
+        id_mapel: { type: ["integer", "null"] }
+        indikator: { type: ["string", "null"] }
+    SilabusIndikatorList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/SilabusIndikator" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Parameter:
+      type: object
+      required: [id, kd_param, id_jns_param, nama_param]
+      properties:
+        id: { type: integer }
+        kd_param: { type: string }
+        id_jns_param: { type: string }
+        nama_param: { type: string }
+        value_1: { type: ["string", "null"] }
+        value_2: { type: ["string", "null"] }
+        value_3: { type: ["string", "null"] }
+        value_html: { type: ["string", "null"] }
+    NewParameter:
+      type: object
+      required: [kd_param, id_jns_param, nama_param]
+      properties:
+        kd_param: { type: string }
+        id_jns_param: { type: string }
+        nama_param: { type: string }
+        value_1: { type: ["string", "null"] }
+        value_2: { type: ["string", "null"] }
+        value_3: { type: ["string", "null"] }
+        value_html: { type: ["string", "null"] }
+    ParameterList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Parameter" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    ParamJabatan:
+      allOf:
+        - $ref: "#/components/schemas/AuditFields"
+        - type: object
+          required: [id, keterangan]
+          properties:
+            id: { type: integer }
+            keterangan: { type: string }
+            id_jabatan: { type: ["integer", "null"] }
+            id_group: { type: ["integer", "null"] }
+    NewParamJabatan:
+      type: object
+      required: [keterangan]
+      properties:
+        keterangan: { type: string }
+        id_jabatan: { type: ["integer", "null"] }
+        id_group: { type: ["integer", "null"] }
+    ParamJabatanList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/ParamJabatan" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Slider:
+      type: object
+      required: [id, slider]
+      properties:
+        id: { type: integer }
+        slider: { type: string }
+    NewSlider:
+      type: object
+      required: [slider]
+      properties:
+        slider: { type: string }
+    SliderList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Slider" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    MenuMobile:
+      type: object
+      required: [id, kd_menu, menu, is_active]
+      properties:
+        id: { type: integer }
+        kd_menu: { type: string }
+        menu: { type: string }
+        is_active: { type: boolean }
+        id_jns_mobile: { type: ["integer", "null"] }
+        seq: { type: ["integer", "null"] }
+    NewMenuMobile:
+      type: object
+      required: [kd_menu, menu]
+      properties:
+        kd_menu: { type: string }
+        menu: { type: string }
+        is_active: { type: boolean }
+        id_jns_mobile: { type: ["integer", "null"] }
+        seq: { type: ["integer", "null"] }
+    MenuMobileList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/MenuMobile" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Provinsi:
+      type: object
+      required: [id, kode, nama]
+      properties:
+        id: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+    NewProvinsi:
+      type: object
+      required: [kode, nama]
+      properties:
+        kode: { type: string }
+        nama: { type: string }
+    ProvinsiList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Provinsi" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Kabupaten:
+      type: object
+      required: [id, id_provinsi, kode, nama]
+      properties:
+        id: { type: integer }
+        id_provinsi: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+    NewKabupaten:
+      type: object
+      required: [id_provinsi, kode, nama]
+      properties:
+        id_provinsi: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+    KabupatenList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Kabupaten" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Kecamatan:
+      type: object
+      required: [id, id_kabupaten, kode, nama]
+      properties:
+        id: { type: integer }
+        id_kabupaten: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+    NewKecamatan:
+      type: object
+      required: [id_kabupaten, kode, nama]
+      properties:
+        id_kabupaten: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+    KecamatanList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Kecamatan" } }
+        meta: { $ref: "#/components/schemas/Meta" }
+    Kelurahan:
+      type: object
+      required: [id, id_kecamatan, kode, nama]
+      properties:
+        id: { type: integer }
+        id_kecamatan: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+        kodepos: { type: ["string", "null"] }
+    NewKelurahan:
+      type: object
+      required: [id_kecamatan, kode, nama]
+      properties:
+        id_kecamatan: { type: integer }
+        kode: { type: string }
+        nama: { type: string }
+        kodepos: { type: ["string", "null"] }
+    KelurahanList:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/Kelurahan" } }
+        meta: { $ref: "#/components/schemas/Meta" }

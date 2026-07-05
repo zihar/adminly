@@ -1,5 +1,5 @@
 {
-  "name": "adminly",
+  "name": "edelweiss-web",
   "version": "0.1.0",
   "private": true,
   "description": "Starter dashboard generik untuk internal tool — Next.js 16, React 19, Tailwind v4, shadcn/ui (Base UI). Siap di-fork tiap project baru.",
