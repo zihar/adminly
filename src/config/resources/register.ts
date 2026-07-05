@@ -22,11 +22,14 @@ import { menumobileResource } from "@/config/resources/menumobile";
 import { parameterResource } from "@/config/resources/parameter";
 import { paramjabatanResource } from "@/config/resources/paramjabatan";
 import { silabusindikatorResource } from "@/config/resources/silabusindikator";
+import { rolesResource } from "@/config/resources/roles";
+import { staffResource } from "@/config/resources/staff";
+import { usersResource } from "@/config/resources/users";
 
-/** Registrasi resource CRUD Edelweiss (F0 agama + F1 katalog referensi). */
+/** Registrasi resource CRUD Edelweiss (F0 agama + F1 referensi + F2 identity). */
 let done = false;
 export function ensureResourcesRegistered() {
   if (done) return;
-  registerResources([agamaResource, bahasarumahResource, kewarganegaraanResource, pekerjaanResource, pendidikanResource, penilaianResource, situasibelajarResource, sliderResource, sumberResource, semesterResource, unitResource, jenisprogramResource, tahunajaranResource, provinsiResource, kabupatenResource, kecamatanResource, kelurahanResource, kelasResource, jambelajarResource, menumobileResource, parameterResource, paramjabatanResource, silabusindikatorResource]);
+  registerResources([agamaResource, bahasarumahResource, kewarganegaraanResource, pekerjaanResource, pendidikanResource, penilaianResource, situasibelajarResource, sliderResource, sumberResource, semesterResource, unitResource, jenisprogramResource, tahunajaranResource, provinsiResource, kabupatenResource, kecamatanResource, kelurahanResource, kelasResource, jambelajarResource, menumobileResource, parameterResource, paramjabatanResource, silabusindikatorResource, rolesResource, staffResource, usersResource]);
   done = true;
 }
