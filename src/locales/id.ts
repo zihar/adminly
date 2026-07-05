@@ -23,6 +23,10 @@ export const id: Dictionary = {
     deleteFailed: "Gagal menghapus",
     yes: "Ya",
     no: "Tidak",
+    export: "Ekspor",
+    exportCsv: "Ekspor sebagai CSV",
+    exportPdf: "Ekspor sebagai PDF",
+    exportFailed: "Gagal mengekspor data",
   },
   // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
   field: {

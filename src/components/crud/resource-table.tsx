@@ -9,6 +9,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useQueryClient } from "@tanstack/react-query";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { toast } from "sonner";
 
@@ -20,6 +21,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Table,
   TableBody,
   TableCell,
@@ -28,8 +35,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { ResourceDef } from "@/lib/crud/define-resource";
+import { downloadBlob, exportPdf, toCsv, type ExportColumn } from "@/lib/crud/export";
 import { initialListParams } from "@/lib/crud/list-params";
+import type { ListParams } from "@/lib/crud/types";
 import { format, resolveLabel } from "@/locales";
+
+// Semua baris cocok filter/sort/scope diambil dalam satu halaman "besar" saat
+// ekspor (bukan paginasi berulang) — 10000 dianggap cukup utk data demo/CRUD
+// generik ini; resource dgn dataset jauh lebih besar butuh strategi lain
+// (streaming/backend job) di luar cakupan task ini.
+const EXPORT_PAGE_SIZE = 10000;
 
 type Row = Record<string, unknown>;
 
@@ -78,15 +93,21 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
     ? Object.fromEntries(scopedEntries)
     : undefined;
 
-  const query = def.api.useList({
+  // Params list "aktif" (page/perPage/q/sort/order/scope) — SATU objek yang
+  // sama dipakai `useList` (paginasi tampilan) DAN ekspor (Task 4, hanya
+  // `page`/`perPage` di-override) supaya hasil ekspor selalu konsisten dgn
+  // filter/sort/scope yang sedang terlihat di layar.
+  const listParams: ListParams = {
     page: state.page,
     perPage,
     q: state.q || undefined,
     sort: state.sort || undefined,
     order: state.order === "desc" ? "desc" : "asc",
     scope: scopedFilter,
-  });
+  };
+  const query = def.api.useList(listParams);
 
+  const qc = useQueryClient();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const removeMany = def.api.useRemoveMany();
   // Hook transisi diambil SEKALI di top level (bukan di dalam map per-baris) —
@@ -107,6 +128,30 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
       else next.add(id);
       return next;
     });
+
+  // Ekspor SEMUA baris cocok filter/sort/scope aktif (bukan hanya halaman yang
+  // sedang tampil) — fetch terpisah lewat `qc.fetchQuery` (BUKAN `query.data`)
+  // dengan `page`/`perPage` di-override ke satu halaman besar, lalu map ke
+  // `ExportColumn[]` dari `def.columns` (header i18n via `resolveLabel`).
+  async function handleExport(kind: "csv" | "pdf") {
+    try {
+      const { rows } = await qc.fetchQuery(
+        def.api.listQueryOptions({ ...listParams, page: 1, perPage: EXPORT_PAGE_SIZE }),
+      );
+      const cols: ExportColumn[] = def.columns.map((c) => ({
+        header: resolveLabel(t, c.labelKey),
+        field: c.field,
+      }));
+      const exportRows = rows as Row[];
+      if (kind === "csv") {
+        downloadBlob(`${def.name}.csv`, "text/csv;charset=utf-8", toCsv(cols, exportRows));
+      } else {
+        exportPdf(cols, exportRows, def.name, `${def.name}.pdf`);
+      }
+    } catch {
+      toast.error(t.common.exportFailed);
+    }
+  }
 
   const columns = React.useMemo<TanstackColumnDef<Row>[]>(
     () =>
@@ -224,6 +269,19 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         <Can permission={def.permissions.create}>
           <Button render={<Link href={`/${def.name}/create`} />}>{t.common.create}</Button>
         </Can>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="outline" />}>
+            {t.common.export}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => void handleExport("csv")}>
+              {t.common.exportCsv}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleExport("pdf")}>
+              {t.common.exportPdf}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         {selected.size > 0 && (
           <Can permission={def.permissions.delete}>
             <Button

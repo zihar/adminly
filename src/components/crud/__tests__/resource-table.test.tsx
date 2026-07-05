@@ -16,12 +16,26 @@ import { I18nProvider } from "@/components/providers/i18n-provider";
 import { RbacProvider } from "@/components/providers/rbac-provider";
 import { ScopeProvider } from "@/components/providers/scope-provider";
 import type { Role } from "@/config/rbac";
+import { downloadBlob, exportPdf } from "@/lib/crud/export";
 
 // `I18nProvider`/`RbacProvider` memanggil `useRouter()` (untuk `router.refresh()`
 // saat ganti locale/role) — di luar App Router (mis. di test) itu butuh mock manual.
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
+
+// `downloadBlob`/`exportPdf` melakukan I/O browser (Blob/anchor/jsPDF) yang tak
+// bermakna di jsdom — di-mock jadi spy supaya test cukup memverifikasi ResourceTable
+// memanggilnya dgn kolom+baris yang benar. `toCsv` TETAP implementasi asli (lewat
+// `importActual`) supaya isi CSV yang dihasilkan (header + nilai baris) bisa diuji.
+vi.mock("@/lib/crud/export", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/crud/export")>();
+  return {
+    ...actual,
+    downloadBlob: vi.fn(),
+    exportPdf: vi.fn(),
+  };
+});
 
 let bulkDeleteBody: { ids: string[] } | undefined;
 
@@ -177,6 +191,8 @@ beforeAll(async () => {
 afterEach(() => {
   server.resetHandlers();
   bulkDeleteBody = undefined;
+  vi.mocked(downloadBlob).mockClear();
+  vi.mocked(exportPdf).mockClear();
 });
 afterAll(() => {
   server.close();
@@ -604,5 +620,102 @@ describe("ResourceTable", () => {
     expect(screen.getByText("7")).toBeInTheDocument();
     // `foto` kosong → tak ada `<img>` yang dirender.
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("klik Export -> CSV mengambil SEMUA baris (perPage besar) lalu memanggil downloadBlob dgn CSV berisi header+nilai baris", async () => {
+    // Tangkap querystring request `/api/items` yang dipicu ekspor — harus
+    // membawa `per_page` besar & `page=1` (fetch semua baris cocok filter),
+    // TERPISAH dari request awal daftar (perPage 10 punya `def`).
+    const capturedSearches: URLSearchParams[] = [];
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        capturedSearches.push(new URL(request.url).searchParams);
+        return HttpResponse.json({
+          data: [
+            { id: "1", nama: "Alpha" },
+            { id: "2", nama: "Beta" },
+          ],
+          meta: { total: 2, page: 1, per_page: 10 },
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+
+    const exportTrigger = screen.getByRole("button", { name: "Export" });
+    await user.click(exportTrigger);
+    const csvItem = await screen.findByRole("menuitem", { name: "Export as CSV" });
+    await user.click(csvItem);
+
+    await waitFor(() => expect(downloadBlob).toHaveBeenCalledTimes(1));
+    const [filename, mime, content] = vi.mocked(downloadBlob).mock.calls[0];
+    expect(filename).toBe("items.csv");
+    expect(mime).toContain("text/csv");
+    expect(String(content)).toContain("Name");
+    expect(String(content)).toContain("Alpha");
+    expect(String(content)).toContain("Beta");
+
+    // Request ekspor (panggilan terakhir) membawa perPage besar & page=1 —
+    // membuktikan ekspor mengambil semua baris cocok filter, bukan halaman aktif.
+    const exportSearch = capturedSearches.at(-1);
+    expect(exportSearch?.get("per_page")).toBe("10000");
+    expect(exportSearch?.get("page")).toBe("1");
+  });
+
+  it("klik Export -> PDF memanggil exportPdf dgn kolom+baris hasil fetch", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", nama: "Alpha" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+
+    await user.click(screen.getByRole("button", { name: "Export" }));
+    const pdfItem = await screen.findByRole("menuitem", { name: "Export as PDF" });
+    await user.click(pdfItem);
+
+    await waitFor(() => expect(exportPdf).toHaveBeenCalledTimes(1));
+    const [cols, rows, title, filename] = vi.mocked(exportPdf).mock.calls[0];
+    expect(cols).toEqual([{ header: "Name", field: "nama" }]);
+    expect(rows).toEqual([{ id: "1", nama: "Alpha" }]);
+    expect(title).toBe("items");
+    expect(filename).toBe("items.pdf");
+  });
+
+  it("menampilkan toast error saat fetch ekspor gagal (tak melempar/crash)", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        // Request awal daftar (perPage kecil) tetap sukses; request ekspor
+        // (perPage besar) sengaja gagal utk menguji jalur error.
+        if (url.searchParams.get("per_page") === "10000") {
+          return HttpResponse.json({ message: "boom" }, { status: 500 });
+        }
+        return HttpResponse.json({
+          data: [{ id: "1", nama: "Alpha" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        });
+      }),
+    );
+    const errorSpy = vi.spyOn(toast, "error");
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+
+    await user.click(screen.getByRole("button", { name: "Export" }));
+    const csvItem = await screen.findByRole("menuitem", { name: "Export as CSV" });
+    await user.click(csvItem);
+
+    await waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to export data"));
+    expect(downloadBlob).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });

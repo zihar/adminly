@@ -24,6 +24,10 @@ export const en = {
     deleteFailed: "Failed to delete",
     yes: "Yes",
     no: "No",
+    export: "Export",
+    exportCsv: "Export as CSV",
+    exportPdf: "Export as PDF",
+    exportFailed: "Failed to export data",
   },
   // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
   field: {
