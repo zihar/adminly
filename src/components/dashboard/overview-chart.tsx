@@ -63,8 +63,8 @@ export function OverviewChart() {
                 <stop offset="95%" stopColor="var(--color-siswaAktif)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
-            <Area dataKey="pendaftar" type="natural" fill="url(#fillPendaftar)" stroke="var(--color-pendaftar)" stackId="a" />
-            <Area dataKey="siswaAktif" type="natural" fill="url(#fillSiswaAktif)" stroke="var(--color-siswaAktif)" stackId="a" />
+            <Area dataKey="siswaAktif" type="natural" fill="url(#fillSiswaAktif)" stroke="var(--color-siswaAktif)" />
+            <Area dataKey="pendaftar" type="natural" fill="url(#fillPendaftar)" stroke="var(--color-pendaftar)" />
           </AreaChart>
         </ChartContainer>
       </CardContent>
