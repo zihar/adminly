@@ -12,6 +12,8 @@ import { RadioField } from "./radio-field";
 import { CheckboxField } from "./checkbox-field";
 import { DateField } from "./date-field";
 import { DateTimeField } from "./datetime-field";
+import { FileField } from "./file-field";
+import { RichtextField } from "./richtext-field";
 
 /** Props publik bersama untuk semua komponen field (Task 5 deliverable). */
 export type FieldProps = { name: string; meta: FieldMeta };
@@ -33,6 +35,8 @@ registerField("radio", RadioField);
 registerField("checkbox", CheckboxField);
 registerField("date", DateField);
 registerField("datetime", DateTimeField);
+registerField("file", FileField);
+registerField("richtext", RichtextField);
 
 export function FieldRenderer({ name, meta }: FieldProps) {
   const Comp = REGISTRY[meta.type] ?? TextField;
