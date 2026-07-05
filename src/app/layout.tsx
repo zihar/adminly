@@ -46,8 +46,8 @@ export default async function RootLayout({
           <I18nProvider initialLocale={locale}>
             <ThemeProvider
               attribute="class"
-              defaultTheme="system"
-              enableSystem
+              defaultTheme="light"
+              enableSystem={false}
               disableTransitionOnChange
             >
               <NuqsAdapter>{children}</NuqsAdapter>

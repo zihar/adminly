@@ -9,22 +9,42 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+type Tone = "blue" | "green" | "amber" | "pink" | "purple";
+
+const toneChip: Record<Tone, string> = {
+  blue: "bg-chart-1/10 text-chart-1",
+  green: "bg-chart-2/10 text-chart-2",
+  amber: "bg-chart-3/10 text-chart-3",
+  pink: "bg-chart-4/10 text-chart-4",
+  purple: "bg-chart-5/10 text-chart-5",
+};
+
 type StatCardProps = {
   title: string;
   value: string;
   delta?: number;
   hint?: string;
   icon?: LucideIcon;
+  tone?: Tone;
 };
 
-export function StatCard({ title, value, delta, hint, icon: Icon }: StatCardProps) {
+export function StatCard({ title, value, delta, hint, icon: Icon, tone }: StatCardProps) {
   const isUp = (delta ?? 0) >= 0;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardDescription>{title}</CardDescription>
-        {Icon ? <Icon className="size-4 text-muted-foreground" /> : null}
+        {Icon ? (
+          <span
+            className={cn(
+              "flex size-9 items-center justify-center rounded-full",
+              tone ? toneChip[tone] : "text-muted-foreground",
+            )}
+          >
+            <Icon className="size-4" />
+          </span>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-1">
         <CardTitle className="text-2xl tabular-nums">{value}</CardTitle>

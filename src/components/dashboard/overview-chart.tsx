@@ -19,20 +19,20 @@ import { useI18n } from "@/components/providers/i18n-provider";
 
 // `m` = indeks bulan (0..5) → label diambil dari kamus i18n agar bisa berganti bahasa.
 const data = [
-  { m: 0, visits: 1860, signups: 800 },
-  { m: 1, visits: 3050, signups: 1200 },
-  { m: 2, visits: 2370, signups: 1100 },
-  { m: 3, visits: 1730, signups: 900 },
-  { m: 4, visits: 2090, signups: 1300 },
-  { m: 5, visits: 3140, signups: 1700 },
+  { m: 0, pendaftar: 32, siswaAktif: 250 },
+  { m: 1, pendaftar: 48, siswaAktif: 258 },
+  { m: 2, pendaftar: 40, siswaAktif: 262 },
+  { m: 3, pendaftar: 55, siswaAktif: 266 },
+  { m: 4, pendaftar: 60, siswaAktif: 270 },
+  { m: 5, pendaftar: 45, siswaAktif: 274 },
 ];
 
 export function OverviewChart() {
   const { t } = useI18n();
 
   const chartConfig = {
-    visits: { label: t.chart.visits, color: "var(--chart-1)" },
-    signups: { label: t.chart.signups, color: "var(--chart-3)" },
+    pendaftar: { label: t.chart.pendaftar, color: "var(--chart-1)" },
+    siswaAktif: { label: t.chart.siswaAktif, color: "var(--chart-2)" },
   } satisfies ChartConfig;
 
   return (
@@ -54,29 +54,17 @@ export function OverviewChart() {
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>
-              <linearGradient id="fillVisits" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-visits)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-visits)" stopOpacity={0.1} />
+              <linearGradient id="fillPendaftar" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-pendaftar)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-pendaftar)" stopOpacity={0.1} />
               </linearGradient>
-              <linearGradient id="fillSignups" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-signups)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-signups)" stopOpacity={0.1} />
+              <linearGradient id="fillSiswaAktif" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-siswaAktif)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-siswaAktif)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
-            <Area
-              dataKey="visits"
-              type="natural"
-              fill="url(#fillVisits)"
-              stroke="var(--color-visits)"
-              stackId="a"
-            />
-            <Area
-              dataKey="signups"
-              type="natural"
-              fill="url(#fillSignups)"
-              stroke="var(--color-signups)"
-              stackId="a"
-            />
+            <Area dataKey="siswaAktif" type="natural" fill="url(#fillSiswaAktif)" stroke="var(--color-siswaAktif)" />
+            <Area dataKey="pendaftar" type="natural" fill="url(#fillPendaftar)" stroke="var(--color-pendaftar)" />
           </AreaChart>
         </ChartContainer>
       </CardContent>

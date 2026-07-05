@@ -108,10 +108,10 @@ export const id: Dictionary = {
     title: "Dashboard",
     description: "Ringkasan metrik utama aplikasimu.",
     stats: {
-      revenue: { title: "Pendapatan", value: "Rp 45,2 jt", hint: "vs bulan lalu" },
-      activeUsers: { title: "Pengguna Aktif", value: "2.340", hint: "vs bulan lalu" },
-      transactions: { title: "Transaksi", value: "1.205", hint: "vs bulan lalu" },
-      uptime: { title: "Uptime", value: "99,98%", hint: "30 hari" },
+      totalPendaftar: { title: "Total Pendaftar", value: "222", hint: "vs bulan lalu" },
+      totalSiswa: { title: "Total Siswa", value: "274", hint: "aktif" },
+      totalStaff: { title: "Total Staff", value: "88", hint: "aktif" },
+      kehadiran: { title: "Kehadiran Hari Ini", value: "96,4%", hint: "hadir" },
     },
     recentActivity: "Aktivitas Terbaru",
     recentActivityDesc: "Beberapa kejadian terakhir",
@@ -133,9 +133,9 @@ export const id: Dictionary = {
   },
   chart: {
     title: "Ringkasan",
-    description: "Kunjungan & pendaftaran 6 bulan terakhir",
-    visits: "Kunjungan",
-    signups: "Pendaftaran",
+    description: "Pendaftar & siswa aktif, 6 bulan terakhir",
+    pendaftar: "Pendaftar",
+    siswaAktif: "Siswa Aktif",
     months: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun"],
   },
   users: {

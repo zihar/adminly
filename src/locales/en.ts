@@ -112,10 +112,10 @@ export const en = {
     title: "Dashboard",
     description: "A summary of your app's key metrics.",
     stats: {
-      revenue: { title: "Revenue", value: "$45.2K", hint: "vs last month" },
-      activeUsers: { title: "Active users", value: "2,340", hint: "vs last month" },
-      transactions: { title: "Transactions", value: "1,205", hint: "vs last month" },
-      uptime: { title: "Uptime", value: "99.98%", hint: "30 days" },
+      totalPendaftar: { title: "Total applicants", value: "222", hint: "vs last month" },
+      totalSiswa: { title: "Total students", value: "274", hint: "active" },
+      totalStaff: { title: "Total staff", value: "88", hint: "active" },
+      kehadiran: { title: "Attendance today", value: "96.4%", hint: "present" },
     },
     recentActivity: "Recent activity",
     recentActivityDesc: "A few recent events",
@@ -137,9 +137,9 @@ export const en = {
   },
   chart: {
     title: "Overview",
-    description: "Visits & signups, last 6 months",
-    visits: "Visits",
-    signups: "Signups",
+    description: "Applicants & active students, last 6 months",
+    pendaftar: "Applicants",
+    siswaAktif: "Active students",
     months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
   },
   users: {
