@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Can } from "@/components/auth/can";
 import { FieldRenderer } from "@/components/crud/fields";
 import { WorkflowStepper } from "@/components/crud/workflow-stepper";
+import { WorkflowTransitionButton } from "@/components/crud/workflow-transition-button";
 import { AuditTimeline } from "@/components/crud/audit-timeline";
 import { CrudError } from "@/lib/crud/errors";
 import type { ResourceDef } from "@/lib/crud/define-resource";
@@ -95,25 +96,7 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
             <div className="flex flex-wrap items-center gap-2">
               {allowedTransitions.map((tr) => (
                 <Can key={tr.action} permission={tr.permission}>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={tr.variant ?? "outline"}
-                    disabled={transition.isPending}
-                    onClick={() =>
-                      transition.mutate(
-                        { id: id!, action: tr.action },
-                        {
-                          // Toast i18n dipasang di caller — sama spt pola
-                          // aksi transisi di `resource-table.tsx`.
-                          onSuccess: () => toast.success(t.workflow.done),
-                          onError: () => toast.error(t.workflow.failed),
-                        },
-                      )
-                    }
-                  >
-                    {resolveLabel(t, tr.labelKey)}
-                  </Button>
+                  <WorkflowTransitionButton transition={tr} id={id!} mutation={transition} />
                 </Can>
               ))}
             </div>

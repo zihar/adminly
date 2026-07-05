@@ -18,6 +18,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { getResource } from "@/config/resources/index";
 import { RelationCell } from "@/components/crud/relation-cell";
+import { WorkflowTransitionButton } from "@/components/crud/workflow-transition-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -534,23 +535,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                     </Can>
                     {allowedTransitions.map((tr) => (
                       <Can key={tr.action} permission={tr.permission}>
-                        <Button
-                          size="sm"
-                          variant={tr.variant ?? "outline"}
-                          onClick={() =>
-                            transition.mutate(
-                              { id, action: tr.action },
-                              {
-                                // Toast i18n dipasang di caller (bukan factory) —
-                                // sama seperti pola `removeMany` di atas.
-                                onSuccess: () => toast.success(t.workflow.done),
-                                onError: () => toast.error(t.workflow.failed),
-                              },
-                            )
-                          }
-                        >
-                          {resolveLabel(t, tr.labelKey)}
-                        </Button>
+                        <WorkflowTransitionButton transition={tr} id={id} mutation={transition} />
                       </Can>
                     ))}
                   </div>
