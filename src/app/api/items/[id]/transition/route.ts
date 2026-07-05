@@ -8,7 +8,7 @@ import { withErrorEnvelope, badRequest, notFound } from "@/lib/api/handler";
 import { itemsResource } from "@/config/resources/items";
 import { ROLE_COOKIE, parseRole } from "@/config/rbac";
 
-const bodySchema = z.object({ action: z.string() });
+const bodySchema = z.object({ action: z.string(), reason: z.string().optional() });
 
 // Aktor terbaik-usaha dari cookie role demo. `cookies()` butuh konteks
 // request Next.js sungguhan — saat route ini dipanggil langsung (unit test
@@ -31,7 +31,7 @@ async function resolveActor(): Promise<string> {
 export const POST = withErrorEnvelope(
   async (req: NextRequest, ctx?: RouteContext<"/api/items/[id]/transition">) => {
     const { id } = await ctx!.params;
-    const { action } = bodySchema.parse(await req.json());
+    const { action, reason } = bodySchema.parse(await req.json());
 
     const row = itemsStore.get(id);
     if (!row) throw notFound();
@@ -41,6 +41,11 @@ export const POST = withErrorEnvelope(
     );
     if (!transition) {
       throw badRequest(`Transisi "${action}" tidak valid dari status "${row.status}"`);
+    }
+    // Transisi ber-`requiresReason` (mis. reject) WAJIB menyertakan alasan
+    // non-kosong — dicek server-side, bukan cuma di client (dialog Task 3).
+    if (transition.requiresReason && !reason?.trim()) {
+      throw badRequest("Alasan wajib diisi untuk transisi ini");
     }
 
     const updated = itemsStore.update(id, { status: transition.to });
@@ -54,6 +59,7 @@ export const POST = withErrorEnvelope(
       to: transition.to,
       actor: await resolveActor(),
       at: new Date().toISOString(),
+      reason: reason ?? null,
     });
 
     return NextResponse.json(updated);

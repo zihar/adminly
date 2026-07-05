@@ -213,6 +213,22 @@ describe("createResourceApi.useTransition", () => {
     // Invalidation of `keys.all`/`keys.one(id)` must trigger (>=1) refetch of the still-mounted getOne query.
     await waitFor(() => expect(getOneCallCount).toBeGreaterThan(1));
   });
+
+  it("POST transition dengan {action, reason} menyertakan reason di body (dikirim ke server)", async () => {
+    let transitionBody: { action: string; reason?: string } | null = null;
+    server.use(
+      http.post("http://localhost:3000/api/items/1/transition", async ({ request }) => {
+        transitionBody = (await request.json()) as { action: string; reason?: string };
+        return HttpResponse.json({ id: "1", nama: "A" });
+      }),
+    );
+    const api = createResourceApi<Item, unknown, unknown>({ resource: "items", path: "/items" });
+    const { result } = renderHook(() => api.useTransition(), { wrapper: wrapper() });
+    result.current.mutate({ id: "1", action: "reject", reason: "alasan x" });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(transitionBody).toEqual({ action: "reject", reason: "alasan x" });
+  });
 });
 
 describe("createResourceApi.useAudit", () => {

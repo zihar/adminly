@@ -28,10 +28,18 @@ export function AuditTimeline({ rows }: { rows: AuditRow[] }) {
       {rows.map((row) => (
         <div key={row.id} className="flex items-start gap-3">
           <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
-          <p className="text-muted-foreground">
-            <span className="font-medium text-foreground">{resolveLabel(t, `workflow.action.${row.action}`)}</span>{" "}
-            {row.from} → {row.to} · {row.actor} · {new Date(row.at).toLocaleString()}
-          </p>
+          <div>
+            <p className="text-muted-foreground">
+              <span className="font-medium text-foreground">{resolveLabel(t, `workflow.action.${row.action}`)}</span>{" "}
+              {row.from} → {row.to} · {row.actor} · {new Date(row.at).toLocaleString()}
+            </p>
+            {/* Alasan (mis. transisi reject `requiresReason`) — baris kedua
+                terpisah, hanya dirender saat non-kosong (baris tanpa alasan
+                tetap tampil rapi, tanpa gap kosong). */}
+            {row.reason ? (
+              <p className="text-muted-foreground">“{row.reason}”</p>
+            ) : null}
+          </div>
         </div>
       ))}
     </div>

@@ -60,4 +60,29 @@ describe("AuditTimeline", () => {
     wrap(<AuditTimeline rows={[]} />);
     expect(screen.getByText("No data yet.")).toBeInTheDocument();
   });
+
+  it("menampilkan alasan (row.reason) saat ada", () => {
+    wrap(
+      <AuditTimeline
+        rows={[
+          {
+            id: "a4",
+            entityId: "1",
+            action: "reject",
+            from: "submitted",
+            to: "rejected",
+            actor: "Admin",
+            at: "2026-07-03T00:00:00.000Z",
+            reason: "tak layak",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("“tak layak”")).toBeInTheDocument();
+  });
+
+  it("tidak menampilkan baris alasan saat row.reason tidak ada", () => {
+    wrap(<AuditTimeline rows={rows} />);
+    expect(screen.queryByText(/“.*”/)).not.toBeInTheDocument();
+  });
 });

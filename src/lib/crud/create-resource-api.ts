@@ -139,8 +139,12 @@ export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partia
   function useTransition() {
     const qc = useQueryClient();
     return useMutation({
-      mutationFn: async ({ id, action }: { id: ID; action: string }) =>
-        (await req<TItem>("POST", `${base}/${id}/transition`, { body: { action } })).data!,
+      // `reason` opsional — hanya wajib bila transition-nya `requiresReason`
+      // (divalidasi di server, lihat `transition/route.ts`). `undefined`
+      // otomatis di-drop oleh `JSON.stringify`, jadi body tetap `{ action }`
+      // saat caller tak mengirim reason.
+      mutationFn: async ({ id, action, reason }: { id: ID; action: string; reason?: string }) =>
+        (await req<TItem>("POST", `${base}/${id}/transition`, { body: { action, reason } })).data!,
       onSuccess: (_d, v) => {
         qc.invalidateQueries({ queryKey: keys.all });
         qc.invalidateQueries({ queryKey: keys.one(v.id) });
