@@ -50,6 +50,8 @@ export const en = {
   },
   // Label workflow generik (status + aksi transisi) — dipakai stepper, badge, dan tombol aksi.
   workflow: {
+    // Header kolom tabel untuk field status (Task 7 — kolom badge di list `items`).
+    statusHeader: "Status",
     status: {
       draft: "Draft",
       submitted: "Submitted",

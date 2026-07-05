@@ -8,7 +8,12 @@ test("Search memfilter baris berdasarkan query", async ({ page }) => {
   const stamp = `${Date.now()}`;
   const nama = `E2ESearch-${stamp}`;
 
-  await page.goto("/items/create");
+  // Navigasi lewat link "Create" di halaman list (BUKAN `goto("/items/create")`
+  // langsung): membuka rute create lewat hard navigation bisa memicu submit
+  // form native (GET, `?nama=...`) sebelum hidrasi handler JS selesai — pola
+  // andal yang sama dipakai `crud-items.spec.ts`/`workflow-items.spec.ts`.
+  await page.goto("/items");
+  await page.getByRole("link", { name: /create/i }).click();
   await page.waitForURL(/\/items\/create$/);
   await page.getByRole("textbox").fill(nama);
   await page.getByRole("button", { name: /save/i }).click();

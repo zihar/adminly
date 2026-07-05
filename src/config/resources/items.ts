@@ -23,7 +23,12 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
   path: "/items",
   api: createResourceApi<Item, NewItem, NewItem>({ resource: "items", path: "/items" }),
   permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
-  columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
+  columns: [
+    { field: "nama", labelKey: "items.nama", sortable: true, searchable: true },
+    // Kolom status workflow (Task 7) — dirender sebagai badge oleh `resource-table`
+    // lewat lookup `def.workflow.statuses` (lihat komentar `render === "badge"` di sana).
+    { field: "status", labelKey: "workflow.statusHeader", render: "badge" },
+  ],
   list: { defaultSort: "nama", perPage: 10 },
   // Contoh demo: `items` ikut scope global `workspace` supaya list-nya
   // terlihat refetch saat workspace picker diganti (lihat `resource-table.tsx`
