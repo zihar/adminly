@@ -16,6 +16,7 @@ import { I18nProvider } from "@/components/providers/i18n-provider";
 import { RbacProvider } from "@/components/providers/rbac-provider";
 import { ScopeProvider } from "@/components/providers/scope-provider";
 import type { Role } from "@/config/rbac";
+import { registerResources, _resetRegistry } from "@/config/resources/index";
 import { downloadBlob, exportPdf } from "@/lib/crud/export";
 
 // `I18nProvider`/`RbacProvider` memanggil `useRouter()` (untuk `router.refresh()`
@@ -65,6 +66,15 @@ const server = setupServer(
     bulkDeleteBody = (await request.json()) as { ids: string[] };
     return HttpResponse.json(undefined, { status: 200 });
   }),
+  // Sumber opsi async utk filter `optionsFrom` (dipakai `defAsyncFiltered`,
+  // lihat def-nya di bawah) — meniru pola `useOptions` (`create-resource-api.ts`)
+  // yang dites di `cascade-field.test.tsx`.
+  http.get("http://localhost:3000/api/priority-options/options", () =>
+    HttpResponse.json([
+      { value: "low", label: "Low (async)" },
+      { value: "high", label: "High (async)" },
+    ]),
+  ),
 );
 
 // `apiClient` menangkap `globalThis.fetch` & base URL saat modulnya pertama kali
@@ -99,6 +109,20 @@ let defRenderers: ResourceDef;
 // filter (All + opsi), menyinkronnya ke URL (nuqs), dan mengirim
 // `filter[prioritas]=<value>` pada request list sungguhan (lewat MSW).
 let defFiltered: ResourceDef;
+// Def khusus test regresi page-reset (Fix 1 review): sama seperti `defPaged`
+// (perPage kecil, 4 baris -> 2 halaman) TAPI juga mendeklarasikan
+// `list.filters: ["prioritas"]` (opsi statis, spt `defFiltered`) — dipakai
+// utk memverifikasi mengganti filter saat berada di page >= 2 mereset page
+// ke 1 (BUKAN diam-diam menyisakan `page=2` di URL yang bisa melampaui total
+// hasil terfilter & merender empty-state palsu).
+let defPagedFiltered: ResourceDef;
+// Def khusus test filter async (`optionsFrom`, Task 2 Filter UI cakupan
+// minor): field `prioritas` TANPA `options` statis, bersumber dari resource
+// terdaftar `priorityOptions` (lihat `registerResources` di bawah + handler
+// MSW `/api/priority-options/options`) — memverifikasi jalur `useOptions`
+// (sama seperti `AsyncSelectField`/`CascadeField`) tersambung ujung-ke-ujung
+// di `ResourceFilter`, bukan hanya opsi statis yang sudah dites `defFiltered`.
+let defAsyncFiltered: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -216,6 +240,60 @@ beforeAll(async () => {
       },
     },
   });
+  defPagedFiltered = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
+    list: { perPage: 2, filters: ["prioritas"] },
+    form: {
+      schema: z.object({ nama: z.string(), prioritas: z.string().optional() }),
+      layout: [{ tabKey: "umum", fields: ["nama", "prioritas"] }],
+      fields: {
+        nama: { type: "text" },
+        prioritas: {
+          type: "select",
+          labelKey: "items.prioritas",
+          options: [
+            { value: "low", label: "Low" },
+            { value: "high", label: "High" },
+          ],
+        },
+      },
+    },
+  });
+  // Resource sumber opsi async — didaftarkan ke registry global (`getResource`,
+  // dipakai `ResourceFilter`) BUKAN sekadar variabel lokal spt def lain di atas,
+  // karena `meta.optionsFrom` di-resolve lewat `getResource(name)`.
+  registerResources([
+    defineResource({
+      name: "priorityOptions",
+      path: "/priority-options",
+      api: createResourceApi({ resource: "priorityOptions", path: "/priority-options" }),
+      permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+      columns: [{ field: "label", labelKey: "items.nama" }],
+      form: { schema: z.object({ label: z.string() }), layout: [{ tabKey: "umum", fields: ["label"] }], fields: { label: { type: "text" } } },
+    }),
+  ]);
+  defAsyncFiltered = defineResource({
+    name: "items",
+    path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama", sortable: true, searchable: true }],
+    list: { perPage: 10, filters: ["prioritas"] },
+    form: {
+      schema: z.object({ nama: z.string(), prioritas: z.string().optional() }),
+      layout: [{ tabKey: "umum", fields: ["nama", "prioritas"] }],
+      fields: {
+        nama: { type: "text" },
+        // TANPA `options` statis — memaksa `ResourceFilter` mengambil daftar
+        // opsi lewat `useOptions` (`optionsFrom`), bukan `meta.options`.
+        prioritas: { type: "select", labelKey: "items.prioritas", optionsFrom: "priorityOptions" },
+      },
+    },
+  });
 });
 afterEach(() => {
   server.resetHandlers();
@@ -226,6 +304,7 @@ afterEach(() => {
 afterAll(() => {
   server.close();
   vi.unstubAllEnvs();
+  _resetRegistry();
 });
 
 function wrap(
@@ -808,5 +887,113 @@ describe("ResourceTable", () => {
     wrap(<ResourceTable def={def} />);
     await screen.findByText("Alpha");
     expect(screen.queryByLabelText("Priority")).not.toBeInTheDocument();
+  });
+
+  it("mengganti filter saat berada di page >= 2 mereset page ke 1 (regresi review Fix 1)", async () => {
+    // Dataset 4 baris (semua `prioritas: "low"`) dipaginasi sungguhan spt tes
+    // Next/Previous di atas, TAPI juga menghormati `filter[prioritas]` — jumlah
+    // baris tak berkurang saat filter "low" dipilih (sengaja, supaya assertion
+    // di bawah murni membuktikan RESET PAGE, bukan sekadar efek samping total
+    // baris yang mengecil).
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        const page = Number(url.searchParams.get("page") ?? "1");
+        const perPage = Number(url.searchParams.get("per_page") ?? "10");
+        const filterPrioritas = url.searchParams.get("filter[prioritas]");
+        const all = [
+          { id: "1", nama: "Alpha", prioritas: "low" },
+          { id: "2", nama: "Beta", prioritas: "low" },
+          { id: "3", nama: "Gamma", prioritas: "low" },
+          { id: "4", nama: "Delta", prioritas: "low" },
+        ];
+        const rows = filterPrioritas ? all.filter((r) => r.prioritas === filterPrioritas) : all;
+        const start = (page - 1) * perPage;
+        return HttpResponse.json({
+          data: rows.slice(start, start + perPage),
+          meta: { total: rows.length, page, per_page: perPage },
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    wrap(<ResourceTable def={defPagedFiltered} />, { onUrlUpdate });
+
+    await screen.findByText("Alpha");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("page=2");
+    });
+    // Konfirmasi memang sudah di halaman 2 (bukan cuma URL yang berubah).
+    await screen.findByText("Gamma");
+    expect(screen.getByText("Delta")).toBeInTheDocument();
+
+    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    await user.selectOptions(filterSelect, "low");
+
+    // `page=1` adalah default nuqs sehingga dibuang dari querystring (bukan
+    // dicetak eksplisit) — assert lewat ABSENnya `page=2`, sama pola dgn tes
+    // Previous di atas, sekaligus konfirmasi filter sungguhan tercatat.
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).not.toContain("page=2");
+      expect(last.queryString).toContain("filter_prioritas=low");
+    });
+    // Baris HALAMAN 1 (bukan halaman 2 yang lama) yang tampil — sebelum fix,
+    // `page` tetap 2 di URL/`ListParams` sehingga request masih membawa
+    // `page=2` walau filter baru saja diganti.
+    await screen.findByText("Alpha");
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    expect(screen.queryByText("Gamma")).not.toBeInTheDocument();
+  });
+
+  it("dropdown filter `optionsFrom` (async-select) merender opsi hasil fetch (useOptions) dan memilihnya mengirim `filter[<field>]=<value>`", async () => {
+    // Sama kerangkanya dgn tes filter statis di atas, tapi `defAsyncFiltered`
+    // TIDAK punya `meta.options` — opsi HARUS datang dari `useOptions`
+    // (`optionsFrom: "priorityOptions"`, di-fetch lewat MSW
+    // `/api/priority-options/options`, lihat `beforeAll`). Ini membuktikan
+    // jalur async (sama pola dgn `AsyncSelectField`/`CascadeField`) benar2
+    // tersambung ke `ResourceFilter`, bukan cuma opsi statis (`defFiltered`).
+    const capturedSearches: URLSearchParams[] = [];
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        capturedSearches.push(url.searchParams);
+        const filterPrioritas = url.searchParams.get("filter[prioritas]");
+        const all = [
+          { id: "1", nama: "Alpha", prioritas: "low" },
+          { id: "2", nama: "Beta", prioritas: "high" },
+        ];
+        const rows = filterPrioritas ? all.filter((r) => r.prioritas === filterPrioritas) : all;
+        return HttpResponse.json({
+          data: rows,
+          meta: { total: rows.length, page: 1, per_page: 10 },
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={defAsyncFiltered} />);
+    await screen.findByText("Alpha");
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+
+    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    // Opsi async butuh fetch (`useOptions`) selesai dulu — labelnya sengaja
+    // dibedakan ("... (async)") dari fixture statis `defFiltered` supaya tes
+    // ini tak bisa lolos palsu kalau `ResourceFilter` diam-diam jatuh balik ke
+    // `meta.options` (yang di sini memang tak ada).
+    await waitFor(() => {
+      expect(within(filterSelect).getByRole("option", { name: "Low (async)" })).toBeInTheDocument();
+    });
+    expect(within(filterSelect).getByRole("option", { name: "High (async)" })).toBeInTheDocument();
+
+    await user.selectOptions(filterSelect, "high");
+
+    await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument());
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    const filteredSearch = capturedSearches.at(-1);
+    expect(filteredSearch?.get("filter[prioritas]")).toBe("high");
   });
 });

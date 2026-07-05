@@ -357,7 +357,14 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             def={def}
             field={field}
             value={filterState[filterKey(field)] ?? ""}
-            onChange={(value) => void setFilterState({ [filterKey(field)]: value || null })}
+            onChange={(value) => {
+              // Ganti filter kolom → reset ke halaman 1 (samakan dgn search &
+              // sort di atas). `setState`+`setFilterState` dipanggil di tick
+              // yang sama → nuqs menggabungkannya jadi satu penulisan URL
+              // (aman, bukan dua navigasi terpisah).
+              void setFilterState({ [filterKey(field)]: value || null });
+              void setState({ page: 1 });
+            }}
           />
         ))}
         <Can permission={def.permissions.create}>
