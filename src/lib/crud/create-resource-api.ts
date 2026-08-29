@@ -54,6 +54,28 @@ async function req<T>(
   return { data: data as T, res: response };
 }
 
+/**
+ * Options fetch dgn PATH mentah, dipanggil langsung — tanpa lewat `getResource`/
+ * `createResourceApi` resource TARGET. Dipakai `AsyncSelectField` saat
+ * `meta.optionsPath` diisi: field yang endpoint resource masternya digerbangi
+ * permission yang tak dimiliki peran pemakai form (mis. `tahunajaran:view`
+ * untuk guru mapel ajar) memanggil rute `opsi/*` milik layar sendiri sebagai
+ * gantinya (lihat `OpsiPeriodeService` di edelweiss-api). Bentuk query string
+ * (`q`, `parent[...]`) sengaja SAMA PERSIS dgn `optionsQueryOptions` di bawah —
+ * server menerima query yang sama utk kedua jalur.
+ */
+export async function fetchOptionsByPath(
+  path: string,
+  params: OptionParams,
+): Promise<Option[]> {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set("q", params.q);
+  for (const [k, v] of Object.entries(params.parent ?? {})) {
+    sp.set(`parent[${k}]`, String(v));
+  }
+  return (await req<Option[]>("GET", `${path}?${sp.toString()}`)).data ?? [];
+}
+
 export function createResourceApi<TItem, TNew = Partial<TItem>, TUpdate = Partial<TItem>>(
   cfg: Cfg,
 ) {

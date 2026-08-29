@@ -28,13 +28,24 @@ export function SelectField({ name, meta }: FieldProps) {
   const options = meta.options ?? [];
   const value = field.value === undefined || field.value === null ? "" : String(field.value);
   const selected = options.find((o) => String(o.value) === value);
+  // Satu jalur tutup terpusat: `onOpenChange` menangkap Escape/klik-luar,
+  // sedangkan memilih opsi menutup popover lewat `setOpen(false)` LANGSUNG
+  // di `onSelect` -- itu TIDAK memicu `onOpenChange` (prop `open` yang
+  // berubah dari kode sendiri tak dianggap Popover sebagai permintaan
+  // eksternal). Tanpa `close()` bersama, `field.onBlur()` tak pernah
+  // terpanggil saat user memilih opsi -- `touchedFields` diam-diam tak
+  // pernah terisi lewat jalur itu (dibuktikan probe empiris).
+  const close = () => {
+    setOpen(false);
+    field.onBlur();
+  };
 
   return (
     <Popover
       open={open}
       onOpenChange={(next: boolean) => {
-        setOpen(next);
-        if (!next) field.onBlur();
+        if (next) setOpen(true);
+        else close();
       }}
     >
       <PopoverTrigger
@@ -61,7 +72,7 @@ export function SelectField({ name, meta }: FieldProps) {
                   value={o.label}
                   onSelect={() => {
                     field.onChange(String(o.value));
-                    setOpen(false);
+                    close();
                   }}
                 >
                   {o.label}
