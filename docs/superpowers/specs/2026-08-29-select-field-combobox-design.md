@@ -43,10 +43,8 @@ Shadcn tidak punya satu komponen "Combobox" siap pakai — komposisi dari `Popov
 Bentuk render `SelectField`:
 ```
 <Popover>
-  <PopoverTrigger asChild>
-    <Button variant="outline" role="combobox" aria-invalid={fieldState.invalid}>
-      {selectedLabel ?? t.common.selectPlaceholder}
-    </Button>
+  <PopoverTrigger render={<Button variant="outline" aria-invalid={fieldState.invalid} />}>
+    {selectedLabel ?? t.common.selectPlaceholder}
   </PopoverTrigger>
   <PopoverContent>
     <Command>
@@ -66,7 +64,7 @@ Bentuk render `SelectField`:
 
 ## 4. Alur Data & Integrasi RHF
 
-- `useController({ name })` menggantikan `register(name)` — field jadi terkendali (pola sama seperti yang sudah dipakai `async-select-field.tsx` untuk kasus lain).
+- `useController({ name })` menggantikan `register(name)` — field jadi terkendali. **Catatan:** di `adminly`, `async-select-field.tsx` versi saat ini MASIH pakai `register()` lama (belum dapat fix "BUG B" yang sudah ada di fork `edelweiss-web`) — jadi `SelectField` ini akan jadi field PERTAMA di `adminly` yang memakai pola `useController`, bukan mengikuti pola yang sudah ada di repo ini.
 - `value` dinormalisasi `null/undefined → ""` sebelum dibandingkan ke `meta.options`.
 - Label yang ditampilkan di trigger dicari manual: `meta.options.find(o => String(o.value) === value)?.label`, fallback ke `t.common.selectPlaceholder` bila tak ada yang cocok/value kosong.
 - Pilih item di `CommandItem.onSelect`: panggil `field.onChange(o.value)`, lalu tutup Popover (state lokal `open`, `useState`).
