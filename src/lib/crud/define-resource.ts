@@ -23,6 +23,12 @@ export type FieldMeta = {
   type: FieldType;
   labelKey?: string;
   optionsFrom?: string;      // nama resource sumber options
+  // Override path mentah untuk options, MENGABAIKAN `optionsFrom` kalau diisi.
+  // Untuk field yang endpoint resource masternya digerbangi permission yang
+  // TIDAK dimiliki peran pemakai form ini (mis. guru mapel ajar tak punya
+  // `tahunajaran:view`) — panggil rute `opsi/*` milik layar sendiri sebagai
+  // gantinya. Lihat OpsiPeriodeService (edelweiss-api) untuk pola servernya.
+  optionsPath?: string;
   dependsOn?: string[];      // field induk (cascade)
   accept?: string;           // untuk file
   options?: { value: string | number; label: string }[]; // untuk select statis
