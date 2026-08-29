@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useForm, FormProvider, useFormState, useWatch } from "react-hook-form";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as React from "react";
@@ -167,71 +168,66 @@ function EditWithOptionsHarness() {
 }
 
 describe("AsyncSelectField - reload nilai FK numerik (BUG B)", () => {
-  it("select menampilkan value tersimpan sebagai opsi terpilih walau opsi datang SETELAH reset()", async () => {
+  it("trigger menampilkan label opsi terpilih walau opsi datang SETELAH reset()", async () => {
     render(<EditWithOptionsHarness />);
     fireEvent.click(screen.getByText("load"));
-    const select = screen.getByRole("combobox") as HTMLSelectElement;
-    // Sebelum opsi tiba: belum ada <option value="42"> di DOM sama sekali.
-    expect(select.value).toBe("");
+    const trigger = screen.getByRole("button", { name: (name) => name !== "load" });
+    // Sebelum opsi tiba: trigger masih menampilkan placeholder, bukan label opsi apa pun.
+    expect(trigger).toHaveTextContent("-- select --");
 
     await act(async () => {
       resolveDelayedOptions([{ value: 42, label: "Shift Pagi" }, { value: 43, label: "Shift Siang" }]);
       await delayedOptionsPromise;
     });
-    await waitFor(() => expect(screen.getAllByRole("option").length).toBeGreaterThan(1));
 
     // Sebelum fix: select TAK-TERKENDALI (`{...register(name)}`) hanya
     // menerapkan `.value` sekali saat `reset()` — opsi yang muncul belakangan
     // tak pernah disinkronkan ulang, jadi dropdown tetap kosong meski RHF
-    // menyimpan `42` dengan benar. Sesudah fix (`value=`/`onChange=`
-    // terkendali via `useWatch`), setiap render menyinkronkan ulang.
-    expect(select.value).toBe("42");
+    // menyimpan `42` dengan benar. Arsitektur Combobox ini menghindari
+    // mekanisme kegagalan itu sepenuhnya: label trigger diturunkan lewat
+    // `options.find()` di SETIAP render, jadi begitu `query.data` resolve
+    // dan komponen re-render, label otomatis tersinkron — tanpa assignment
+    // DOM imperatif apa pun yang bisa dibuang diam-diam oleh browser.
+    await waitFor(() => expect(trigger).toHaveTextContent("Shift Pagi"));
   });
 });
 
 /**
- * Temuan 1 review (kritis): `register()` menyediakan EMPAT hal —
- * `name`/`ref`/`onBlur`/`onChange` internal RHF. Perbaikan BUG B pertama
- * (`setValue` tangan-sendiri di `onChange`, dgn `{ shouldDirty: true }`)
- * MASIH mengisi `dirtyFields` dengan benar — itu SENGAJA di-set eksplisit
- * di panggilan `setValue`-nya, jadi memeriksa `dirtyFields` SAJA tak cukup
- * membedakan versi lama vs `useController`. Yang benar-benar hilang di versi
- * lama: (a) atribut DOM `name` (tak pernah dipasang sama sekali — bukan
- * lewat `register()`, bukan manual), dan (b) `onBlur` (tak pernah disambung
- * — `touchedFields` tak mungkin terisi lewat blur). Test ini menegaskan
- * KEDUANYA, plus value+dirtyFields, lewat interaksi DOM sungguhan —
- * dibuktikan RED thd versi `setValue` tangan-sendiri (lihat commit ini).
+ * Temuan 1 review (kritis, warisan dari versi native `<select>`): registrasi
+ * RHF yang benar (`useController`, bukan `setValue` tangan-sendiri) WAJIB
+ * membawa dua hal: (a) memilih opsi menandai `dirtyFields`, dan (b) menutup
+ * popover menandai `touchedFields` lewat `field.onBlur()`. Versi Combobox ini
+ * membuktikan keduanya lewat interaksi klik sungguhan (bukan `fireEvent`
+ * mentah pada elemen native `<select>` yang sudah tak ada). `field.onBlur()`
+ * dipanggil dari `close()` terpusat di komponen — BUKAN otomatis dari
+ * `onOpenChange`, karena `setOpen(false)` yang dipanggil langsung dari
+ * `onSelect` tak memicu `onOpenChange` sama sekali (dibuktikan probe empiris
+ * atas `select-field.tsx`, lihat commit ini).
  */
-describe("AsyncSelectField - onChange/blur DOM sungguhan (registrasi RHF)", () => {
-  it("memilih opsi via event change memperbarui value + dirtyFields, DAN select punya atribut name + onBlur menandai touchedFields", async () => {
+describe("AsyncSelectField - pilih opsi via Combobox (registrasi RHF)", () => {
+  it("memilih opsi menandai dirtyFields, menutup popover menandai touchedFields", async () => {
+    const user = userEvent.setup();
     render(<EditWithOptionsHarness />);
     fireEvent.click(screen.getByText("load"));
     await act(async () => {
       resolveDelayedOptions([{ value: 42, label: "Shift Pagi" }, { value: 43, label: "Shift Siang" }]);
       await delayedOptionsPromise;
     });
-    await waitFor(() => expect(screen.getAllByRole("option").length).toBeGreaterThan(1));
-
-    const select = screen.getByRole("combobox") as HTMLSelectElement;
-    // Atribut DOM `name` HARUS terpasang (bukti field terdaftar via
-    // `useController`/`register`, bukan setValue tangan-sendiri yang tak
-    // pernah memasang atribut ini sama sekali).
-    expect(select.name).toBe("jadwal_1");
 
     // Sebelum interaksi user: belum dirty, belum touched.
     expect(screen.getByTestId("dirty")).toHaveTextContent("false");
     expect(screen.getByTestId("touched")).toHaveTextContent("false");
 
-    fireEvent.change(select, { target: { value: "43" } });
-    // (1) Nilai RHF berubah.
-    expect(select.value).toBe("43");
+    const trigger = screen.getByRole("button", { name: (name) => name !== "load" });
+    await user.click(trigger);
+    await user.click(await screen.findByRole("option", { name: "Shift Siang" }));
+
+    // (1) Nilai RHF berubah — trigger sekarang menampilkan label baru.
+    expect(trigger).toHaveTextContent("Shift Siang");
     // (2) dirtyFields terisi.
     expect(screen.getByTestId("dirty")).toHaveTextContent("true");
-
-    fireEvent.blur(select);
-    // (3) touchedFields terisi — HANYA mungkin lewat `onBlur` yang
-    // terpasang (`field.onBlur`). Versi `setValue` tangan-sendiri tak
-    // pernah menyambung `onBlur` apa pun, jadi ini tetap "false" di sana.
+    // (3) touchedFields terisi — HANYA mungkin lewat `field.onBlur()` yang
+    // dipanggil dari `close()` terpusat saat popover ditutup oleh `onSelect`.
     expect(screen.getByTestId("touched")).toHaveTextContent("true");
   });
 });
@@ -281,7 +277,11 @@ function BothOptionsHarness() {
 
 describe("AsyncSelectField - optionsPath (mekanisme baru, Task 3)", () => {
   it("optionsPath diisi -> fetchOptionsByPath dipanggil dgn path itu + parent dari dependsOn, opsi hasilnya dirender", async () => {
+    const user = userEvent.setup();
     render(<OptionsPathHarness />);
+    // Konten Command ada di dalam Popover portal/conditional -- buka trigger
+    // dulu sebelum opsi ("Opsi Path") ada di DOM.
+    await user.click(screen.getByRole("button"));
     await waitFor(() => expect(screen.getByText("Opsi Path")).toBeInTheDocument());
     // `parent` (dari `dependsOn: ["parent"]`) WAJIB ikut terkirim — cascade
     // parent tetap didukung utk jalur `optionsPath`, sama seperti `optionsFrom`.
@@ -291,15 +291,19 @@ describe("AsyncSelectField - optionsPath (mekanisme baru, Task 3)", () => {
   });
 
   it("optionsPath mengalahkan optionsFrom kalau keduanya diisi -- getResource/optionsFrom TIDAK terpanggil", async () => {
+    const user = userEvent.setup();
     const getResourceMock = vi.mocked(getResource);
     getResourceMock.mockClear();
     render(<BothOptionsHarness />);
+    await user.click(screen.getByRole("button"));
     await waitFor(() => expect(screen.getByText("Opsi Path")).toBeInTheDocument());
     expect(getResourceMock).not.toHaveBeenCalled();
   });
 
   it("parent (dependsOn) berubah -> fetchOptionsByPath dipanggil ULANG dgn parent BARU (queryKey ikut parent, bukan cache basi)", async () => {
+    const user = userEvent.setup();
     render(<OptionsPathHarness />);
+    await user.click(screen.getByRole("button"));
     await waitFor(() => expect(screen.getByText("Opsi Path")).toBeInTheDocument());
     const mockFn = vi.mocked(fetchOptionsByPath);
     const panggilanAwal = mockFn.mock.calls.length;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm, FormProvider, useWatch } from "react-hook-form";
+import { useForm, FormProvider, useFormState, useWatch } from "react-hook-form";
 import * as React from "react";
 import { SelectField } from "@/components/crud/fields/select-field";
 import { I18nProvider } from "@/components/providers/i18n-provider";
@@ -15,6 +15,11 @@ vi.mock("next/navigation", () => ({
 function ValueProbe() {
   const value = useWatch({ name: "warna" });
   return <span data-testid="warna-value">{String(value ?? "")}</span>;
+}
+
+function TouchedProbe() {
+  const { touchedFields } = useFormState({ name: "warna" });
+  return <span data-testid="warna-touched">{String(Boolean((touchedFields as Record<string, unknown>).warna))}</span>;
 }
 
 function Harness({ triggerError }: { triggerError?: boolean }) {
@@ -38,6 +43,7 @@ function Harness({ triggerError }: { triggerError?: boolean }) {
           }}
         />
         <ValueProbe />
+        <TouchedProbe />
       </FormProvider>
     </I18nProvider>
   );
@@ -72,5 +78,14 @@ describe("SelectField", () => {
   it("trigger dapat aria-invalid=true saat field ada error validasi", () => {
     render(<Harness triggerError />);
     expect(screen.getByRole("button")).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("memilih opsi menandai touchedFields (popover tertutup lewat close() terpusat, bukan setOpen langsung)", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.getByTestId("warna-touched")).toHaveTextContent("false");
+    await user.click(screen.getByRole("button"));
+    await user.click(await screen.findByRole("option", { name: "Biru" }));
+    expect(screen.getByTestId("warna-touched")).toHaveTextContent("true");
   });
 });

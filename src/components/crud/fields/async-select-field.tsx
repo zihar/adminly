@@ -4,6 +4,16 @@ import { useController, useFormContext, useFormState, useWatch } from "react-hoo
 import { useQuery } from "@tanstack/react-query";
 import { getResource } from "@/config/resources/index";
 import { useI18n } from "@/components/providers/i18n-provider";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import type { FieldProps } from "./index";
 
 export function AsyncSelectField({ name, meta }: FieldProps) {
@@ -82,8 +92,11 @@ export function AsyncSelectField({ name, meta }: FieldProps) {
   // tetap kita yang menormalkan `null`/`undefined` → `""` — bukan
   // `field.value` mentah — dan tetap TERSINKRON ULANG tiap render saat opsi
   // datang belakangan (MENJAGA fix BUG B).
-  const { field } = useController({ name });
+  const { field, fieldState } = useController({ name });
   const value = field.value === undefined || field.value === null ? "" : String(field.value);
+  const [open, setOpen] = React.useState(false);
+  const options = query?.data ?? [];
+  const selected = options.find((o) => String(o.value) === value);
 
   // Reset value HANYA saat perubahan parent berasal dari AKSI USER.
   //
@@ -109,17 +122,60 @@ export function AsyncSelectField({ name, meta }: FieldProps) {
     setValue(name, "");
   }, [name, setValue, parentKey, parentDirty]); // reset saat parent berubah oleh user
 
+  // Satu jalur tutup terpusat: `onOpenChange` menangkap Escape/klik-luar,
+  // sedangkan memilih opsi menutup popover lewat `setOpen(false)` LANGSUNG
+  // di `onSelect` -- itu TIDAK memicu `onOpenChange` (prop `open` yang
+  // berubah dari kode sendiri tak dianggap Popover sebagai permintaan
+  // eksternal). Tanpa `close()` bersama, `field.onBlur()` tak pernah
+  // terpanggil saat user memilih opsi -- `touchedFields` diam-diam tak
+  // pernah terisi lewat jalur itu (dibuktikan probe empiris di select-field.tsx).
+  const close = () => {
+    setOpen(false);
+    field.onBlur();
+  };
+
   return (
-    <select
-      id={name}
-      {...field}
-      value={value}
-      className="border rounded px-2 py-1"
+    <Popover
+      open={open}
+      onOpenChange={(next: boolean) => {
+        if (next) setOpen(true);
+        else close();
+      }}
     >
-      <option value="">{t.common.selectPlaceholder}</option>
-      {(query?.data ?? []).map((o) => (
-        <option key={String(o.value)} value={String(o.value)}>{o.label}</option>
-      ))}
-    </select>
+      <PopoverTrigger
+        render={
+          <Button
+            ref={field.ref}
+            variant="outline"
+            className="w-full justify-start font-normal"
+            aria-invalid={fieldState.invalid}
+          />
+        }
+      >
+        {selected?.label ?? t.common.selectPlaceholder}
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0">
+        <Command>
+          <CommandInput placeholder={t.common.searchPlaceholder} />
+          <CommandList>
+            <CommandEmpty>{t.common.noResults}</CommandEmpty>
+            <CommandGroup>
+              {options.map((o) => (
+                <CommandItem
+                  key={String(o.value)}
+                  value={o.label}
+                  onSelect={() => {
+                    field.onChange(String(o.value));
+                    close();
+                  }}
+                >
+                  {o.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
