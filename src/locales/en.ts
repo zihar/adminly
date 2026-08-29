@@ -32,6 +32,7 @@ export const en = {
     // Opsi "semua" pada dropdown filter kolom (Filter UI Task 2) — mengosongkan
     // filter field terkait.
     all: "All",
+    noResults: "No results",
   },
   // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
   field: {

@@ -31,6 +31,7 @@ export const id: Dictionary = {
     // Opsi "semua" pada dropdown filter kolom (Filter UI Task 2) — mengosongkan
     // filter field terkait.
     all: "Semua",
+    noResults: "Tidak ada hasil",
   },
   // Teks generik komponen field CRUD (dipakai lintas-resource, mis. `FileField`).
   field: {
