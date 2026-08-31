@@ -84,6 +84,26 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
   const currentStatus = wf ? String((one.data as Record<string, unknown> | undefined)?.[wf.field] ?? "") : "";
   const allowedTransitions = wf ? wf.transitions.filter((tr) => tr.from.includes(currentStatus)) : [];
 
+  // Satu field = satu sel. Diekstrak supaya jalur `fields` (lama) dan jalur
+  // `sections` (baru) merender field dengan cara yang PERSIS sama — kalau
+  // keduanya menyalin blok ini, perbaikan di satu jalur diam-diam melewatkan
+  // yang lain.
+  const renderField = (f: string) => (
+    <div key={f} className="space-y-1">
+      {/* Field `cascade` render label per-levelnya sendiri (tiap
+          `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
+          htmlFor={f}>` di sini akan menggantung (tak ada elemen
+          dengan `id={f}`), jadi dilewati khusus untuk tipe ini. */}
+      {def.form.fields[f]?.type !== "cascade" && (
+        <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
+      )}
+      <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
+      <p className="text-sm text-destructive">
+        {form.formState.errors[f]?.message as string | undefined}
+      </p>
+    </div>
+  );
+
   return (
     <>
       {/* Panel workflow: HANYA di mode edit + resource yang mendeklarasikan
@@ -114,20 +134,19 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
             )}
             {tabs.map((tab) => (
               <TabsContent key={tab.tabKey} value={tab.tabKey} className="space-y-4">
-                {tab.fields.map((f) => (
-                  <div key={f} className="space-y-1">
-                    {/* Field `cascade` render label per-levelnya sendiri (tiap
-                        `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
-                        htmlFor={f}>` di sini akan menggantung (tak ada elemen
-                        dengan `id={f}`), jadi dilewati khusus untuk tipe ini. */}
-                    {def.form.fields[f]?.type !== "cascade" && (
-                      <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
-                    )}
-                    <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors[f]?.message as string | undefined}
-                    </p>
-                  </div>
+                {/* Jalur lama: field langsung di tab, tanpa judul section.
+                    `?? []` bukan defensif berlebihan — sejak `sections` ada,
+                    `fields` boleh absen. */}
+                {(tab.fields ?? []).map(renderField)}
+                {/* Jalur baru: field dikelompokkan di bawah judul section,
+                    URUTAN section = urutan array (bukan urutan `form.fields`). */}
+                {(tab.sections ?? []).map((sec) => (
+                  <section key={sec.key} className="space-y-4">
+                    <h3 className="border-b pb-1 text-sm font-semibold">
+                      {resolveLabel(t, sec.key)}
+                    </h3>
+                    {sec.fields.map(renderField)}
+                  </section>
                 ))}
               </TabsContent>
             ))}

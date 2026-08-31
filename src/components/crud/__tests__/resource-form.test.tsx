@@ -33,6 +33,10 @@ const server = setupServer(
 // harus di-import secara dinamis SETELAH `server.listen()` (MSW menambal
 // fetch) dan env var di-set — bukan lewat static import di atas.
 let def: ResourceDef;
+// Def ketiga: layout ber-`sections` (judul section di dalam satu tab). Dipakai
+// uji paritas-urutan — legacy Sximo menyusun form dalam section berhuruf, dan
+// `layout` lama (`{ tabKey, fields }`) tak punya tempat untuk judul itu.
+let sectionedDef: ResourceDef;
 // Def kedua khusus uji scoped-create: sama seperti `def` tapi punya `scope`
 // (`ResourceForm` harus menempelkan `useScope()` ke payload create-nya).
 let scopedDef: ResourceDef;
@@ -63,6 +67,28 @@ beforeAll(async () => {
       schema: z.object({ nama: z.string().min(1, "Nama wajib diisi") }),
       layout: [{ tabKey: "umum", fields: ["nama"] }],
       fields: { nama: { type: "text", labelKey: "items.nama" } },
+    },
+  });
+  sectionedDef = defineResource({
+    name: "items", path: "/items",
+    api: createResourceApi({ resource: "items", path: "/items" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama" }],
+    form: {
+      schema: z.object({ nama: z.string().min(1, "Nama wajib diisi"), kode: z.string().optional() }),
+      layout: [
+        {
+          tabKey: "umum",
+          sections: [
+            { key: "items.sec.identitas", fields: ["nama"] },
+            { key: "items.sec.lainnya", fields: ["kode"] },
+          ],
+        },
+      ],
+      fields: {
+        nama: { type: "text", labelKey: "items.nama" },
+        kode: { type: "text", labelKey: "items.kode" },
+      },
     },
   });
 });
@@ -116,6 +142,31 @@ describe("ResourceForm", () => {
     await userEvent.type(screen.getByLabelText("Name"), "Halo");
     await userEvent.click(screen.getByRole("button", { name: /save/i }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
+  });
+
+  it("merender judul tiap section, dan field-nya di bawah judul itu", () => {
+    wrap(<ResourceForm def={sectionedDef} />);
+    // Judul section = `key` yang di-resolve lewat kamus; kunci tak dikenal
+    // jatuh ke segmen terakhir (`resolveLabel`), jadi yang tampil "identitas".
+    expect(screen.getByRole("heading", { name: "identitas" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "lainnya" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+  });
+
+  it("mempertahankan URUTAN section apa adanya — bukan urutan `fields` object", () => {
+    const { container } = wrap(<ResourceForm def={sectionedDef} />);
+    const teks = (container.textContent ?? "");
+    // Assertion kontrol: keduanya memang ADA, supaya uji ini tak lulus
+    // gara-gara dua indexOf sama-sama -1.
+    expect(teks).toContain("identitas");
+    expect(teks).toContain("lainnya");
+    expect(teks.indexOf("identitas")).toBeLessThan(teks.indexOf("lainnya"));
+  });
+
+  it("layout `fields` polos (152 resource memakainya) tetap render tanpa judul section", () => {
+    const { container } = wrap(<ResourceForm def={def} />);
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(container.querySelectorAll("h3").length).toBe(0);
   });
 
   it("menempelkan scope aktif (workspace) ke payload create, bukan hanya field form", async () => {

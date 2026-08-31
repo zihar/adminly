@@ -43,9 +43,25 @@ export type FieldMeta = {
   }[];
 };
 
+/**
+ * Satu section di dalam satu tab form — judul + daftar field di bawahnya.
+ *
+ * `key` di-resolve lewat `resolveLabel` sama seperti `labelKey` field, jadi
+ * judulnya ikut i18n dan bukan string mentah.
+ */
+export type FormSection = { key: string; fields: string[] };
+
 export type FormDef = {
   schema: ZodType<unknown>;
-  layout: { tabKey: string; fields: string[] }[];
+  /**
+   * Isi satu tab. Dua jalur, dan `fields` SENGAJA dipertahankan: mayoritas
+   * resource memakainya, jadi `sections` ditambahkan sebagai jalur kedua
+   * alih-alih menggantikannya.
+   *
+   * Kalau keduanya diisi, `fields` dirender lebih dulu (tanpa judul) lalu
+   * `sections` — bukan salah satunya dibuang diam-diam.
+   */
+  layout: { tabKey: string; fields?: string[]; sections?: FormSection[] }[];
   fields: Record<string, FieldMeta>;
 };
 
