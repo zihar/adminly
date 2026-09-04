@@ -37,6 +37,10 @@ export function TemplatePicker() {
   // sini cuma leluhur `.dark`-nya — jadi kelasnya harus dipasang manual di
   // sini juga, kalau tidak miniatur SELALU tampil terang walau halaman gelap.
   const { resolvedTheme } = useTheme();
+  // Aman hanya karena tab Appearance dipasang malas (Base UI `Tabs.Panel`
+  // defaultnya `keepMounted={false}`) SETELAH `ThemeProvider` selesai
+  // meresolusi tema — kalau nanti pemasangan tab jadi eager atau
+  // digerakkan URL, miniatur ini bisa sekejap menampilkan palet yang salah.
   const isDark = resolvedTheme === "dark";
 
   return (

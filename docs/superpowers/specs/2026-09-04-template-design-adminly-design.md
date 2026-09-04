@@ -197,7 +197,28 @@ Satu-satunya tempat gaya komponen boleh ditulis.
 
 Aturan tinggi kontrol sengaja dilingkupi ke dalam `[data-slot="form-row"]`. Kalau dipasang global, tombol ikon di header dan trigger sidebar ikut membesar — bukan yang dimaksud. `SelectField` sudah berupa Popover + Button, jadi trigger-nya ikut terkena lewat `[data-slot="button"]` tanpa perlu penanda tambahan.
 
-`:where()` menjaga spesifisitas tetap nol, jadi utility Tailwind di `className` selalu menang.
+`:where()` menjaga spesifisitas tetap nol — tapi itu cuma menyelesaikan
+perebutan **di dalam** `vocabulary.css` sendiri (aturan di sini tak saling
+berebut satu sama lain). Yang menentukan menang-lawan-utility-Tailwind adalah
+hal lain: seluruh berkas ini hidup di layer `adminly-vocabulary`, dideklarasikan
+di `globals.css` SETELAH layer `utilities` bawaan Tailwind
+(`@layer theme, base, components, utilities, adminly-vocabulary;`). Urutan
+layer diputuskan sebelum spesifisitas dipertimbangkan sama sekali, jadi aturan
+di sini MENIMPA utility yang di-hardcode shadcn ke `className` komponennya
+sendiri (mis. `ring-1` di `card.tsx`) — itulah mekanisme yang membuat template
+bisa mengubah bentuk komponen tanpa menyentuh `src/components/ui/`.
+Konsekuensinya: utility Tailwind di `className` konsumen TIDAK lagi otomatis
+menang atas aturan kosakata; menimpanya secara lokal perlu modifier penting
+Tailwind (mis. `shadow-none!`).
+
+> **Catatan implementasi (menggantikan D5 & paragraf di atas):** rancangan
+> awal berasumsi spesifisitas nol dari `:where()` sudah cukup membuat "utility
+> Tailwind di `className` selalu menang". Itu ternyata mustahil: shadcn
+> menulis gaya komponennya SEBAGAI utility class di `className`, bukan sebagai
+> CSS custom bikinan sendiri — jadi "utility selalu menang" dan "template bisa
+> merestyle komponen tanpa menyentuh `src/components/ui/`" memperebutkan slot
+> cascade yang sama, dan tidak bisa dua-duanya benar sekaligus. Mekanisme layer
+> di atas dipilih selama implementasi sebagai gantinya.
 
 Aturan `form-row` di atas dibungkus `@media (min-width: 48rem)` — di layar sempit label kembali ke atas field, karena kolom label 190px memakan lebar yang tidak ada.
 
