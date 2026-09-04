@@ -10,7 +10,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { LOCALE_COOKIE, parseLocale } from "@/config/i18n";
 
 const geistSans = Geist({
-  variable: "--font-sans",
+  // Dulu "--font-sans". Dipindah supaya `--font-sans` di @theme inline bebas
+  // menunjuk `--font-app`, token yang boleh diganti tiap template.
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
