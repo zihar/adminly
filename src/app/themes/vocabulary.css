@@ -1,0 +1,108 @@
+/*
+ * KOSAKATA gaya komponen — SATU-SATUNYA tempat gaya komponen boleh ditulis.
+ *
+ * Semua aturan di sini berada di dalam layer `adminly-vocabulary`, yang
+ * dideklarasikan di `globals.css` (`@layer theme, base, components, utilities,
+ * adminly-vocabulary;`) SETELAH `utilities` milik Tailwind. Urutan layer
+ * diselesaikan sebelum spesifisitas dipertimbangkan sama sekali, jadi aturan
+ * di sini MENIMPA utility Tailwind — termasuk utility yang di-hardcode di
+ * `className` komponen shadcn sendiri (mis. `ring-1 ring-foreground/10` di
+ * `card.tsx`). Itulah mekanismenya: tanpa layer ini datang setelah
+ * `utilities`, template tidak bisa mengubah bentuk komponen shadcn tanpa
+ * menyentuh `src/components/ui/` — karena shadcn menulis gaya komponennya
+ * SEBAGAI utility class di `className`, bukan sebagai CSS custom, jadi kedua
+ * hal itu memperebutkan slot cascade yang sama.
+ *
+ * Konsekuensinya juga harus disadari: utility di `className` TIDAK lagi
+ * otomatis menang di sini seperti anggapan versi sebelumnya berkas ini.
+ * Kalau suatu saat perlu menimpa aturan kosakata secara lokal dari
+ * `className`, pakai modifier penting Tailwind (mis. `shadow-none!`).
+ *
+ * `:where()` dipakai supaya spesifisitas di DALAM lapisan ini tetap rendah
+ * (aturan di sini tak saling berebut satu sama lain) — itu urusan spesifisitas
+ * di dalam layer yang sama, terpisah dari urusan antar-layer di atas. Bagian
+ * ancestor selektor di luar `:where()` (mis. `[data-density="lega"]`,
+ * `[data-slot="form-row"]`) tetap menyumbang spesifisitas seperti biasa.
+ *
+ * Yang di-hook adalah penanda `data-slot` yang sudah dibawa tiap komponen
+ * shadcn — jadi tak satu pun berkas di src/components/ui/ perlu disentuh dan
+ * `npx shadcn@latest add` tetap aman.
+ *
+ * Nilai yang ada di sini HANYA yang benar-benar dipakai template terdaftar.
+ * `density: rapat` dan `surface: rata` menyusul bersama template Dispatch.
+ */
+
+@layer adminly-vocabulary {
+  /* ── Kepadatan ─────────────────────────────────────────────────────── */
+
+  /*
+   * `lega`: label pindah ke kolom kiri sejajar dengan field, tiap baris dipisah
+   * garis rambut. Pada form 20 field, mata bisa melacak barisnya sendiri.
+   * Di layar sempit label kembali ke atas field — kolom 190px memakan lebar
+   * yang memang tidak ada di sana.
+   */
+  @media (min-width: 48rem) {
+    [data-density="lega"] :where([data-slot="form-row"]) {
+      display: grid;
+      grid-template-columns: var(--label-col) 1fr;
+      align-items: center;
+      gap: 0 1.25rem;
+      border-bottom: 1px solid var(--border);
+      padding-block: 0.5rem;
+    }
+
+    [data-density="lega"] :where([data-slot="form-row"]:last-child) {
+      border-bottom: 0;
+    }
+
+    /*
+     * Unit field+error (`data-slot="form-field"`, lihat `resource-form.tsx`)
+     * DIPAKSA ke kolom kedua alih-alih dibiarkan lewat auto-placement.
+     * Untuk field bertipe `cascade`, `<Label>` sengaja dilewati di
+     * `resource-form.tsx` (cascade render label per-levelnya sendiri) —
+     * itu membuat unit ini jadi SATU-SATUNYA anak `form-row`, dan
+     * auto-placement dua-kolom akan menaruh anak tunggal itu di kolom
+     * PERTAMA (kolom label). `grid-column: 2` di sini membuatnya benar
+     * terlepas dari ada-tidaknya `<Label>` sibling; giliran `<Label>` (kalau
+     * ada) tetap auto-placement ke kolom pertama karena kolom kedua sudah
+     * dipakai eksplisit di sini.
+     */
+    [data-density="lega"] :where([data-slot="form-row"]) > [data-slot="form-field"] {
+      grid-column: 2;
+    }
+  }
+
+  /*
+   * Target klik lega untuk orang yang mengetik ratusan baris sehari. Sengaja
+   * DILINGKUPI ke dalam baris form: kalau dipasang global, tombol ikon di
+   * header dan trigger sidebar ikut membesar — bukan yang dimaksud.
+   * `SelectField` sudah berupa Popover + Button, jadi trigger-nya ikut terkena
+   * lewat [data-slot="button"] tanpa penanda tambahan.
+   *
+   * Di-hook lewat `data-slot` ("input"/"textarea" dari `input.tsx`/
+   * `textarea.tsx`), BUKAN selektor elemen bawaan `input`/`textarea` —
+   * selektor elemen ikut menjaring `<input type="checkbox">`/`<input
+   * type="radio">` native (`checkbox-field.tsx`, `radio-field.tsx`, tak
+   * punya `data-slot`), yang meregangkannya jadi bar 42px tinggi × ~13px
+   * lebar alih-alih kotak kecil biasa.
+   */
+  [data-density="lega"] [data-slot="form-row"] :where([data-slot="input"], [data-slot="textarea"], [data-slot="button"]) {
+    min-height: 2.625rem;
+  }
+
+  /* ── Permukaan ───────────────────────────────────────────────────────── */
+
+  /*
+   * `terangkat`: kartu kehilangan garisnya dan mendapat elevasi. Dipakai
+   * template yang tampilannya diproyeksikan — proyektor meratakan kedalaman,
+   * jadi elevasi yang mengembalikan hierarki.
+   */
+  [data-surface="terangkat"] :where([data-slot="card"]) {
+    box-shadow: var(--lift);
+  }
+
+  [data-surface="terangkat"] :where([data-slot="card-footer"]) {
+    background: transparent;
+    border-top-width: 0;
+  }
+}

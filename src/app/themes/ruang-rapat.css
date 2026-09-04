@@ -1,0 +1,87 @@
+/*
+ * Template "Ruang Rapat" — untuk yang ditampilkan ke ruangan.
+ *
+ * Proyektor memucatkan warna dan MERATAKAN kedalaman, jadi dua hal dibalik:
+ * radius & skala naik, dan kedalaman dikembalikan lewat elevasi lembut
+ * (`--lift`) — satu-satunya template yang memakai surface `terangkat`, dan di
+ * sinilah itu punya alasan.
+ *
+ * Indigonya BUKAN titik aksen melainkan bidang padat di belakang navigasi
+ * (token `--sidebar`, dipakai TopNav). Tanpa gradien.
+ */
+[data-template="ruang-rapat"] {
+  --background: oklch(0.968 0.006 268);
+  --foreground: oklch(0.21 0.03 268);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.03 268);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.03 268);
+  --primary: oklch(0.36 0.14 268);
+  --primary-foreground: oklch(0.99 0.002 268);
+  --secondary: oklch(0.935 0.01 268);
+  --secondary-foreground: oklch(0.21 0.03 268);
+  --muted: oklch(0.935 0.01 268);
+  /* Dinaikkan dari 0.53 (≈4.82:1) ke 0.48 (≈5.9:1) — ini satu-satunya template
+     yang tujuannya dibaca lintas ruangan lewat proyektor, di mana kontras
+     makin merosot; blok gelap sudah cukup nyaman, tak disentuh. */
+  --muted-foreground: oklch(0.48 0.026 268);
+  --accent: oklch(0.92 0.016 268);
+  --accent-foreground: oklch(0.21 0.03 268);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.915 0.008 268);
+  --input: oklch(0.915 0.008 268);
+  --ring: oklch(0.36 0.14 268);
+  --chart-1: oklch(0.36 0.14 268);
+  --chart-2: oklch(0.61 0.105 215);
+  --chart-3: oklch(0.5 0.12 292);
+  --chart-4: oklch(0.7 0.09 195);
+  --chart-5: oklch(0.44 0.105 250);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.36 0.14 268);
+  --sidebar-foreground: oklch(0.99 0.002 268);
+  --sidebar-primary: oklch(0.99 0.002 268);
+  --sidebar-primary-foreground: oklch(0.36 0.14 268);
+  --sidebar-accent: oklch(0.42 0.135 268);
+  --sidebar-accent-foreground: oklch(0.99 0.002 268);
+  --sidebar-border: oklch(0.44 0.13 268);
+  --sidebar-ring: oklch(0.75 0.09 268);
+  --font-app: var(--font-archivo);
+  --label-col: 190px;
+  --lift: 0 1px 2px oklch(0.21 0.03 268 / 6%), 0 8px 22px -10px oklch(0.21 0.03 268 / 28%);
+}
+
+[data-template="ruang-rapat"].dark {
+  --background: oklch(0.172 0.016 275);
+  --foreground: oklch(0.93 0.008 275);
+  --card: oklch(0.235 0.022 275);
+  --card-foreground: oklch(0.93 0.008 275);
+  --popover: oklch(0.235 0.022 275);
+  --popover-foreground: oklch(0.93 0.008 275);
+  --primary: oklch(0.665 0.145 275);
+  --primary-foreground: oklch(0.172 0.016 275);
+  --secondary: oklch(0.285 0.024 275);
+  --secondary-foreground: oklch(0.93 0.008 275);
+  --muted: oklch(0.285 0.024 275);
+  --muted-foreground: oklch(0.68 0.026 275);
+  --accent: oklch(0.305 0.028 275);
+  --accent-foreground: oklch(0.93 0.008 275);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.315 0.02 275);
+  --input: oklch(0.345 0.022 275);
+  --ring: oklch(0.665 0.145 275);
+  --chart-1: oklch(0.665 0.145 275);
+  --chart-2: oklch(0.735 0.105 215);
+  --chart-3: oklch(0.62 0.13 292);
+  --chart-4: oklch(0.78 0.085 195);
+  --chart-5: oklch(0.57 0.1 250);
+  --sidebar: oklch(0.3 0.115 273);
+  --sidebar-foreground: oklch(0.96 0.006 275);
+  --sidebar-primary: oklch(0.96 0.006 275);
+  --sidebar-primary-foreground: oklch(0.3 0.115 273);
+  --sidebar-accent: oklch(0.36 0.115 273);
+  --sidebar-accent-foreground: oklch(0.96 0.006 275);
+  --sidebar-border: oklch(0.38 0.11 273);
+  --sidebar-ring: oklch(0.7 0.1 275);
+  /* Bayangan di atas dasar gelap harus jauh lebih pekat agar terbaca. */
+  --lift: 0 1px 2px oklch(0 0 0 / 40%), 0 10px 24px -12px oklch(0 0 0 / 70%);
+}

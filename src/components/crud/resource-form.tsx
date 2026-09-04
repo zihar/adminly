@@ -89,7 +89,7 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
   // keduanya menyalin blok ini, perbaikan di satu jalur diam-diam melewatkan
   // yang lain.
   const renderField = (f: string) => (
-    <div key={f} className="space-y-1">
+    <div key={f} data-slot="form-row" className="space-y-1">
       {/* Field `cascade` render label per-levelnya sendiri (tiap
           `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
           htmlFor={f}>` di sini akan menggantung (tak ada elemen
@@ -97,10 +97,25 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
       {def.form.fields[f]?.type !== "cascade" && (
         <Label htmlFor={f}>{resolveLabel(t, def.form.fields[f]?.labelKey ?? f)}</Label>
       )}
-      <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
-      <p className="text-sm text-destructive">
-        {form.formState.errors[f]?.message as string | undefined}
-      </p>
+      {/* Dibungkus SATU `<div>` bertanda `data-slot="form-field"` supaya
+          field & pesan error selalu satu unit: tanpanya, grid `lega`
+          (`grid-template-columns: var(--label-col) 1fr`) menempatkan tiap
+          anak lewat auto-placement, jadi error yang jadi anak terpisah jatuh
+          ke kolom label. Penanda `data-slot` ini JUGA yang dipakai
+          `vocabulary.css` untuk MEMAKSA unit ini ke kolom kedua (field) via
+          `grid-column: 2` — bukan cuma mengandalkan urutan anak. Itu perlu
+          khusus untuk `cascade`: begitu `<Label>` di atas dilewati, div ini
+          jadi SATU-SATUNYA anak `form-row`, dan auto-placement tanpa
+          `grid-column` eksplisit akan menaruh anak tunggal itu di kolom
+          PERTAMA (kolom label), bukan kolom field. Menyatukan field+error di
+          sini juga lebih baik untuk density `normal`: error tetap menempel
+          ke kontrolnya, bukan elemen sibling lepas. */}
+      <div data-slot="form-field" className="space-y-1">
+        <FieldRenderer name={f} meta={def.form.fields[f] ?? { type: "text" }} />
+        <p className="text-sm text-destructive">
+          {form.formState.errors[f]?.message as string | undefined}
+        </p>
+      </div>
     </div>
   );
 

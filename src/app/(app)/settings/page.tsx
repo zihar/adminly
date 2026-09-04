@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { TemplatePicker } from "@/components/settings/template-picker";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
         <TabsList>
           <TabsTrigger value="general">{t.settings.tabGeneral}</TabsTrigger>
           <TabsTrigger value="account">{t.settings.tabAccount}</TabsTrigger>
+          <TabsTrigger value="appearance">{t.template.tab}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -74,6 +76,18 @@ export default async function SettingsPage() {
             <CardFooter className="border-t pt-4">
               <Button>{t.settings.save}</Button>
             </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.template.cardTitle}</CardTitle>
+              <CardDescription>{t.template.cardDesc}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TemplatePicker />
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

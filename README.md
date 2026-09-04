@@ -62,7 +62,11 @@ src/
 1. **Change the identity** in `src/config/site.ts` (`siteConfig.name`).
 2. **Set up the menu** by editing the `navMain` array in `src/config/site.ts` — the sidebar, breadcrumb, and active page follow automatically. Add new pages at `src/app/(app)/<name>/page.tsx`.
 3. **Wire up data**: replace `src/lib/data.ts` with fetches to your API/database. Pages are Server Components, so they can be `async` + `await fetch(...)`.
-4. **Branding/colors**: edit the CSS variables in `src/app/globals.css` (`:root` and `.dark`).
+4. **Branding/colors**: pick a built-in template in **Settings → Appearance**, or
+   set `DEFAULT_TEMPLATE` in `src/config/templates.ts` to choose the default for
+   your fork. To restyle a template, edit its CSS variables in
+   `src/app/themes/<id>.css`. `src/app/themes/base.css` holds the fallback
+   tokens used when no template attribute is present (Storybook, unit tests).
 5. **Add UI components**: `npx shadcn@latest add <component>`.
 
 ## Generic CRUD resources + scaffold generator
@@ -93,6 +97,55 @@ After generating: run `npx tsc --noEmit`, then `npm run dev` and open `/<name>`.
 > generated resource (more fields, cascade, real backend types), edit its
 > `<name>.ts` and `_data.ts`; for a real backend add the schema to `openapi.yaml`
 > and switch the type to `components["schemas"][...]` (as `items.ts` does).
+
+## Design templates
+
+A **template** bundles three things: colour and type tokens, the navigation
+shell, and component density/surface. Three ship with Adminly:
+
+| Template | For | Shell |
+|---|---|---|
+| Adminly | neutral default | sidebar |
+| Kertas Kerja | long forms, master data | sidebar |
+| Ruang Rapat | dashboards read together on a screen | top navigation |
+
+Users pick one in **Settings → Appearance**; the choice is stored in the
+`adminly_template` cookie. Light/dark stays a separate axis — every template
+works in both.
+
+**Adding a template:** add an entry to `TEMPLATES` in `src/config/templates.ts`,
+create `src/app/themes/<id>.css` with a light block and a `.dark` block, and
+import it in `globals.css` **before** `vocabulary.css`. The import order is part
+of the contract — theme files must come after `base.css`, or they stop
+overriding it. `src/config/__tests__/template-css.test.ts` fails if a registered
+template is missing tokens — but that test parses theme files with a
+brace-naive regex, so `src/app/themes/<id>.css` must contain only flat token
+blocks, no `@media` and no nested rules; `vocabulary.css` is the exception and
+may use them, since the integrity test never reads it.
+
+Component styling lives only in `src/app/themes/vocabulary.css`, keyed off the
+`data-slot` markers shadcn components already carry — nothing in
+`src/components/ui/` is modified, so `npx shadcn@latest add` stays safe. This
+works because `vocabulary.css` lives in its own CSS layer, `adminly-vocabulary`,
+declared **after** Tailwind's `utilities` layer in `src/app/globals.css`
+(`@layer theme, base, components, utilities, adminly-vocabulary;`). Layer order
+is settled before specificity is even considered, so a rule in `vocabulary.css`
+overrides a utility class that a shadcn component hardcodes into its own
+`className` (e.g. `ring-1` in `card.tsx`) — that's what lets a template restyle
+a component without ever touching `src/components/ui/`. The trade-off: a
+utility written in a consumer's `className` no longer automatically wins over
+a vocabulary rule; to override one locally you need Tailwind's `!` important
+modifier (e.g. `shadow-none!`).
+
+**Upgrading an existing fork:** older forks branded the app by editing the
+`:root` / `.dark` blocks directly in `globals.css`. This branch moved those
+blocks out into `src/app/themes/adminly.css`, so a clean merge that leaves
+your overrides in `globals.css` will silently stop working — `<html>` always
+carries a `data-template` attribute, and a template block (0,1,0 specificity)
+always comes after `:root` in the cascade, so it wins even though `:root` is
+declared first in the file. Move your color/typography overrides from
+`globals.css` into `src/app/themes/adminly.css` (both the light block and the
+`.dark` block) to get them back.
 
 ## Data layer (TanStack Query + typed OpenAPI client)
 
