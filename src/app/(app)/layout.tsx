@@ -11,7 +11,6 @@ import {
   TEMPLATE_COOKIE,
   parseTemplate,
   templateById,
-  type Shell,
 } from "@/config/templates";
 
 export default async function AppLayout({
@@ -38,10 +37,7 @@ export default async function AppLayout({
   return (
     <RbacProvider initialRole={role}>
       <ScopeProvider initial={parseScope(cookieStore.get(SCOPE_COOKIE)?.value)}>
-        {/* Cast: registry cuma berisi satu entri ("sidebar") sampai Task 9
-            menambah template ber-shell "topnav", jadi TypeScript sempat
-            menyempitkan `def.shell` ke literal tunggal itu saja. */}
-        {(def.shell as Shell) === "topnav" ? (
+        {def.shell === "topnav" ? (
           <TopNavShell>{children}</TopNavShell>
         ) : (
           <SidebarShell defaultOpen={defaultOpen}>{children}</SidebarShell>

@@ -45,6 +45,14 @@ export const TEMPLATES = [
     density: "lega",
     surface: "bergaris",
   },
+  {
+    id: "ruang-rapat",
+    labelKey: "template.ruangRapat.label",
+    descKey: "template.ruangRapat.desc",
+    shell: "topnav",
+    density: "lega",
+    surface: "terangkat",
+  },
 ] as const satisfies readonly TemplateEntry[];
 
 /** Union id yang benar-benar terdaftar — ikut melebar saat entri ditambah. */

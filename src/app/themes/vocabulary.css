@@ -55,4 +55,20 @@
   [data-density="lega"] [data-slot="form-row"] :where(input, textarea, [data-slot="button"]) {
     min-height: 2.625rem;
   }
+
+  /* ── Permukaan ───────────────────────────────────────────────────────── */
+
+  /*
+   * `terangkat`: kartu kehilangan garisnya dan mendapat elevasi. Dipakai
+   * template yang tampilannya diproyeksikan — proyektor meratakan kedalaman,
+   * jadi elevasi yang mengembalikan hierarki.
+   */
+  [data-surface="terangkat"] :where([data-slot="card"]) {
+    border-color: transparent;
+    box-shadow: var(--lift);
+  }
+
+  [data-surface="terangkat"] :where([data-slot="card-footer"]) {
+    background: transparent;
+  }
 }

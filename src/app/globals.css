@@ -15,6 +15,7 @@
 @import "./themes/base.css";
 @import "./themes/adminly.css";
 @import "./themes/kertas-kerja.css";
+@import "./themes/ruang-rapat.css";
 @import "./themes/vocabulary.css";
 
 @custom-variant dark (&:is(.dark *));
