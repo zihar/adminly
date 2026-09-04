@@ -43,7 +43,7 @@
 | D2 | Template disimpan di **cookie**, bukan localStorage | Shell berbeda = markup berbeda, jadi server wajib tahu template aktif sebelum render. localStorage bikin kerangka halaman berkedip tiap load |
 | D3 | **Dua sumbu** (template × mode), bukan satu | Selisih sesungguhnya cuma 2 palet (6 vs 8 saat itu), sementara satu sumbu menuntut mencopot `next-themes` lalu memasang ulang kelas `.dark` sendiri demi 22 utility `dark:` di `src/components/ui/` — membangun ulang yang sudah ada demi menghapus sebuah tombol. Dua sumbu juga mempertahankan pengikutan otomatis ke setelan sistem |
 | D4 | `:root` dan `.dark` yang sekarang **dipertahankan sebagai lantai dasar** | Komponen yang dirender tanpa `data-template` (Storybook, vitest, komponen terisolasi) tetap punya token lengkap dan tampil persis seperti sekarang |
-| D5 | Gaya komponen lewat `data-slot` + `:where()`, bukan fork komponen | Spesifisitas nol → utility Tailwind di `className` selalu menang, tak ada perang `!important`; dan `src/components/ui/` tetap bisa ditimpa `npx shadcn add` |
+| D5 | Gaya komponen lewat `data-slot` + `:where()`, bukan fork komponen | Aturan hidup di layer `adminly-vocabulary`, dideklarasikan SETELAH `utilities` Tailwind, jadi menimpa utility yang di-hardcode shadcn ke `className`-nya sendiri — itulah yang membuat template bisa merestyle komponen tanpa menyentuh `src/components/ui/` (`npx shadcn add` tetap aman). Biayanya: override lokal dari `className` butuh modifier `!` Tailwind, bukan otomatis menang. Lihat 4.4 untuk mekanisme lengkap |
 | D6 | Kosakata terkunci (`density`, `surface`) dengan nilai terbatas | Template baru mengombinasikan yang sudah teruji, bukan menambah permukaan baru yang bisa rusak |
 | D7 | Logika navigasi diangkat ke `useVisibleNav()` | Dua shell menggambar nav berbeda tapi memakai satu sumber logika; menambah item menu tetap sekali kerja |
 | D8 | Atribut dipasang di `documentElement` **sebelum** `router.refresh()` | Warna berganti seketika; struktur menyusul. Tanpa ini pergantian terasa tersendat |
@@ -211,7 +211,7 @@ Konsekuensinya: utility Tailwind di `className` konsumen TIDAK lagi otomatis
 menang atas aturan kosakata; menimpanya secara lokal perlu modifier penting
 Tailwind (mis. `shadow-none!`).
 
-> **Catatan implementasi (menggantikan D5 & paragraf di atas):** rancangan
+> **Catatan implementasi (paragraf di atas menggantikan asumsi rancangan awal; D5 di §2 sudah diperbarui agar konsisten):** rancangan
 > awal berasumsi spesifisitas nol dari `:where()` sudah cukup membuat "utility
 > Tailwind di `className` selalu menang". Itu ternyata mustahil: shadcn
 > menulis gaya komponennya SEBAGAI utility class di `className`, bukan sebagai

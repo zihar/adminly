@@ -118,7 +118,10 @@ create `src/app/themes/<id>.css` with a light block and a `.dark` block, and
 import it in `globals.css` **before** `vocabulary.css`. The import order is part
 of the contract — theme files must come after `base.css`, or they stop
 overriding it. `src/config/__tests__/template-css.test.ts` fails if a registered
-template is missing tokens.
+template is missing tokens — but that test parses theme files with a
+brace-naive regex, so `src/app/themes/<id>.css` must contain only flat token
+blocks, no `@media` and no nested rules; `vocabulary.css` is the exception and
+may use them, since the integrity test never reads it.
 
 Component styling lives only in `src/app/themes/vocabulary.css`, keyed off the
 `data-slot` markers shadcn components already carry — nothing in
