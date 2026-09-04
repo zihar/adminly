@@ -1,17 +1,28 @@
 /*
  * KOSAKATA gaya komponen — SATU-SATUNYA tempat gaya komponen boleh ditulis.
  *
- * Semua aturan di sini berada di dalam `@layer components`. Tailwind
- * mendeklarasikan urutan layer di `node_modules/tailwindcss/index.css` sebagai
- * `@layer theme, base, components, utilities;` — `components` datang SEBELUM
- * `utilities`, dan urutan layer diselesaikan sebelum spesifisitas dipertimbangkan
- * sama sekali. Jadi utility Tailwind di `className` selalu menang atas apa pun
- * di sini, tak peduli spesifisitas selektornya, dan tak ada perang `!important`.
- * `:where()` tetap dipakai supaya spesifisitas di DALAM lapisan ini tetap
- * rendah (aturan di sini tak saling berebut) — tapi itu bukan alasan utility
- * Tailwind menang; itu kerja `@layer`. Bagian ancestor selektor di luar
- * `:where()` (mis. `[data-density="lega"]`, `[data-slot="form-row"]`) tetap
- * menyumbang spesifisitas seperti biasa.
+ * Semua aturan di sini berada di dalam layer `adminly-vocabulary`, yang
+ * dideklarasikan di `globals.css` (`@layer theme, base, components, utilities,
+ * adminly-vocabulary;`) SETELAH `utilities` milik Tailwind. Urutan layer
+ * diselesaikan sebelum spesifisitas dipertimbangkan sama sekali, jadi aturan
+ * di sini MENIMPA utility Tailwind — termasuk utility yang di-hardcode di
+ * `className` komponen shadcn sendiri (mis. `ring-1 ring-foreground/10` di
+ * `card.tsx`). Itulah mekanismenya: tanpa layer ini datang setelah
+ * `utilities`, template tidak bisa mengubah bentuk komponen shadcn tanpa
+ * menyentuh `src/components/ui/` — karena shadcn menulis gaya komponennya
+ * SEBAGAI utility class di `className`, bukan sebagai CSS custom, jadi kedua
+ * hal itu memperebutkan slot cascade yang sama.
+ *
+ * Konsekuensinya juga harus disadari: utility di `className` TIDAK lagi
+ * otomatis menang di sini seperti anggapan versi sebelumnya berkas ini.
+ * Kalau suatu saat perlu menimpa aturan kosakata secara lokal dari
+ * `className`, pakai modifier penting Tailwind (mis. `shadow-none!`).
+ *
+ * `:where()` dipakai supaya spesifisitas di DALAM lapisan ini tetap rendah
+ * (aturan di sini tak saling berebut satu sama lain) — itu urusan spesifisitas
+ * di dalam layer yang sama, terpisah dari urusan antar-layer di atas. Bagian
+ * ancestor selektor di luar `:where()` (mis. `[data-density="lega"]`,
+ * `[data-slot="form-row"]`) tetap menyumbang spesifisitas seperti biasa.
  *
  * Yang di-hook adalah penanda `data-slot` yang sudah dibawa tiap komponen
  * shadcn — jadi tak satu pun berkas di src/components/ui/ perlu disentuh dan
@@ -21,7 +32,7 @@
  * `density: rapat` dan `surface: rata` menyusul bersama template Dispatch.
  */
 
-@layer components {
+@layer adminly-vocabulary {
   /* ── Kepadatan ─────────────────────────────────────────────────────── */
 
   /*
@@ -64,11 +75,11 @@
    * jadi elevasi yang mengembalikan hierarki.
    */
   [data-surface="terangkat"] :where([data-slot="card"]) {
-    border-color: transparent;
     box-shadow: var(--lift);
   }
 
   [data-surface="terangkat"] :where([data-slot="card-footer"]) {
     background: transparent;
+    border-top-width: 0;
   }
 }

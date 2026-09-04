@@ -1,3 +1,12 @@
+/* Urutan layer eksplisit. Empat pertama milik Tailwind; `adminly-vocabulary`
+   sengaja ditaruh SETELAH `utilities` supaya aturan gaya komponen di
+   themes/vocabulary.css bisa menimpa utility yang di-hardcode komponen shadcn
+   (mis. `ring-1` di card.tsx) — itulah yang membuat template bisa mengubah
+   bentuk komponen tanpa menyentuh src/components/ui/. Konsekuensinya: utility
+   di `className` TIDAK otomatis menang atas aturan di layer itu; untuk menimpa
+   secara lokal, pakai modifier penting Tailwind (mis. `shadow-none!`). */
+@layer theme, base, components, utilities, adminly-vocabulary;
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
