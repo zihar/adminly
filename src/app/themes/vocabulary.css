@@ -1,0 +1,46 @@
+/*
+ * KOSAKATA gaya komponen — SATU-SATUNYA tempat gaya komponen boleh ditulis.
+ *
+ * Semua selektor memakai `:where()` sehingga spesifisitasnya NOL: utility
+ * Tailwind di `className` selalu menang, dan tak ada perang `!important`.
+ * Yang di-hook adalah penanda `data-slot` yang sudah dibawa tiap komponen
+ * shadcn — jadi tak satu pun berkas di src/components/ui/ perlu disentuh dan
+ * `npx shadcn@latest add` tetap aman.
+ *
+ * Nilai yang ada di sini HANYA yang benar-benar dipakai template terdaftar.
+ * `density: rapat` dan `surface: rata` menyusul bersama template Dispatch.
+ */
+
+/* ── Kepadatan ───────────────────────────────────────────────────────── */
+
+/*
+ * `lega`: label pindah ke kolom kiri sejajar dengan field, tiap baris dipisah
+ * garis rambut. Pada form 20 field, mata bisa melacak barisnya sendiri.
+ * Di layar sempit label kembali ke atas field — kolom 190px memakan lebar
+ * yang memang tidak ada di sana.
+ */
+@media (min-width: 48rem) {
+  [data-density="lega"] :where([data-slot="form-row"]) {
+    display: grid;
+    grid-template-columns: var(--label-col) 1fr;
+    align-items: center;
+    gap: 0 1.25rem;
+    border-bottom: 1px solid var(--border);
+    padding-block: 0.5rem;
+  }
+
+  [data-density="lega"] :where([data-slot="form-row"]:last-child) {
+    border-bottom: 0;
+  }
+}
+
+/*
+ * Target klik lega untuk orang yang mengetik ratusan baris sehari. Sengaja
+ * DILINGKUPI ke dalam baris form: kalau dipasang global, tombol ikon di
+ * header dan trigger sidebar ikut membesar — bukan yang dimaksud.
+ * `SelectField` sudah berupa Popover + Button, jadi trigger-nya ikut terkena
+ * lewat [data-slot="button"] tanpa penanda tambahan.
+ */
+[data-density="lega"] [data-slot="form-row"] :where(input, textarea, [data-slot="button"]) {
+  min-height: 2.625rem;
+}

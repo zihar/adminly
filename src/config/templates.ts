@@ -37,6 +37,14 @@ export const TEMPLATES = [
     density: "normal",
     surface: "bergaris",
   },
+  {
+    id: "kertas-kerja",
+    labelKey: "template.kertasKerja.label",
+    descKey: "template.kertasKerja.desc",
+    shell: "sidebar",
+    density: "lega",
+    surface: "bergaris",
+  },
 ] as const satisfies readonly TemplateEntry[];
 
 /** Union id yang benar-benar terdaftar — ikut melebar saat entri ditambah. */

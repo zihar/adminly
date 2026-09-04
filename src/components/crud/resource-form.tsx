@@ -89,7 +89,7 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
   // keduanya menyalin blok ini, perbaikan di satu jalur diam-diam melewatkan
   // yang lain.
   const renderField = (f: string) => (
-    <div key={f} className="space-y-1">
+    <div key={f} data-slot="form-row" className="space-y-1">
       {/* Field `cascade` render label per-levelnya sendiri (tiap
           `<select>` punya `id`/`htmlFor` sendiri) — outer `<Label
           htmlFor={f}>` di sini akan menggantung (tak ada elemen

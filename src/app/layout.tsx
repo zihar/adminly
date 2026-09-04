@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Public_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
@@ -27,6 +27,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
+  subsets: ["latin"],
+  // Bukan huruf bawaan: jangan dipreload. Peramban tetap mengunduhnya saat
+  // template Kertas Kerja aktif; @font-face yang tak terpakai tidak ditarik.
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Adminly",
@@ -52,7 +60,7 @@ export default async function RootLayout({
       data-template={templateDef.id}
       data-density={templateDef.density}
       data-surface={templateDef.surface}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${publicSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full">
