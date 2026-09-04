@@ -18,6 +18,7 @@ import { ModeToggle } from "@/components/layout/mode-toggle";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ScopeSwitcher } from "@/components/layout/scope-switcher";
+import { TemplateSwitcher } from "@/components/layout/template-switcher";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useVisibleNav } from "@/hooks/use-visible-nav";
 import { siteConfig } from "@/config/site";
@@ -123,7 +124,10 @@ export function TopNav() {
           <span className="font-semibold">{siteConfig.name}</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav
+          aria-label={t.nav.primaryLabel}
+          className="hidden items-center gap-1 md:flex"
+        >
           {items.map((item) => (
             <Link
               key={item.href}
@@ -145,6 +149,7 @@ export function TopNav() {
           <ScopeSwitcher />
           <LocaleSwitcher />
           <RoleSwitcher />
+          <TemplateSwitcher />
           <ModeToggle />
           <TopNavUser
             user={{ name: "Admin", email: "admin@example.com", avatar: "" }}
@@ -153,7 +158,10 @@ export function TopNav() {
       </div>
 
       {/* Menu ringkas untuk layar sempit — top-nav tak punya laci samping. */}
-      <nav className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
+      <nav
+        aria-label={t.nav.mobileLabel}
+        className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden"
+      >
         {items.map((item) => (
           <Link
             key={item.href}

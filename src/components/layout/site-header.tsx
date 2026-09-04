@@ -12,6 +12,7 @@ import { ModeToggle } from "@/components/layout/mode-toggle";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ScopeSwitcher } from "@/components/layout/scope-switcher";
+import { TemplateSwitcher } from "@/components/layout/template-switcher";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useVisibleNav } from "@/hooks/use-visible-nav";
 import { resolveNavLabel } from "@/locales";
@@ -37,6 +38,7 @@ export function SiteHeader() {
         <ScopeSwitcher />
         <LocaleSwitcher />
         <RoleSwitcher />
+        <TemplateSwitcher />
         <ModeToggle />
       </div>
     </header>

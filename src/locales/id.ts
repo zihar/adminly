@@ -104,9 +104,31 @@ export const id: Dictionary = {
     users: "Pengguna",
     analytics: "Analitik",
     settings: "Pengaturan",
+    // Landmark aria-label untuk kedua <nav> di top-nav (desktop & mobile) —
+    // biar screen reader tidak melihat dua region "navigation" tanpa nama.
+    primaryLabel: "Navigasi utama",
+    mobileLabel: "Navigasi mobile",
   },
   modeToggle: { toggle: "Ganti tema" },
   localeSwitcher: { label: "Bahasa" },
+  template: {
+    label: "Template",
+    tab: "Tampilan",
+    cardTitle: "Template",
+    cardDesc: "Pilih tampilan Adminly. Pilihanmu tersimpan di perangkat ini.",
+    adminly: {
+      label: "Adminly",
+      desc: "Netral, kepadatan sedang. Bawaan.",
+    },
+    kertasKerja: {
+      label: "Kertas Kerja",
+      desc: "Form panjang, label sejajar di kolom kiri, target klik lega.",
+    },
+    ruangRapat: {
+      label: "Ruang Rapat",
+      desc: "Navigasi atas, angka besar, untuk layar yang dilihat bersama.",
+    },
+  },
   roleSwitcher: { label: "Role (demo)" },
   scope: { workspace: "Workspace" },
   user: { account: "Akun", signOut: "Keluar" },

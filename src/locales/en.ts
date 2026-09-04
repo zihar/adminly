@@ -108,9 +108,31 @@ export const en = {
     users: "Users",
     analytics: "Analytics",
     settings: "Settings",
+    // Landmark aria-label untuk kedua <nav> di top-nav (desktop & mobile) —
+    // biar screen reader tidak melihat dua region "navigation" tanpa nama.
+    primaryLabel: "Primary navigation",
+    mobileLabel: "Mobile navigation",
   },
   modeToggle: { toggle: "Toggle theme" },
   localeSwitcher: { label: "Language" },
+  template: {
+    label: "Template",
+    tab: "Appearance",
+    cardTitle: "Template",
+    cardDesc: "Pick how Adminly looks. Your choice is saved on this device.",
+    adminly: {
+      label: "Adminly",
+      desc: "Neutral, medium density. The default.",
+    },
+    kertasKerja: {
+      label: "Kertas Kerja",
+      desc: "Long forms, labels aligned in a left column, roomy click targets.",
+    },
+    ruangRapat: {
+      label: "Ruang Rapat",
+      desc: "Top navigation, large figures, for screens people read together.",
+    },
+  },
   roleSwitcher: { label: "Role (demo)" },
   scope: { workspace: "Workspace" },
   user: { account: "Account", signOut: "Sign out" },
