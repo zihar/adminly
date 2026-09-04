@@ -5,7 +5,12 @@ import { useVisibleNav } from "@/hooks/use-visible-nav";
 const pathname = vi.hoisted(() => ({ value: "/dashboard" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }));
 
-const can = vi.hoisted(() => ({ fn: (_: string): boolean => true }));
+// `(void _, true)` sengaja "membaca" `_` — default izinkan-semua tetap
+// butuh parameter permission di tanda tangannya (dipakai ulang saat
+// `can.fn` diganti per test), tapi tak boleh menganggur (lint unused-vars).
+// `void` di depan operand kiri koma diperlukan: tanpanya `tsc` menandainya
+// TS2695 ("left side of comma operator is unused").
+const can = vi.hoisted(() => ({ fn: (_: string): boolean => (void _, true) }));
 vi.mock("@/components/providers/rbac-provider", () => ({
   useRbac: () => ({ can: can.fn }),
 }));

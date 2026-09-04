@@ -55,6 +55,33 @@ test.describe("Template — pergantian shell", () => {
     // Menu tetap terisi dari registry nav yang sama.
     await expect(page.getByRole("link", { name: /analytics/i }).first()).toBeVisible();
   });
+
+  // Ketiga test lain di describe ini SEMUANYA menyetel cookie lalu `goto` —
+  // shell selalu dirender dari nol lewat request server, jadi tak satu pun
+  // membuktikan bahwa MENGGANTI template TANPA reload benar-benar menukar
+  // shell yang sudah terpasang di client. Itu satu-satunya alasan
+  // `TemplateProvider.setTemplate` memanggil `router.refresh()` (lihat
+  // komentarnya) — tanpa test ini, menghapus baris itu tak membuat satu pun
+  // e2e merah (lihat spec §8).
+  test("ganti template dari Settings menukar shell TANPA reload", async ({ page }) => {
+    // Default (tanpa cookie) = "adminly" → shell sidebar.
+    await page.goto("/settings");
+    await expect(page.locator('[data-slot="sidebar"]').first()).toBeVisible();
+
+    await page.getByRole("tab", { name: /appearance|tampilan/i }).click();
+    await page.getByRole("button", { name: /ruang rapat/i }).click();
+
+    // TIDAK ADA reload/goto di sini — ini yang membedakan test ini dari
+    // ketiganya di atas. `data-template`/`data-density`/`data-surface`
+    // dipasang optimis oleh `setTemplate` (langkah 1), tapi shell
+    // sidebar-vs-topnav dirender SERVER (`app/(app)/layout.tsx`), jadi ia
+    // cuma bisa berganti lewat `router.refresh()` (langkah 2). Hapus baris
+    // itu dan assert di bawah gagal: sidebar masih ada, topnav tak pernah
+    // muncul.
+    await expect(page.locator("html")).toHaveAttribute("data-template", "ruang-rapat");
+    await expect(page.locator('[data-slot="sidebar"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /analytics/i }).first()).toBeVisible();
+  });
 });
 
 test.describe("Template — sumbu terang/gelap tetap berdiri sendiri", () => {

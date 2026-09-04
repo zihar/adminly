@@ -25,6 +25,8 @@ function tokensOf(css: string, selector: string): Set<string> {
   );
 }
 
+const GLOBALS_PATH = resolve(__dirname, "../../app/globals.css");
+
 const base = readFileSync(resolve(THEMES_DIR, "base.css"), "utf8");
 const rootTokens = tokensOf(base, ":root");
 const darkTokens = tokensOf(base, ".dark");
@@ -53,6 +55,44 @@ describe("integritas token template", () => {
       const asing = [...dark].filter((t) => !rootTokens.has(t));
       expect(kurang).toEqual([]);
       expect(asing).toEqual([]);
+    },
+  );
+});
+
+/*
+ * Tes token di atas membaca `themes/<id>.css` LANGSUNG dari disk — kalau
+ * templatenya terdaftar di `TEMPLATES` tapi lupa di-`@import` di globals.css,
+ * berkasnya tetap ada dan tetap punya token yang benar, jadi tes di atas
+ * tetap hijau walau template itu tak pernah dimuat browser (render sebagai
+ * near-miss Adminly, tanpa error apa pun). Tes ini menutup celah itu dengan
+ * membaca globals.css sendiri dan memastikan urutan impornya — kontrak yang
+ * didokumentasikan di komentar globals.css: base.css dulu, lalu tiap berkas
+ * template, lalu vocabulary.css terakhir.
+ */
+describe("integritas impor template di globals.css", () => {
+  const globals = readFileSync(GLOBALS_PATH, "utf8");
+
+  function importIndex(path: string): number {
+    return globals.indexOf(`@import "${path}";`);
+  }
+
+  const baseIdx = importIndex("./themes/base.css");
+  const vocabIdx = importIndex("./themes/vocabulary.css");
+
+  it("base.css dan vocabulary.css sendiri benar-benar diimpor", () => {
+    expect(baseIdx).toBeGreaterThan(-1);
+    expect(vocabIdx).toBeGreaterThan(-1);
+  });
+
+  it.each(TEMPLATES.map((t) => t.id))(
+    "%s: diimpor di globals.css, setelah base.css dan sebelum vocabulary.css",
+    (id) => {
+      const idx = importIndex(`./themes/${id}.css`);
+      // Pesan kustom: kegagalan di sini HARUS langsung menunjuk baris impor
+      // yang hilang/salah urutan, bukan cuma "-1 !== angka".
+      expect(idx, `@import "./themes/${id}.css" tidak ditemukan di globals.css`).toBeGreaterThan(-1);
+      expect(idx, `@import "./themes/${id}.css" harus SETELAH @import "./themes/base.css"`).toBeGreaterThan(baseIdx);
+      expect(idx, `@import "./themes/${id}.css" harus SEBELUM @import "./themes/vocabulary.css"`).toBeLessThan(vocabIdx);
     },
   );
 });

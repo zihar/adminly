@@ -21,7 +21,10 @@
   --secondary: oklch(0.935 0.01 268);
   --secondary-foreground: oklch(0.21 0.03 268);
   --muted: oklch(0.935 0.01 268);
-  --muted-foreground: oklch(0.53 0.024 268);
+  /* Dinaikkan dari 0.53 (≈4.82:1) ke 0.48 (≈5.9:1) — ini satu-satunya template
+     yang tujuannya dibaca lintas ruangan lewat proyektor, di mana kontras
+     makin merosot; blok gelap sudah cukup nyaman, tak disentuh. */
+  --muted-foreground: oklch(0.48 0.026 268);
   --accent: oklch(0.92 0.016 268);
   --accent-foreground: oklch(0.21 0.03 268);
   --destructive: oklch(0.577 0.245 27.325);

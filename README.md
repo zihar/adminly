@@ -137,6 +137,16 @@ utility written in a consumer's `className` no longer automatically wins over
 a vocabulary rule; to override one locally you need Tailwind's `!` important
 modifier (e.g. `shadow-none!`).
 
+**Upgrading an existing fork:** older forks branded the app by editing the
+`:root` / `.dark` blocks directly in `globals.css`. This branch moved those
+blocks out into `src/app/themes/adminly.css`, so a clean merge that leaves
+your overrides in `globals.css` will silently stop working — `<html>` always
+carries a `data-template` attribute, and a template block (0,1,0 specificity)
+always comes after `:root` in the cascade, so it wins even though `:root` is
+declared first in the file. Move your color/typography overrides from
+`globals.css` into `src/app/themes/adminly.css` (both the light block and the
+`.dark` block) to get them back.
+
 ## Data layer (TanStack Query + typed OpenAPI client)
 
 - `openapi.yaml` is the API contract. `npm run gen:api` regenerates

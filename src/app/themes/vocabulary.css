@@ -54,6 +54,22 @@
     [data-density="lega"] :where([data-slot="form-row"]:last-child) {
       border-bottom: 0;
     }
+
+    /*
+     * Unit field+error (`data-slot="form-field"`, lihat `resource-form.tsx`)
+     * DIPAKSA ke kolom kedua alih-alih dibiarkan lewat auto-placement.
+     * Untuk field bertipe `cascade`, `<Label>` sengaja dilewati di
+     * `resource-form.tsx` (cascade render label per-levelnya sendiri) —
+     * itu membuat unit ini jadi SATU-SATUNYA anak `form-row`, dan
+     * auto-placement dua-kolom akan menaruh anak tunggal itu di kolom
+     * PERTAMA (kolom label). `grid-column: 2` di sini membuatnya benar
+     * terlepas dari ada-tidaknya `<Label>` sibling; giliran `<Label>` (kalau
+     * ada) tetap auto-placement ke kolom pertama karena kolom kedua sudah
+     * dipakai eksplisit di sini.
+     */
+    [data-density="lega"] :where([data-slot="form-row"]) > [data-slot="form-field"] {
+      grid-column: 2;
+    }
   }
 
   /*
@@ -62,8 +78,15 @@
    * header dan trigger sidebar ikut membesar — bukan yang dimaksud.
    * `SelectField` sudah berupa Popover + Button, jadi trigger-nya ikut terkena
    * lewat [data-slot="button"] tanpa penanda tambahan.
+   *
+   * Di-hook lewat `data-slot` ("input"/"textarea" dari `input.tsx`/
+   * `textarea.tsx`), BUKAN selektor elemen bawaan `input`/`textarea` —
+   * selektor elemen ikut menjaring `<input type="checkbox">`/`<input
+   * type="radio">` native (`checkbox-field.tsx`, `radio-field.tsx`, tak
+   * punya `data-slot`), yang meregangkannya jadi bar 42px tinggi × ~13px
+   * lebar alih-alih kotak kecil biasa.
    */
-  [data-density="lega"] [data-slot="form-row"] :where(input, textarea, [data-slot="button"]) {
+  [data-density="lega"] [data-slot="form-row"] :where([data-slot="input"], [data-slot="textarea"], [data-slot="button"]) {
     min-height: 2.625rem;
   }
 
