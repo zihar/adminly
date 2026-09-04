@@ -1,19 +1,107 @@
 "use client";
 
 import Link from "next/link";
-import { Boxes } from "lucide-react";
+import { BadgeCheck, Boxes, ChevronsUpDown, LogOut } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ScopeSwitcher } from "@/components/layout/scope-switcher";
-import { NavUser } from "@/components/layout/nav-user";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useVisibleNav } from "@/hooks/use-visible-nav";
 import { siteConfig } from "@/config/site";
 import { resolveNavLabel } from "@/locales";
 import { cn } from "@/lib/utils";
+
+type TopNavUserInfo = {
+  name: string;
+  email: string;
+  avatar?: string;
+};
+
+/**
+ * Menu akun untuk top-nav — sengaja BUKAN `NavUser` yang dipakai sidebar.
+ * `NavUser` merender `SidebarMenuButton`, yang mewajibkan konteks
+ * `SidebarProvider`; top-nav tidak dan tidak boleh punya konteks itu (lihat
+ * `src/components/ui/sidebar.tsx`, tidak boleh diubah). Isi menu sengaja
+ * disamakan dengan `NavUser` (avatar+inisial, nama, email, item Account/Sign
+ * out, ikon & kunci i18n yang sama) supaya kedua shell menawarkan hal yang
+ * sama — hanya triggernya dibuat kompak untuk bilah horizontal, bukan baris
+ * selebar sidebar.
+ */
+function TopNavUser({ user }: { user: TopNavUserInfo }) {
+  const { t } = useI18n();
+  const initials = user.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            className="h-9 gap-2 px-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[popup-open]:bg-sidebar-accent data-[popup-open]:text-sidebar-accent-foreground"
+          />
+        }
+      >
+        <Avatar className="size-7 rounded-lg">
+          <AvatarImage src={user.avatar} alt={user.name} />
+          <AvatarFallback className="rounded-lg text-xs">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <ChevronsUpDown className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="min-w-56 rounded-lg" align="end" sideOffset={4}>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="p-0 font-normal">
+            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <Avatar className="size-8 rounded-lg">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="rounded-lg">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {user.email}
+                </span>
+              </div>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem>
+            <BadgeCheck />
+            {t.user.account}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/login" />}>
+          <LogOut />
+          {t.user.signOut}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 /**
  * Navigasi horizontal di atas bidang `--sidebar`. Dipakai template yang
@@ -58,15 +146,9 @@ export function TopNav() {
           <LocaleSwitcher />
           <RoleSwitcher />
           <ModeToggle />
-          {/* `NavUser` dipinjam dari sidebar dan bergantung pada konteks
-              `SidebarProvider` (via `SidebarMenuButton`). `className="contents"`
-              membuat provider tak menghasilkan kotak/markup sidebar apa pun —
-              cuma menyuplai konteks yang dibutuhkan. */}
-          <SidebarProvider className="contents">
-            <NavUser
-              user={{ name: "Admin", email: "admin@example.com", avatar: "" }}
-            />
-          </SidebarProvider>
+          <TopNavUser
+            user={{ name: "Admin", email: "admin@example.com", avatar: "" }}
+          />
         </div>
       </div>
 
