@@ -20,7 +20,14 @@ export function SidebarShell({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
-      <SidebarInset>
+      {/* `min-w-0`: tanpa ini kolom konten adalah flex item ber-`min-width:auto`,
+          jadi tabel yang lebih lebar dari viewport MENDORONG lebarnya dan yang
+          menggulir mendatar adalah SELURUH halaman, bukan tabelnya.
+          `SiteHeader` cuma `sticky top-0` (terkunci vertikal), jadi ia ikut
+          bergeser ke kiri menimpa sidebar yang `fixed` — logo tertutup judul
+          halaman. Terukur pada struktur ini: scrollWidth 1696 pada viewport
+          1440 → 1440 sesudah `min-w-0`. */}
+      <SidebarInset className="min-w-0">
         <SiteHeader />
         <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">{children}</main>
         <SiteFooter />
