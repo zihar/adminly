@@ -40,6 +40,9 @@ let sectionedDef: ResourceDef;
 // Def kedua khusus uji scoped-create: sama seperti `def` tapi punya `scope`
 // (`ResourceForm` harus menempelkan `useScope()` ke payload create-nya).
 let scopedDef: ResourceDef;
+// Def keempat: dipakai uji seam `components.formTabs` — panel custom yang
+// harus menerima `id` record induk (`undefined` di create, string di edit).
+let formTabsDef: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -91,6 +94,18 @@ beforeAll(async () => {
       },
     },
   });
+  formTabsDef = defineResource({
+    name: "itemswithpanel", path: "/itemswithpanel",
+    api: createResourceApi({ resource: "itemswithpanel", path: "/itemswithpanel" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama" }],
+    components: { formTabs: [{ tabKey: "umum", component: PanelProbe }] },
+    form: {
+      schema: z.object({ nama: z.string().min(1) }),
+      layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text", labelKey: "items.nama" } },
+    },
+  });
 });
 afterEach(() => server.resetHandlers());
 afterAll(() => {
@@ -120,6 +135,13 @@ function wrapWithScope(ui: React.ReactNode, initial: Record<string, unknown>) {
       </I18nProvider>
     </QueryClientProvider>,
   );
+}
+
+// Panel probe: dipakai uji seam `components.formTabs` — merender `id` yang
+// diterimanya supaya uji bisa membedakan `undefined` (create) dari string
+// (edit) tanpa membaca internal `ResourceForm`.
+function PanelProbe({ id }: { id?: string }) {
+  return <div data-testid="panel-probe">{id ?? "none"}</div>;
 }
 
 describe("ResourceForm", () => {
@@ -183,5 +205,19 @@ describe("ResourceForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /save/i }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect(capturedBody).toMatchObject({ nama: "Halo", workspace: "w1" });
+  });
+
+  it("formTabs: panel menerima id=undefined di mode create", () => {
+    wrap(<ResourceForm def={formTabsDef} />);
+    expect(screen.getByTestId("panel-probe")).toHaveTextContent("none");
+  });
+
+  it("formTabs: panel menerima id record induk (string) di mode edit", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/itemswithpanel/5", () =>
+        HttpResponse.json({ id: "5", nama: "X" })),
+    );
+    wrap(<ResourceForm def={formTabsDef} id="5" />);
+    await waitFor(() => expect(screen.getByTestId("panel-probe")).toHaveTextContent("5"));
   });
 });

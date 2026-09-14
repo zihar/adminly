@@ -106,7 +106,11 @@ export type ResourceDef<TItem = unknown, TNew = unknown, TUpdate = unknown> = {
   scope?: string[];
   form: FormDef;
   actions?: (string | { key: string; icon?: LucideIcon; run: (id: string | number) => void })[];
-  components?: { list?: React.ComponentType<{ def: ResourceDef }>; form?: React.ComponentType<{ def: ResourceDef; id?: string }> };
+  components?: {
+    list?: React.ComponentType<{ def: ResourceDef }>;
+    form?: React.ComponentType<{ def: ResourceDef; id?: string }>;
+    formTabs?: { tabKey: string; sectionKey?: string; component: React.ComponentType<{ id?: string }> }[];
+  };
   workflow?: WorkflowDef;
 };
 
