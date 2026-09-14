@@ -43,6 +43,12 @@ let scopedDef: ResourceDef;
 // Def keempat: dipakai uji seam `components.formTabs` — panel custom yang
 // harus menerima `id` record induk (`undefined` di create, string di edit).
 let formTabsDef: ResourceDef;
+// Def kelima: seam `components.formTabs` DENGAN `sectionKey` — jalur
+// `panelSection` (panel menempel di dalam satu section), berbeda dari
+// `formTabsDef` di atas yang hanya mengeksekusi jalur panel-tanpa-`sectionKey`
+// di ujung tab. Def terpisah supaya `sectionedDef` (dipakai test lain) tak
+// perlu diubah.
+let formTabsSectionDef: ResourceDef;
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:3000/api");
@@ -103,6 +109,18 @@ beforeAll(async () => {
     form: {
       schema: z.object({ nama: z.string().min(1) }),
       layout: [{ tabKey: "umum", fields: ["nama"] }],
+      fields: { nama: { type: "text", labelKey: "items.nama" } },
+    },
+  });
+  formTabsSectionDef = defineResource({
+    name: "itemswithsectionpanel", path: "/itemswithsectionpanel",
+    api: createResourceApi({ resource: "itemswithsectionpanel", path: "/itemswithsectionpanel" }),
+    permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
+    columns: [{ field: "nama", labelKey: "items.nama" }],
+    components: { formTabs: [{ tabKey: "umum", sectionKey: "items.sec.identitas", component: PanelProbe }] },
+    form: {
+      schema: z.object({ nama: z.string().min(1) }),
+      layout: [{ tabKey: "umum", sections: [{ key: "items.sec.identitas", fields: ["nama"] }] }],
       fields: { nama: { type: "text", labelKey: "items.nama" } },
     },
   });
@@ -219,5 +237,10 @@ describe("ResourceForm", () => {
     );
     wrap(<ResourceForm def={formTabsDef} id="5" />);
     await waitFor(() => expect(screen.getByTestId("panel-probe")).toHaveTextContent("5"));
+  });
+
+  it("formTabs ber-sectionKey: panel menempel DI DALAM section, bukan di ujung tab", () => {
+    wrap(<ResourceForm def={formTabsSectionDef} />);
+    expect(screen.getByTestId("panel-probe")).toHaveTextContent("none");
   });
 });
