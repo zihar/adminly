@@ -119,6 +119,24 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
     </div>
   );
 
+  // Panel custom yang ditempel ke satu (tabKey, sectionKey) via seam
+  // `components.formTabs` — dipakai mis. `RencanaPanel`/`SesiPanel` yang
+  // butuh akses `id` record induk untuk mengelola sub-resource sendiri.
+  // Diperlakukan sama seperti `<Panel id={...}>` di edelweiss-web: `id`
+  // di-`String()`-kan HANYA kalau ada, supaya panel bisa membedakan mode
+  // create (`undefined`) dari mode edit (string).
+  const panelSection = (tabKey: string, sectionKey: string) =>
+    (def.components?.formTabs ?? [])
+      .filter((p) => p.tabKey === tabKey && p.sectionKey === sectionKey)
+      .map((p, i) => {
+        const Panel = p.component;
+        return (
+          <div key={`${tabKey}-${sectionKey}-${i}`}>
+            <Panel id={id === undefined ? undefined : String(id)} />
+          </div>
+        );
+      });
+
   return (
     <>
       {/* Panel workflow: HANYA di mode edit + resource yang mendeklarasikan
@@ -160,9 +178,23 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
                     <h3 className="border-b pb-1 text-sm font-semibold">
                       {resolveLabel(t, sec.key)}
                     </h3>
+                    {panelSection(tab.tabKey, sec.key)}
                     {sec.fields.map(renderField)}
                   </section>
                 ))}
+                {/* Panel tanpa `sectionKey` — ditempel di ujung tab, bukan di
+                    dalam section tertentu (mis. tab yang seluruhnya diisi
+                    panel, tanpa field form biasa). */}
+                {def.components?.formTabs
+                  ?.filter((p) => p.tabKey === tab.tabKey && p.sectionKey === undefined)
+                  .map((p, i) => {
+                    const Panel = p.component;
+                    return (
+                      <div key={`${p.tabKey}-${i}`}>
+                        <Panel id={id === undefined ? undefined : String(id)} />
+                      </div>
+                    );
+                  })}
               </TabsContent>
             ))}
           </Tabs>
