@@ -16,6 +16,8 @@ export const id: Dictionary = {
     loadError: "Gagal memuat data.",
     empty: "Belum ada data.",
     deleteSelected: "Hapus ({count})",
+    confirmDeleteTitle: "Hapus ({count})?",
+    confirmDeleteDescription: "Tindakan ini tidak bisa dibatalkan.",
     selectRow: "Pilih baris {id}",
     selectPlaceholder: "-- pilih --",
     saved: "Data tersimpan",

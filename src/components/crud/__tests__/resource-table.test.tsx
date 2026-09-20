@@ -400,7 +400,7 @@ describe("ResourceTable", () => {
     expect(screen.getAllByRole("link", { name: "Edit" }).length).toBeGreaterThan(0);
   });
 
-  it("pilih baris lalu hapus massal memanggil bulk-delete dan mengosongkan seleksi", async () => {
+  it("klik hapus massal menampilkan konfirmasi dulu, bukan langsung memanggil bulk-delete", async () => {
     const user = userEvent.setup();
     wrap(<ResourceTable def={def} />);
     await screen.findByText("Alpha");
@@ -410,8 +410,48 @@ describe("ResourceTable", () => {
     const deleteButton = await screen.findByRole("button", { name: "Delete (1)" });
     await user.click(deleteButton);
 
+    expect(await screen.findByText("Delete (1)?")).toBeInTheDocument();
+    expect(bulkDeleteBody).toBeUndefined();
+  });
+
+  it("pilih baris, hapus massal, lalu konfirmasi memanggil bulk-delete dan mengosongkan seleksi", async () => {
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+
+    const checkbox = screen.getByRole("checkbox", { name: "Select row 1" });
+    await user.click(checkbox);
+    const deleteButton = await screen.findByRole("button", { name: "Delete (1)" });
+    await user.click(deleteButton);
+
+    const confirmButton = await screen.findByRole("button", { name: "Confirm" });
+    await user.click(confirmButton);
+
     await waitFor(() => expect(bulkDeleteBody).toEqual({ ids: ["1"] }));
     await waitFor(() => expect(checkbox).not.toBeChecked());
+    await waitFor(() => {
+      expect(screen.queryByText("Delete (1)?")).not.toBeInTheDocument();
+    });
+  });
+
+  it("klik batal pada konfirmasi hapus massal tidak memanggil bulk-delete", async () => {
+    const user = userEvent.setup();
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+
+    const checkbox = screen.getByRole("checkbox", { name: "Select row 1" });
+    await user.click(checkbox);
+    const deleteButton = await screen.findByRole("button", { name: "Delete (1)" });
+    await user.click(deleteButton);
+
+    const cancelButton = await screen.findByRole("button", { name: "Cancel" });
+    await user.click(cancelButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Delete (1)?")).not.toBeInTheDocument();
+    });
+    expect(bulkDeleteBody).toBeUndefined();
+    expect(checkbox).toBeChecked();
   });
 
   it("mengetik lalu Enter pada pencarian meng-update state URL (nuqs) dan hasil", async () => {

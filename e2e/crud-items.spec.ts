@@ -68,8 +68,11 @@ test("Edit & Delete item lewat rute generik /[resource]/[id]/edit dan bulk-delet
   // Tabel generik (`ResourceTable`) hanya punya aksi "Delete (n)" massal
   // (tanpa tombol hapus per baris) — jadi jalur nyata untuk menghapus satu
   // baris tetap lewat centang baris tsb lalu klik tombol hapus massal.
+  // Klik itu sekarang membuka kotak konfirmasi (ConfirmDialog) dulu, BUKAN
+  // langsung memanggil bulk-delete — jawab lewat tombol "Confirm"-nya.
   await editedRow.getByRole("checkbox").check();
   await page.getByRole("button", { name: /delete \(1\)/i }).click();
+  await page.getByRole("button", { name: /confirm/i }).click();
 
   await expect(page.getByRole("row", { name: new RegExp(edited) })).toHaveCount(0);
 });

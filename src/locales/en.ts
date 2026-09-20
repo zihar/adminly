@@ -17,6 +17,8 @@ export const en = {
     loadError: "Failed to load data.",
     empty: "No data yet.",
     deleteSelected: "Delete ({count})",
+    confirmDeleteTitle: "Delete ({count})?",
+    confirmDeleteDescription: "This can't be undone.",
     selectRow: "Select row {id}",
     selectPlaceholder: "-- select --",
     saved: "Saved",

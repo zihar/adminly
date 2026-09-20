@@ -20,6 +20,7 @@ import { getResource } from "@/config/resources/index";
 import { RelationCell } from "@/components/crud/relation-cell";
 import { WorkflowTransitionButton } from "@/components/crud/workflow-transition-button";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -197,6 +198,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
   const qc = useQueryClient();
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const removeMany = def.api.useRemoveMany();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = React.useState(false);
   // Hook transisi diambil SEKALI di top level (bukan di dalam map per-baris) —
   // wajib mengikuti Rules of Hooks; instance yang sama dipakai semua tombol
   // transisi tiap baris (lihat filter `allowedTransitions` di bawah).
@@ -425,25 +427,35 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         </DropdownMenu>
         {selected.size > 0 && (
           <Can permission={def.permissions.delete}>
-            <Button
-              variant="destructive"
-              onClick={() =>
-                removeMany.mutate([...selected], {
-                  // Toast i18n dipasang di caller (bukan factory) — default
-                  // locale English; factory sendiri toast-free.
-                  onSuccess: () => {
-                    setSelected(new Set());
-                    toast.success(t.common.deleted);
-                  },
-                  onError: () => toast.error(t.common.deleteFailed),
-                })
-              }
-            >
+            <Button variant="destructive" onClick={() => setConfirmDeleteOpen(true)}>
               {format(t.common.deleteSelected, { count: String(selected.size) })}
             </Button>
           </Can>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        variant="destructive"
+        title={format(t.common.confirmDeleteTitle, { count: String(selected.size) })}
+        description={t.common.confirmDeleteDescription}
+        confirmLabel={t.common.confirm}
+        cancelLabel={t.common.cancel}
+        loading={removeMany.isPending}
+        onConfirm={() =>
+          removeMany.mutate([...selected], {
+            // Toast i18n dipasang di caller (bukan factory) — default
+            // locale English; factory sendiri toast-free.
+            onSuccess: () => {
+              setSelected(new Set());
+              setConfirmDeleteOpen(false);
+              toast.success(t.common.deleted);
+            },
+            onError: () => toast.error(t.common.deleteFailed),
+          })
+        }
+      />
 
       {/* Indikator refetch latar (ganti page/sort/search) — non-destruktif:
           baris lama tetap tampil, hanya diberi opasitas turun. Skeleton penuh
