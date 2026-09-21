@@ -12,7 +12,7 @@ import type { FieldProps } from "./index";
  * disimpan adalah URL hasil unggah, bukan isi file itu sendiri. Storage cloud
  * sungguhan & otorisasi upload di luar backend mock ini = pekerjaan fork.
  */
-export function FileField({ name, meta }: FieldProps) {
+export function FileField({ name, meta, disabled }: FieldProps) {
   const { t } = useI18n();
   const { setValue } = useFormContext();
   const value = useWatch({ name }) as string | undefined;
@@ -24,6 +24,7 @@ export function FileField({ name, meta }: FieldProps) {
   const isImage = Boolean(meta.accept?.includes("image"));
 
   async function handleFile(file: File) {
+    if (disabled) return;
     setPending(true);
     try {
       const result = await uploadFile(file);
@@ -55,6 +56,7 @@ export function FileField({ name, meta }: FieldProps) {
   }
 
   function openPicker() {
+    if (disabled) return;
     inputRef.current?.click();
   }
 
@@ -75,6 +77,7 @@ export function FileField({ name, meta }: FieldProps) {
       <div
         role="button"
         tabIndex={0}
+        aria-disabled={disabled}
         onClick={openPicker}
         onKeyDown={handleKeyDown}
         onDragOver={handleDragOver}
@@ -109,6 +112,7 @@ export function FileField({ name, meta }: FieldProps) {
         id={name}
         type="file"
         accept={meta.accept}
+        disabled={disabled}
         onChange={handleInputChange}
         className="sr-only"
       />

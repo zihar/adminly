@@ -15,12 +15,12 @@ type CascadeLevelMeta = NonNullable<FieldMeta["cascade"]>[number];
  * level punya field RHF sendiri (`level.key`), jadi field ini murni wadah
  * yang me-render satu `<select>` per level.
  */
-export function CascadeField({ meta }: FieldProps) {
+export function CascadeField({ meta, disabled }: FieldProps) {
   const levels = meta.cascade ?? [];
   return (
     <div className="space-y-2">
       {levels.map((level, i) => (
-        <CascadeLevel key={level.key} level={level} levels={levels} index={i} />
+        <CascadeLevel key={level.key} level={level} levels={levels} index={i} disabled={disabled} />
       ))}
     </div>
   );
@@ -37,10 +37,12 @@ function CascadeLevel({
   level,
   levels,
   index,
+  disabled,
 }: {
   level: CascadeLevelMeta;
   levels: CascadeLevelMeta[];
   index: number;
+  disabled?: boolean;
 }) {
   const { t } = useI18n();
   const { register, setValue, getFieldState } = useFormContext();
@@ -85,7 +87,7 @@ function CascadeLevel({
     }
   }, [ownValue, fieldDirty, levels, index, setValue]);
 
-  const disabled = index > 0 && !parentValue;
+  const disabledByParent = index > 0 && !parentValue;
 
   return (
     <div className="space-y-1">
@@ -95,7 +97,7 @@ function CascadeLevel({
       <select
         id={level.key}
         {...register(level.key)}
-        disabled={disabled}
+        disabled={disabled || disabledByParent}
         className="border rounded px-2 py-1"
       >
         <option value="">{t.common.selectPlaceholder}</option>

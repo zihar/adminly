@@ -9,7 +9,7 @@ import type { FieldProps } from "./index";
  * `id={name}` supaya `<Label htmlFor={name}>` di `resource-form.tsx` (label
  * grup) tetap bisa memfokuskan salah satu input.
  */
-export function RadioField({ name, meta }: FieldProps) {
+export function RadioField({ name, meta, disabled }: FieldProps) {
   const { register } = useFormContext();
   const options = meta.options ?? [];
   return (
@@ -19,6 +19,7 @@ export function RadioField({ name, meta }: FieldProps) {
           <input
             id={i === 0 ? name : undefined}
             type="radio"
+            disabled={disabled}
             value={String(o.value)}
             {...register(name)}
           />

@@ -8,7 +8,7 @@ import type { FieldProps } from "./index";
  * jadi dipakai `<input type="checkbox">` native — RHF otomatis memperlakukan
  * checkbox tunggal (tanpa sibling bernama sama) sebagai value boolean.
  */
-export function CheckboxField({ name }: FieldProps) {
+export function CheckboxField({ name, disabled }: FieldProps) {
   const { register } = useFormContext();
-  return <input id={name} type="checkbox" {...register(name)} />;
+  return <input id={name} type="checkbox" disabled={disabled} {...register(name)} />;
 }
