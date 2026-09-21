@@ -243,4 +243,15 @@ describe("ResourceForm", () => {
     wrap(<ResourceForm def={formTabsSectionDef} />);
     expect(screen.getByTestId("panel-probe")).toHaveTextContent("none");
   });
+
+  it("detail memuat record disabled tanpa Save", async () => {
+    server.use(http.get("http://localhost:3000/api/items/5", () => HttpResponse.json({ id: "5", nama: "Record" })));
+    wrap(<ResourceForm def={def} id="5" mode="detail" />);
+    expect(await screen.findByDisplayValue("Record")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument();
+  });
+
+  it("detail tanpa id gagal jelas", () => {
+    expect(() => wrap(<ResourceForm def={def} mode="detail" />)).toThrow("ResourceForm detail requires id");
+  });
 });
