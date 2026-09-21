@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/command";
 import type { FieldProps } from "./index";
 
-export function AsyncSelectField({ name, meta }: FieldProps) {
+export function AsyncSelectField({ name, meta, disabled }: FieldProps) {
   const { t } = useI18n();
   const { setValue, getFieldState } = useFormContext();
   const dependsOn = meta.dependsOn ?? [];
@@ -138,7 +138,7 @@ export function AsyncSelectField({ name, meta }: FieldProps) {
     <Popover
       open={open}
       onOpenChange={(next: boolean) => {
-        if (next) setOpen(true);
+        if (next && !disabled) setOpen(true);
         else close();
       }}
     >
@@ -149,6 +149,7 @@ export function AsyncSelectField({ name, meta }: FieldProps) {
             variant="outline"
             className="w-full justify-start font-normal"
             aria-invalid={fieldState.invalid}
+            disabled={disabled}
           />
         }
       >

@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ZodType } from "zod";
 import type { Permission } from "@/config/rbac";
 import type { ResourceApi } from "@/lib/crud/create-resource-api";
+import type { FormMode } from "@/components/crud/form-mode-context";
 
 export type FieldType =
   | "text" | "textarea" | "number" | "select" | "async-select"
@@ -108,7 +109,8 @@ export type ResourceDef<TItem = unknown, TNew = unknown, TUpdate = unknown> = {
   actions?: (string | { key: string; icon?: LucideIcon; run: (id: string | number) => void })[];
   components?: {
     list?: React.ComponentType<{ def: ResourceDef }>;
-    form?: React.ComponentType<{ def: ResourceDef; id?: string }>;
+    form?: React.ComponentType<{ def: ResourceDef; id?: string; mode?: FormMode }>;
+    detail?: React.ComponentType<{ def: ResourceDef; id: string }>;
     formTabs?: { tabKey: string; sectionKey?: string; component: React.ComponentType<{ id?: string }> }[];
   };
   workflow?: WorkflowDef;

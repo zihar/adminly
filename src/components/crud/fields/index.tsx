@@ -14,9 +14,10 @@ import { DateField } from "./date-field";
 import { DateTimeField } from "./datetime-field";
 import { FileField } from "./file-field";
 import { RichtextField } from "./richtext-field";
+import { useFormMode } from "../form-mode-context";
 
 /** Props publik bersama untuk semua komponen field (Task 5 deliverable). */
-export type FieldProps = { name: string; meta: FieldMeta };
+export type FieldProps = { name: string; meta: FieldMeta; disabled?: boolean };
 
 export type FieldComponent = React.ComponentType<FieldProps>;
 // Dipakai objek biasa (bukan Map) agar lookup di JSX dapat dianalisis statis oleh
@@ -38,7 +39,8 @@ registerField("datetime", DateTimeField);
 registerField("file", FileField);
 registerField("richtext", RichtextField);
 
-export function FieldRenderer({ name, meta }: FieldProps) {
+export function FieldRenderer({ name, meta, disabled }: FieldProps) {
+  const mode = useFormMode();
   const Comp = REGISTRY[meta.type] ?? TextField;
-  return <Comp name={name} meta={meta} />;
+  return <Comp name={name} meta={meta} disabled={disabled ?? mode === "detail"} />;
 }

@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import type { FieldProps } from "./index";
 
-export function TextField({ name }: FieldProps) {
+export function TextField({ name, disabled }: FieldProps) {
   const { register } = useFormContext();
-  return <Input id={name} {...register(name)} />;
+  return <Input id={name} disabled={disabled} {...register(name)} />;
 }

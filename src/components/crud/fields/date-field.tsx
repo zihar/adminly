@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import type { FieldProps } from "./index";
 
 // Field tanggal (tanpa waktu); value RHF berupa string "YYYY-MM-DD".
-export function DateField({ name }: FieldProps) {
+export function DateField({ name, disabled }: FieldProps) {
   const { register } = useFormContext();
-  return <Input id={name} type="date" {...register(name)} />;
+  return <Input id={name} type="date" disabled={disabled} {...register(name)} />;
 }

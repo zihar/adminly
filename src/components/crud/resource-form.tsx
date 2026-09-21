@@ -18,13 +18,15 @@ import type { ID } from "@/lib/crud/types";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { resolveLabel } from "@/locales";
+import { FormModeProvider, type FormMode } from "@/components/crud/form-mode-context";
 
 // `FormDef.schema` disimpan type-erased (`ZodType<unknown>`) di registry resource
 // (heterogen antar resource). Di sini di-cast ke bentuk yang cocok dengan generic
 // `zodResolver`/`useForm` (`FieldValues` = `Record<string, unknown>`).
 type FormValues = Record<string, unknown>;
 
-export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; onDone?: () => void }) {
+export function ResourceForm({ def, id, mode = "edit", onDone }: { def: ResourceDef; id?: ID; mode?: FormMode; onDone?: () => void }) {
+  if (mode === "detail" && id === undefined) throw new Error("ResourceForm detail requires id");
   const { t } = useI18n();
   const { scope } = useScope();
   const isEdit = id !== undefined;
@@ -145,7 +147,7 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
       {wf && isEdit && (
         <div className="mb-6 space-y-4 rounded-lg border p-4">
           <WorkflowStepper statuses={wf.statuses} current={currentStatus} />
-          {allowedTransitions.length > 0 && (
+          {mode !== "detail" && allowedTransitions.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               {allowedTransitions.map((tr) => (
                 <Can key={tr.action} permission={tr.permission}>
@@ -158,7 +160,8 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
         </div>
       )}
       <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormModeProvider mode={mode}>
+        <form onSubmit={mode === "detail" ? (event) => event.preventDefault() : form.handleSubmit(onSubmit)}>
           <Tabs defaultValue={tabs[0]?.tabKey}>
             {tabs.length > 1 && (
               <TabsList>
@@ -178,14 +181,14 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
                     <h3 className="border-b pb-1 text-sm font-semibold">
                       {resolveLabel(t, sec.key)}
                     </h3>
-                    {panelSection(tab.tabKey, sec.key)}
+                    {mode !== "detail" && panelSection(tab.tabKey, sec.key)}
                     {sec.fields.map(renderField)}
                   </section>
                 ))}
                 {/* Panel tanpa `sectionKey` — ditempel di ujung tab, bukan di
                     dalam section tertentu (mis. tab yang seluruhnya diisi
                     panel, tanpa field form biasa). */}
-                {def.components?.formTabs
+                {mode !== "detail" && def.components?.formTabs
                   ?.filter((p) => p.tabKey === tab.tabKey && p.sectionKey === undefined)
                   .map((p, i) => {
                     const Panel = p.component;
@@ -198,8 +201,9 @@ export function ResourceForm({ def, id, onDone }: { def: ResourceDef; id?: ID; o
               </TabsContent>
             ))}
           </Tabs>
-          <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>{t.common.save}</Button>
+          {mode !== "detail" && <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>{t.common.save}</Button>}
         </form>
+        </FormModeProvider>
       </FormProvider>
     </>
   );

@@ -21,7 +21,7 @@ import type { FieldProps } from "./index";
  * lewat `e.target.value`, jadi tipe itu dilestarikan biar config resource
  * ber-value numerik tak diam-diam berubah tipe tersimpannya di form.
  */
-export function SelectField({ name, meta }: FieldProps) {
+export function SelectField({ name, meta, disabled }: FieldProps) {
   const { t } = useI18n();
   const { field, fieldState } = useController({ name });
   const [open, setOpen] = React.useState(false);
@@ -44,7 +44,7 @@ export function SelectField({ name, meta }: FieldProps) {
     <Popover
       open={open}
       onOpenChange={(next: boolean) => {
-        if (next) setOpen(true);
+        if (next && !disabled) setOpen(true);
         else close();
       }}
     >
@@ -55,6 +55,7 @@ export function SelectField({ name, meta }: FieldProps) {
             variant="outline"
             className="w-full justify-start font-normal"
             aria-invalid={fieldState.invalid}
+            disabled={disabled}
           />
         }
       >
