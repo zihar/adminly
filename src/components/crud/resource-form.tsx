@@ -144,10 +144,10 @@ export function ResourceForm({ def, id, mode = "edit", onDone }: { def: Resource
       {/* Panel workflow: HANYA di mode edit + resource yang mendeklarasikan
           `def.workflow` — stepper status, tombol transisi (gated `<Can>`, pola
           sama dgn aksi transisi baris di ResourceTable), lalu jejak audit. */}
-      {wf && isEdit && mode !== "detail" && (
+      {wf && isEdit && (
         <div className="mb-6 space-y-4 rounded-lg border p-4">
           <WorkflowStepper statuses={wf.statuses} current={currentStatus} />
-          {allowedTransitions.length > 0 && (
+          {mode !== "detail" && allowedTransitions.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               {allowedTransitions.map((tr) => (
                 <Can key={tr.action} permission={tr.permission}>
@@ -181,7 +181,7 @@ export function ResourceForm({ def, id, mode = "edit", onDone }: { def: Resource
                     <h3 className="border-b pb-1 text-sm font-semibold">
                       {resolveLabel(t, sec.key)}
                     </h3>
-                    {panelSection(tab.tabKey, sec.key)}
+                    {mode !== "detail" && panelSection(tab.tabKey, sec.key)}
                     {sec.fields.map(renderField)}
                   </section>
                 ))}
