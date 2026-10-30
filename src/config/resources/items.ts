@@ -70,7 +70,7 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
       { value: "draft", labelKey: "workflow.status.draft", variant: "secondary" },
       { value: "submitted", labelKey: "workflow.status.submitted", variant: "warning" },
       { value: "approved", labelKey: "workflow.status.approved", variant: "success" },
-      { value: "rejected", labelKey: "workflow.status.rejected", variant: "destructive" },
+      { value: "rejected", labelKey: "workflow.status.rejected", variant: "danger" },
     ],
     transitions: [
       { action: "submit", from: ["draft"], to: "submitted", permission: "items:update", labelKey: "workflow.action.submit" },

@@ -25,6 +25,14 @@ describe("Badge", () => {
     expect(screen.getByText("B").className).toContain("--status-submitted-");
   });
 
+  it("varian danger memakai pasangan token status rejected (bukan destructive/10)", () => {
+    render(<Badge variant="danger">Ditolak</Badge>);
+    const badge = screen.getByText("Ditolak");
+    expect(badge).toHaveAttribute("data-variant", "danger");
+    expect(badge.className).toContain("--status-rejected-bg");
+    expect(badge.className).toContain("--status-rejected-fg");
+  });
+
   it("memuat titik penanda dekoratif (aria-hidden) di depan teks", () => {
     render(<Badge variant="success">Disetujui</Badge>);
     const dot = screen

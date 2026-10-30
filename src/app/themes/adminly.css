@@ -139,6 +139,17 @@
 [data-template="adminly"] [data-sidebar="menu-button"] svg[data-tone="4"] {
   color: var(--m4);
 }
+/* Penanda emas digambar lewat ::before, BUKAN box-shadow: aturan tak berlapis
+   ini mengalahkan semua utility Tailwind, jadi box-shadow emas akan
+   menghapus cincin fokus keyboard (`focus-visible:ring-2` = box-shadow). */
 [data-template="adminly"] [data-sidebar="content"] [data-sidebar="menu-button"][data-active] {
-  box-shadow: inset 3px 0 0 var(--gold);
+  position: relative;
+}
+[data-template="adminly"] [data-sidebar="content"] [data-sidebar="menu-button"][data-active]::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  background: var(--gold);
 }

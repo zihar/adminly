@@ -170,4 +170,34 @@ test.describe("Template — kosakata (style terkomputasi)", () => {
     const lain = await activeTabShadow(page);
     expect(lain.tab).not.toBe(lain.gold);
   });
+
+  test("adminly: item sidebar aktif tetap punya cincin fokus keyboard dan penanda emas", async ({ page }) => {
+    await setTemplate(page, "adminly");
+    await page.setViewportSize({ width: 1366, height: 800 });
+    await page.goto("/items");
+    const active = page.locator('[data-sidebar="content"] [data-sidebar="menu-button"][data-active]');
+    await expect(active).toBeVisible();
+
+    // Fokus lewat keyboard supaya :focus-visible aktif.
+    await page.keyboard.press("Tab");
+    await active.focus();
+
+    const result = await active.evaluate((el) => {
+      const probe = document.createElement("div");
+      probe.style.boxShadow = "inset 3px 0 0 var(--gold)";
+      document.body.appendChild(probe);
+      const goldOnly = getComputedStyle(probe).boxShadow;
+      probe.remove();
+      return {
+        shadow: getComputedStyle(el).boxShadow,
+        goldOnly,
+        markBg: getComputedStyle(el, "::before").backgroundColor,
+      };
+    });
+    // Cincin fokus (box-shadow) tidak boleh digantikan oleh garis emas...
+    expect(result.shadow).not.toBe("none");
+    expect(result.shadow).not.toBe(result.goldOnly);
+    // ...dan penanda emas tetap ada, kini lewat ::before.
+    expect(result.markBg).not.toBe("rgba(0, 0, 0, 0)");
+  });
 });

@@ -73,7 +73,8 @@ type BadgeVariant =
   | "destructive"
   | "outline"
   | "success"
-  | "warning";
+  | "warning"
+  | "danger";
 
 /** Satu status dalam workflow — dipakai stepper & badge kolom status. */
 export type WorkflowStatus = {

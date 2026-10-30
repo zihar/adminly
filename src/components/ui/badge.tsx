@@ -21,6 +21,7 @@ const badgeVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         success: "bg-(--status-approved-bg) text-(--status-approved-fg)",
         warning: "bg-(--status-submitted-bg) text-(--status-submitted-fg)",
+        danger: "bg-(--status-rejected-bg) text-(--status-rejected-fg)",
       },
     },
     defaultVariants: {
@@ -31,7 +32,7 @@ const badgeVariants = cva(
 
 type BadgeProps = useRender.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & {
-    /** Titik penanda di depan teks. Bawaan: aktif untuk success/warning. */
+    /** Titik penanda di depan teks. Bawaan: aktif untuk success/warning/danger. */
     dot?: boolean
   }
 
@@ -43,7 +44,7 @@ function Badge({
   children,
   ...props
 }: BadgeProps) {
-  const showDot = dot ?? (variant === "success" || variant === "warning")
+  const showDot = dot ?? (variant === "success" || variant === "warning" || variant === "danger")
   return useRender({
     defaultTagName: "span",
     props: mergeProps<"span">(
