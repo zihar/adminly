@@ -105,13 +105,22 @@ shell, and component density/surface. Three ship with Adminly:
 
 | Template | For | Shell |
 |---|---|---|
-| Adminly | neutral default | sidebar |
+| Adminly | default, "Dataran Tinggi" look: deep teal + gold, Fraunces headings, Figtree body | sidebar |
 | Kertas Kerja | long forms, master data | sidebar |
 | Ruang Rapat | dashboards read together on a screen | top navigation |
 
 Users pick one in **Settings → Appearance**; the choice is stored in the
 `adminly_template` cookie. Light/dark stays a separate axis — every template
 works in both.
+
+The default **Adminly** template is styled "Dataran Tinggi" (teal brand, gold
+accent, coloured status badges, searchable comboboxes, status filter chips,
+carded tables and forms). Colours and fonts live only as tokens in
+`src/app/themes/adminly.css` (status pairs `--status-*`, `--gold`, module
+accents `--m1..--m4`, `--font-heading`), so components carry no template
+branches. To go back to the old neutral grey, replace that file's token values
+with those in `src/app/themes/base.css` and set `--font-app` to
+`var(--font-geist)`; `contrast.test.ts` keeps text/badge pairs at WCAG AA.
 
 **Adding a template:** add an entry to `TEMPLATES` in `src/config/templates.ts`,
 create `src/app/themes/<id>.css` with a light block and a `.dark` block, and

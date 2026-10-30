@@ -103,7 +103,7 @@ function ResourceFilter({
         placeholder={t.common.selectPlaceholder}
         searchPlaceholder={t.common.searchPlaceholder}
         emptyLabel={t.common.noResults}
-        className="min-w-36"
+        className="w-auto min-w-36"
       />
     </label>
   );
@@ -407,7 +407,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder={t.common.searchPlaceholder}
           value={searchInput}
@@ -417,7 +417,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
               void setState({ q: searchInput, page: 1 });
             }
           }}
-          className="max-w-sm"
+          className="min-w-48 max-w-sm flex-1"
         />
         {filterFields
           .filter((field) => field !== statusField)
