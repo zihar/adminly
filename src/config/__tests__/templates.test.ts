@@ -25,6 +25,10 @@ describe("templateById", () => {
     expect(templateById("adminly").shell).toBe("sidebar");
   });
 
+  it("template adminly (Dataran Tinggi) memakai permukaan terangkat", () => {
+    expect(templateById("adminly").surface).toBe("terangkat");
+  });
+
   it("jatuh ke template default untuk id asing", () => {
     expect(templateById("tidak-ada").id).toBe(DEFAULT_TEMPLATE);
   });

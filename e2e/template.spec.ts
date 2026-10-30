@@ -15,7 +15,7 @@ test.describe("Template — persistensi", () => {
     await page.goto("/dashboard");
     await expect(page.locator("html")).toHaveAttribute("data-template", "adminly");
     await expect(page.locator("html")).toHaveAttribute("data-density", "normal");
-    await expect(page.locator("html")).toHaveAttribute("data-surface", "bergaris");
+    await expect(page.locator("html")).toHaveAttribute("data-surface", "terangkat");
   });
 
   test("cookie asing jatuh ke default, bukan halaman rusak", async ({ page }) => {
@@ -117,7 +117,7 @@ test.describe("Template — kosakata (style terkomputasi)", () => {
     await expect(row).not.toHaveCSS("display", "grid");
   });
 
-  test("ruang-rapat: card memakai box-shadow --lift, adminly tidak", async ({ page }) => {
+  test("ruang-rapat: card memakai box-shadow --lift, kertas-kerja (bergaris) tidak", async ({ page }) => {
     // Dibandingkan lewat elemen probe yang di-render browser yang sama,
     // supaya normalisasi warna (oklch → computed) tak bikin perbandingan
     // string rapuh — keduanya melalui resolusi CSSOM yang identik.
@@ -139,7 +139,7 @@ test.describe("Template — kosakata (style terkomputasi)", () => {
     expect(terangkat.card).not.toBe("none");
     expect(terangkat.card).toBe(terangkat.lift);
 
-    await setTemplate(page, "adminly");
+    await setTemplate(page, "kertas-kerja");
     await page.goto("/dashboard");
     const bergaris = await cardShadowVsLift(page);
     expect(bergaris.card).not.toBe(bergaris.lift);

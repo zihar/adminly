@@ -44,6 +44,20 @@
   --font-app: var(--font-public-sans);
   --label-col: 190px;
   --lift: none;
+  --status-draft-bg: oklch(0.94 0.005 230);
+  --status-draft-fg: oklch(0.4 0.02 230);
+  --status-submitted-bg: oklch(0.95 0.07 95);
+  --status-submitted-fg: oklch(0.4 0.08 80);
+  --status-approved-bg: oklch(0.94 0.05 155);
+  --status-approved-fg: oklch(0.38 0.09 155);
+  --status-rejected-bg: oklch(0.94 0.04 20);
+  --status-rejected-fg: oklch(0.44 0.17 25);
+  --gold: oklch(0.47 0.145 258);
+  --m1: oklch(0.47 0.145 258);
+  --m2: oklch(0.58 0.115 245);
+  --m3: oklch(0.67 0.09 232);
+  --m4: oklch(0.75 0.07 220);
+  --font-heading: var(--font-app);
 }
 
 [data-template="kertas-kerja"].dark {
@@ -78,4 +92,17 @@
   --sidebar-accent-foreground: oklch(0.925 0.008 265);
   --sidebar-border: oklch(0.3 0.014 265);
   --sidebar-ring: oklch(0.735 0.105 268);
+  --status-draft-bg: oklch(0.3 0.02 232);
+  --status-draft-fg: oklch(0.82 0.015 230);
+  --status-submitted-bg: oklch(0.33 0.06 90);
+  --status-submitted-fg: oklch(0.9 0.12 95);
+  --status-approved-bg: oklch(0.3 0.06 155);
+  --status-approved-fg: oklch(0.86 0.12 155);
+  --status-rejected-bg: oklch(0.31 0.08 22);
+  --status-rejected-fg: oklch(0.87 0.09 22);
+  --gold: oklch(0.735 0.105 268);
+  --m1: oklch(0.735 0.105 268);
+  --m2: oklch(0.67 0.1 248);
+  --m3: oklch(0.61 0.09 232);
+  --m4: oklch(0.55 0.075 220);
 }
