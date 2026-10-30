@@ -52,6 +52,11 @@ export const id: Dictionary = {
     internal: "Terjadi kesalahan. Coba lagi.",
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
+  form: {
+    tab: {
+      umum: "Umum",
+    },
+  },
   items: {
     title: "Item",
     nama: "Nama",

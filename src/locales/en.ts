@@ -53,6 +53,12 @@ export const en = {
     internal: "Something went wrong. Please try again.",
   },
   // Label demo untuk resource generik `items` (contoh layer CRUD).
+  // Label tab form generik (`layout[].tabKey` tanpa titik, mis. "umum").
+  form: {
+    tab: {
+      umum: "General",
+    },
+  },
   items: {
     title: "Items",
     nama: "Name",

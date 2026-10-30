@@ -116,3 +116,10 @@
 [data-template="adminly"] :is(h1, h2, h3) {
   font-family: var(--font-heading);
 }
+
+/* Tab aktif beraksen emas: garis bawah memakai `--gold`, lewat hook
+   `data-slot` yang sudah dibawa komponen Tabs (src/components/ui/tabs.tsx
+   tak disentuh). */
+[data-template="adminly"] [data-slot="tabs-trigger"][data-active] {
+  box-shadow: inset 0 -3px 0 var(--gold);
+}

@@ -144,4 +144,30 @@ test.describe("Template — kosakata (style terkomputasi)", () => {
     const bergaris = await cardShadowVsLift(page);
     expect(bergaris.card).not.toBe(bergaris.lift);
   });
+
+  test("adminly: tab aktif di form beraksen emas (garis bawah --gold), template lain tidak", async ({ page }) => {
+    async function activeTabShadow(p: Page) {
+      return p.evaluate(() => {
+        const probe = document.createElement("div");
+        probe.style.boxShadow = "inset 0 -3px 0 var(--gold)";
+        document.body.appendChild(probe);
+        const gold = getComputedStyle(probe).boxShadow;
+        probe.remove();
+        const tab = document.querySelector('[data-slot="tabs-trigger"][data-active]');
+        return { tab: tab ? getComputedStyle(tab).boxShadow : null, gold };
+      });
+    }
+
+    await setTemplate(page, "adminly");
+    await page.goto("/items/itm-1/edit");
+    await expect(page.locator('[data-slot="tabs-trigger"][data-active]')).toBeVisible();
+    const adminly = await activeTabShadow(page);
+    expect(adminly.tab).toBe(adminly.gold);
+
+    await setTemplate(page, "kertas-kerja");
+    await page.goto("/items/itm-1/edit");
+    await expect(page.locator('[data-slot="tabs-trigger"][data-active]')).toBeVisible();
+    const lain = await activeTabShadow(page);
+    expect(lain.tab).not.toBe(lain.gold);
+  });
 });
