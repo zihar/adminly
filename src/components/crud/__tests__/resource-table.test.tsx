@@ -657,8 +657,10 @@ describe("ResourceTable", () => {
 
     wrap(<ResourceTable def={defWorkflow} />);
 
-    expect(await screen.findByText("Submitted")).toBeInTheDocument();
-    expect(screen.queryByText("submitted")).not.toBeInTheDocument();
+    // Dibatasi ke tabel: chip filter status memakai label yang sama.
+    const table = await screen.findByRole("table");
+    expect(await within(table).findByText("Submitted")).toBeInTheDocument();
+    expect(within(table).queryByText("submitted")).not.toBeInTheDocument();
   });
 
   it("status approved dirender sebagai badge varian success, submitted sebagai warning", async () => {
@@ -676,8 +678,9 @@ describe("ResourceTable", () => {
 
     wrap(<ResourceTable def={defWorkflow} />);
 
-    expect(await screen.findByText("Approved")).toHaveAttribute("data-variant", "success");
-    expect(screen.getByText("Submitted")).toHaveAttribute("data-variant", "warning");
+    const table = await screen.findByRole("table");
+    expect(await within(table).findByText("Approved")).toHaveAttribute("data-variant", "success");
+    expect(within(table).getByText("Submitted")).toHaveAttribute("data-variant", "warning");
   });
 
   it("status yang tidak ada di workflow (data lama) jatuh ke teks biasa tanpa galat", async () => {
@@ -694,6 +697,72 @@ describe("ResourceTable", () => {
 
     const cell = await screen.findByText("arsip-lama");
     expect(cell).not.toHaveAttribute("data-slot", "badge");
+  });
+
+  it("chip filter status: tampil hanya untuk resource berworkflow; klik Approved menyetel filter_status dan menyaring daftar", async () => {
+    const searches: URLSearchParams[] = [];
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        searches.push(url.searchParams);
+        const all = [
+          { id: "1", status: "approved" },
+          { id: "2", status: "draft" },
+        ];
+        const only = url.searchParams.get("filter[status]");
+        const data = only ? all.filter((r) => r.status === only) : all;
+        return HttpResponse.json({ data, meta: { total: data.length, page: 1, per_page: 10 } });
+      }),
+    );
+
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    wrap(<ResourceTable def={defWorkflow} />, { onUrlUpdate });
+    const table = await screen.findByRole("table");
+    await within(table).findByText("Draft");
+
+    const chip = screen.getByRole("button", { name: "Approved", pressed: false });
+    await user.click(chip);
+
+    await waitFor(() => expect(within(table).queryByText("Draft")).not.toBeInTheDocument());
+    expect(searches.at(-1)?.get("filter[status]")).toBe("approved");
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("filter_status=approved");
+    });
+    expect(screen.getByRole("button", { name: "Approved" })).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: "All" }));
+    await waitFor(() => expect(within(table).getByText("Draft")).toBeInTheDocument());
+    expect(searches.at(-1)?.has("filter[status]")).toBe(false);
+  });
+
+  it("resource tanpa workflow TIDAK merender chip filter status", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    expect(screen.queryByRole("button", { name: "All", pressed: true })).not.toBeInTheDocument();
+  });
+
+  it("field status di `list.filters` tidak ganda: chip menggantikan dropdown ResourceFilter-nya", async () => {
+    const defDouble = {
+      ...defWorkflow,
+      list: { perPage: 10, filters: ["status"] },
+    } as ResourceDef;
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", status: "approved" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defDouble} />);
+    await screen.findByRole("table");
+    expect(screen.getByRole("button", { name: "Approved" })).toBeInTheDocument();
+    // ResourceFilter untuk field status akan merender tombol combobox yang
+    // namanya diambil dari <label> ("status"); chip menggantikannya.
+    expect(screen.queryByRole("button", { name: "status" })).not.toBeInTheDocument();
   });
 
   it("menampilkan tombol aksi transisi yang diizinkan dari status baris (gated <Can>), TIDAK menampilkan yang tak diizinkan", async () => {
@@ -716,7 +785,7 @@ describe("ResourceTable", () => {
 
     // Tunggu data sungguhan (bukan skeleton loading) sebelum memetik baris —
     // `findAllByRole("row")` tanpa ini bisa resolve ke baris skeleton tunggal.
-    await screen.findByText("Submitted");
+    await within(await screen.findByRole("table")).findByText("Submitted");
     const rows = screen.getAllByRole("row");
     // rows[0] = header; rows[1] = baris "submitted"; rows[2] = baris "approved".
     const submittedRow = rows[1];

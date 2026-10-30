@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Combobox } from "@/components/ui/combobox";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -142,7 +143,14 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
   // bikin TypeScript memaksakan index signature seragam. Config-nya sendiri
   // di-memo (stabil selama daftar field filter resource tak berubah) supaya
   // `useQueryStates` tak menerima objek baru tiap render.
-  const filterFields = def.list?.filters ?? [];
+  // Field status workflow ikut jadi filter (lewat chip, bukan dropdown) walau
+  // tak tercantum di `list.filters`, memakai kunci `filter_<field>` yang sama.
+  const statusField = def.workflow?.field;
+  const declaredFilters = def.list?.filters ?? [];
+  const filterFields =
+    statusField && !declaredFilters.includes(statusField)
+      ? [...declaredFilters, statusField]
+      : declaredFilters;
   const filterParsersConfig = React.useMemo(
     () =>
       Object.fromEntries(filterFields.map((f) => [filterKey(f), parseAsString.withDefault("")])),
@@ -396,22 +404,24 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           }}
           className="max-w-sm"
         />
-        {filterFields.map((field) => (
-          <ResourceFilter
-            key={field}
-            def={def}
-            field={field}
-            value={filterState[filterKey(field)] ?? ""}
-            onChange={(value) => {
-              // Ganti filter kolom → reset ke halaman 1 (samakan dgn search &
-              // sort di atas). `setState`+`setFilterState` dipanggil di tick
-              // yang sama → nuqs menggabungkannya jadi satu penulisan URL
-              // (aman, bukan dua navigasi terpisah).
-              void setFilterState({ [filterKey(field)]: value || null });
-              void setState({ page: 1 });
-            }}
-          />
-        ))}
+        {filterFields
+          .filter((field) => field !== statusField)
+          .map((field) => (
+            <ResourceFilter
+              key={field}
+              def={def}
+              field={field}
+              value={filterState[filterKey(field)] ?? ""}
+              onChange={(value) => {
+                // Ganti filter kolom → reset ke halaman 1 (samakan dgn search &
+                // sort di atas). `setState`+`setFilterState` dipanggil di tick
+                // yang sama → nuqs menggabungkannya jadi satu penulisan URL
+                // (aman, bukan dua navigasi terpisah).
+                void setFilterState({ [filterKey(field)]: value || null });
+                void setState({ page: 1 });
+              }}
+            />
+          ))}
         <Can permission={def.permissions.create}>
           <Button render={<Link href={`/${def.name}/create`} />}>{t.common.create}</Button>
         </Can>
@@ -436,6 +446,22 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           </Can>
         )}
       </div>
+
+      {def.workflow && (
+        <FilterChips
+          label={resolveLabel(t, def.form.fields[def.workflow.field]?.labelKey ?? def.workflow.field)}
+          allLabel={t.common.all}
+          options={def.workflow.statuses.map((s) => ({
+            value: s.value,
+            label: resolveLabel(t, s.labelKey),
+          }))}
+          value={filterState[filterKey(def.workflow.field)] ?? ""}
+          onChange={(value) => {
+            void setFilterState({ [filterKey(def.workflow!.field)]: value || null });
+            void setState({ page: 1 });
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDeleteOpen}
