@@ -86,3 +86,14 @@ describe.each([
     expect(contrastRatio(tokens[fg], tokens[bg])).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+// Ikon sidebar berwarna adalah objek grafis (WCAG 1.4.11): minimal 3:1 di atas
+// latar sidebar di kedua mode.
+describe.each([
+  ["terang", light],
+  ["gelap", dark],
+] as const)("kontras ikon modul tema %s (template adminly)", (_name, tokens) => {
+  it.each(["--m1", "--m2", "--m3", "--m4"])("%s di atas --sidebar ≥ 3:1", (m) => {
+    expect(contrastRatio(tokens[m], tokens["--sidebar"])).toBeGreaterThanOrEqual(3);
+  });
+});

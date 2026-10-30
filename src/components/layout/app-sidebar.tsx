@@ -21,6 +21,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { siteConfig } from "@/config/site";
 import { useVisibleNav } from "@/hooks/use-visible-nav";
 import { resolveNavLabel } from "@/locales";
+import { toneOf } from "@/lib/tone";
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { t } = useI18n();
@@ -62,7 +63,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     isActive={isActive}
                     tooltip={label}
                   >
-                    <item.icon />
+                    <item.icon data-tone={toneOf(item.key)} />
                     <span>{label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
