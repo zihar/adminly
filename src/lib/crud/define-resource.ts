@@ -9,7 +9,7 @@ export type FieldType =
   | "date" | "datetime" | "checkbox" | "radio" | "file" | "richtext" | "hidden"
   | "cascade";
 
-export type ColumnRender = "text" | "date" | "badge" | "relation" | "image" | "currency" | "boolean";
+export type ColumnRender = "text" | "date" | "badge" | "relation" | "image" | "currency" | "boolean" | "avatar";
 
 export type ColumnDef = {
   field: string;

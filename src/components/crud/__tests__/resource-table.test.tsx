@@ -18,6 +18,7 @@ import { ScopeProvider } from "@/components/providers/scope-provider";
 import type { Role } from "@/config/rbac";
 import { registerResources, _resetRegistry } from "@/config/resources/index";
 import { downloadBlob, exportPdf } from "@/lib/crud/export";
+import { toneOf } from "@/lib/tone";
 
 // `I18nProvider`/`RbacProvider` memanggil `useRouter()` (untuk `router.refresh()`
 // saat ganti locale/role) — di luar App Router (mis. di test) itu butuh mock manual.
@@ -352,6 +353,8 @@ function wrap(
     // tanpa opsi ini tetap memverifikasi fallback `useScope()` tanpa provider
     // (lihat `scope-provider.tsx`: `ctx ?? { scope: {}, ... }`).
     scope?: Record<string, unknown>;
+    // Query string awal URL (mis. "q=zzz&filter_prioritas=high").
+    searchParams?: string;
   },
 ) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -364,7 +367,7 @@ function wrap(
               nilai awal — `setState` di komponen ter-reconcile balik ke default pada
               render berikutnya. `hasMemory: true` mensimulasikan adapter sungguhan
               (browser `history`) yang benar-benar menyimpan update URL. */}
-          <NuqsTestingAdapter hasMemory onUrlUpdate={opts?.onUrlUpdate}>
+          <NuqsTestingAdapter hasMemory searchParams={opts?.searchParams} onUrlUpdate={opts?.onUrlUpdate}>
             {content}
           </NuqsTestingAdapter>
         </RbacProvider>
@@ -763,6 +766,129 @@ describe("ResourceTable", () => {
     // ResourceFilter untuk field status akan merender tombol combobox yang
     // namanya diambil dari <label> ("status"); chip menggantikannya.
     expect(screen.queryByRole("button", { name: "status" })).not.toBeInTheDocument();
+  });
+
+  it("kolom render:\"avatar\" menampilkan inisial dan nama; nama kosong jadi \"?\" tanpa galat", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", nama: "Ani Rahma Putri" },
+            { id: "2", nama: "" },
+            { id: "3", nama: "Budi" },
+          ],
+          meta: { total: 3, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    const defAvatar = {
+      ...def,
+      columns: [{ field: "nama", labelKey: "items.nama", render: "avatar" }],
+    } as ResourceDef;
+
+    wrap(<ResourceTable def={defAvatar} />);
+
+    expect(await screen.findByText("Ani Rahma Putri")).toBeInTheDocument();
+    expect(screen.getByText("AR")).toBeInTheDocument();
+    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("?")).toBeInTheDocument();
+  });
+
+  it("kolom avatar: nama 200 karakter dipotong (truncate), inisial tetap 2 huruf", async () => {
+    const panjang = `${"a".repeat(100)} ${"b".repeat(99)}`;
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", nama: panjang }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    const defAvatar = {
+      ...def,
+      columns: [{ field: "nama", labelKey: "items.nama", render: "avatar" }],
+    } as ResourceDef;
+
+    wrap(<ResourceTable def={defAvatar} />);
+
+    const name = await screen.findByText(panjang);
+    expect(name.className).toContain("truncate");
+    expect(screen.getByText("AB")).toBeInTheDocument();
+  });
+
+  it("avatar diwarnai token modul --m<1..4> dari toneOf(nama)", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", nama: "Budi" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    const defAvatar = {
+      ...def,
+      columns: [{ field: "nama", labelKey: "items.nama", render: "avatar" }],
+    } as ResourceDef;
+
+    wrap(<ResourceTable def={defAvatar} />);
+
+    const initials = await screen.findByText("B");
+    expect(initials.closest("[data-tone]")).toHaveAttribute("data-tone", String(toneOf("Budi")));
+  });
+
+  it("daftar kosong karena q/filter aktif: tombol Clear all filters menghapus q dan semua filter_* dari URL", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({ data: [], meta: { total: 0, page: 1, per_page: 10 } }),
+      ),
+    );
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    wrap(<ResourceTable def={defFiltered} />, {
+      onUrlUpdate,
+      searchParams: "q=zzz&filter_prioritas=high",
+    });
+
+    const clear = await screen.findByRole("button", { name: "Clear all filters" });
+    await user.click(clear);
+
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).not.toContain("q=");
+      expect(last.queryString).not.toContain("filter_prioritas");
+    });
+    expect(screen.getByPlaceholderText("Search...")).toHaveValue("");
+  });
+
+  it("daftar kosong tanpa q/filter: tidak ada tombol Clear all filters", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({ data: [], meta: { total: 0, page: 1, per_page: 10 } }),
+      ),
+    );
+    wrap(<ResourceTable def={defFiltered} />);
+
+    expect(await screen.findByText("No data yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear all filters" })).not.toBeInTheDocument();
+  });
+
+  it("header tabel lengket dan kolom currency memakai tabular-nums", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", harga: 1234.5, aktif: true }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    wrap(<ResourceTable def={defRenderers} />);
+
+    const expectedCurrency = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(1234.5);
+    const cell = await screen.findByText(expectedCurrency);
+    expect(cell.closest("td")).toHaveClass("tabular-nums");
+    for (const th of screen.getAllByRole("columnheader")) {
+      expect(th.className).toContain("sticky");
+    }
   });
 
   it("menampilkan tombol aksi transisi yang diizinkan dari status baris (gated <Can>), TIDAK menampilkan yang tak diizinkan", async () => {

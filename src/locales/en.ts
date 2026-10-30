@@ -33,6 +33,7 @@ export const en = {
     exportFailed: "Failed to export data",
     // Opsi "semua" pada dropdown filter kolom (Filter UI Task 2) — mengosongkan
     // filter field terkait.
+    clearFilters: "Clear all filters",
     all: "All",
     noResults: "No results",
   },

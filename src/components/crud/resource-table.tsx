@@ -17,6 +17,7 @@ import { Can } from "@/components/auth/can";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { getResource } from "@/config/resources/index";
+import { AvatarCell } from "@/components/crud/avatar-cell";
 import { RelationCell } from "@/components/crud/relation-cell";
 import { WorkflowTransitionButton } from "@/components/crud/workflow-transition-button";
 import { Button } from "@/components/ui/button";
@@ -325,6 +326,9 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
               currency: "USD",
             }).format(amount);
           }
+          if (c.render === "avatar") {
+            return <AvatarCell name={typeof value === "string" ? value : String(value ?? "")} />;
+          }
           if (c.render === "image") {
             if (typeof value === "string" && value.length > 0) {
               // `<img>` biasa (BUKAN `next/image`) sengaja dipakai — sumber
@@ -387,6 +391,17 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
     },
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // Kolom angka (currency): rata kanan + angka selebar tetap supaya digit sejajar.
+  const numericFields = new Set(
+    def.columns.filter((c) => c.render === "currency").map((c) => c.field),
+  );
+  const hasActiveFilter = !!state.q || Object.keys(activeFilters).length > 0;
+  const clearAllFilters = () => {
+    setSearchInput("");
+    void setState({ q: null, page: 1 });
+    void setFilterState(Object.fromEntries(filterFields.map((f) => [filterKey(f), null])));
+  };
 
   const colSpan = def.columns.length + 2; // + kolom pilih + kolom aksi
 
@@ -490,6 +505,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           baris lama tetap tampil, hanya diberi opasitas turun. Skeleton penuh
           HANYA untuk load pertama (`isPending`), lihat `<TableBody>`. */}
       <Table
+        containerClassName="max-h-[70vh] overflow-y-auto rounded-xl border bg-card"
         aria-busy={query.isFetching && !query.isPending}
         className={
           query.isFetching && !query.isPending ? "opacity-60 transition-opacity" : undefined
@@ -498,9 +514,9 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              <TableHead className="w-8" />
+              <TableHead className="sticky top-0 z-10 bg-muted font-semibold w-8" />
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className="sticky top-0 z-10 bg-muted font-semibold">
                   {header.column.getCanSort() ? (
                     <button
                       type="button"
@@ -516,7 +532,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                   )}
                 </TableHead>
               ))}
-              <TableHead>{t.common.actions}</TableHead>
+              <TableHead className="sticky top-0 z-10 bg-muted font-semibold">{t.common.actions}</TableHead>
             </TableRow>
           ))}
         </TableHeader>
@@ -538,7 +554,14 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           {query.isSuccess && rows.length === 0 && (
             <TableRow>
               <TableCell colSpan={colSpan} className="text-muted-foreground">
-                {t.common.empty}
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <p>{hasActiveFilter ? t.common.noResults : t.common.empty}</p>
+                  {hasActiveFilter && (
+                    <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
+                      {t.common.clearFilters}
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -563,7 +586,10 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                   />
                 </TableCell>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    className={numericFields.has(cell.column.id) ? "text-right tabular-nums" : undefined}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

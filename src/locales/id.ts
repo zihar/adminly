@@ -32,6 +32,7 @@ export const id: Dictionary = {
     exportFailed: "Gagal mengekspor data",
     // Opsi "semua" pada dropdown filter kolom (Filter UI Task 2) — mengosongkan
     // filter field terkait.
+    clearFilters: "Hapus semua filter",
     all: "Semua",
     noResults: "Tidak ada hasil",
   },

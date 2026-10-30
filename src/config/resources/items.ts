@@ -39,7 +39,8 @@ export const itemsResource = defineResource<Item, NewItem, NewItem>({
   api: createResourceApi<Item, NewItem, NewItem>({ resource: "items", path: "/items" }),
   permissions: { view: "items:view", create: "items:create", update: "items:update", delete: "items:delete" },
   columns: [
-    { field: "nama", labelKey: "items.nama", sortable: true, searchable: true },
+    // `render:"avatar"` (demo): lingkaran inisial berwarna deterministik + nama.
+    { field: "nama", labelKey: "items.nama", sortable: true, searchable: true, render: "avatar" },
     // Kolom status workflow (Task 7) — dirender sebagai badge oleh `resource-table`
     // lewat lookup `def.workflow.statuses` (lihat komentar `render === "badge"` di sana).
     { field: "status", labelKey: "workflow.statusHeader", render: "badge" },
