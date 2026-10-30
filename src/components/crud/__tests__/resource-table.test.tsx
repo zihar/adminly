@@ -1022,13 +1022,16 @@ describe("ResourceTable", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
 
     // Dropdown filter di-label via `resolveLabel(t, meta.labelKey)` ("items.prioritas" -> "Priority").
-    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    // Kontrol filter = Combobox: tombol pemicu berlabel "Priority"; panel opsi
+    // baru ada di DOM setelah dibuka.
+    const filterSelect = screen.getByLabelText("Priority");
+    await user.click(filterSelect);
     // Opsi "All" (t.common.all) + opsi statis field (Low/High).
-    expect(within(filterSelect).getByRole("option", { name: "All" })).toBeInTheDocument();
-    expect(within(filterSelect).getByRole("option", { name: "Low" })).toBeInTheDocument();
-    expect(within(filterSelect).getByRole("option", { name: "High" })).toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: "All" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Low" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "High" })).toBeInTheDocument();
 
-    await user.selectOptions(filterSelect, "high");
+    await user.click(screen.getByRole("option", { name: "High" }));
 
     await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument());
     expect(screen.getByText("Beta")).toBeInTheDocument();
@@ -1040,7 +1043,8 @@ describe("ResourceTable", () => {
     });
 
     // Pilih "All" lagi -> filter dihapus dari URL & request, kedua baris kembali.
-    await user.selectOptions(filterSelect, "");
+    await user.click(filterSelect);
+    await user.click(await screen.findByRole("option", { name: "All" }));
 
     await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
     expect(screen.getByText("Beta")).toBeInTheDocument();
@@ -1099,8 +1103,8 @@ describe("ResourceTable", () => {
     await screen.findByText("Gamma");
     expect(screen.getByText("Delta")).toBeInTheDocument();
 
-    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
-    await user.selectOptions(filterSelect, "low");
+    await user.click(screen.getByLabelText("Priority"));
+    await user.click(await screen.findByRole("option", { name: "Low" }));
 
     // `page=1` adalah default nuqs sehingga dibuang dari querystring (bukan
     // dicetak eksplisit) — assert lewat ABSENnya `page=2`, sama pola dgn tes
@@ -1148,17 +1152,17 @@ describe("ResourceTable", () => {
     await screen.findByText("Alpha");
     expect(screen.getByText("Beta")).toBeInTheDocument();
 
-    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    const filterSelect = screen.getByLabelText("Priority");
     // Opsi async butuh fetch (`useOptions`) selesai dulu — labelnya sengaja
     // dibedakan ("... (async)") dari fixture statis `defFiltered` supaya tes
     // ini tak bisa lolos palsu kalau `ResourceFilter` diam-diam jatuh balik ke
-    // `meta.options` (yang di sini memang tak ada).
-    await waitFor(() => {
-      expect(within(filterSelect).getByRole("option", { name: "Low (async)" })).toBeInTheDocument();
-    });
-    expect(within(filterSelect).getByRole("option", { name: "High (async)" })).toBeInTheDocument();
+    // `meta.options` (yang di sini memang tak ada). `findByRole` menunggu
+    // fetch selesai; opsi baru ada di DOM saat panel terbuka.
+    await user.click(filterSelect);
+    expect(await screen.findByRole("option", { name: "Low (async)" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "High (async)" })).toBeInTheDocument();
 
-    await user.selectOptions(filterSelect, "high");
+    await user.click(screen.getByRole("option", { name: "High (async)" }));
 
     await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument());
     expect(screen.getByText("Beta")).toBeInTheDocument();

@@ -19,18 +19,21 @@ test("Filter Priority menyempitkan baris & sinkron ke URL; All mengembalikannya"
 
   // Dropdown filter dilabeli via `resolveLabel(t, meta.labelKey)`
   // ("items.prioritas" -> "Priority", locale default "en").
+  // Kontrol filter adalah Combobox (tombol pemicu), bukan <select> bawaan.
   const filterSelect = page.getByLabel("Priority");
   await expect(filterSelect).toBeVisible();
 
   // Pilih "high" -> hanya "Contoh A" (prioritas high) yang cocok; "Contoh B"
   // (low) tersaring keluar. URL mendapat param `filter_prioritas=high`.
-  await filterSelect.selectOption("high");
+  await filterSelect.click();
+  await page.getByRole("option", { name: "High" }).click();
   await expect(page).toHaveURL(/filter_prioritas=high/);
   await expect(page.getByText("Contoh A")).toBeVisible();
   await expect(page.getByText("Contoh B")).toHaveCount(0);
 
   // Pilih "All" (value kosong) -> filter dihapus dari URL, kedua baris balik.
-  await filterSelect.selectOption("");
+  await filterSelect.click();
+  await page.getByRole("option", { name: "All" }).click();
   await expect(page).not.toHaveURL(/filter_prioritas/);
   await expect(page.getByText("Contoh A")).toBeVisible();
   await expect(page.getByText("Contoh B")).toBeVisible();

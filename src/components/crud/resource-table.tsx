@@ -22,6 +22,7 @@ import { WorkflowTransitionButton } from "@/components/crud/workflow-transition-
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui/combobox";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -92,18 +93,16 @@ function ResourceFilter({
   return (
     <label className="flex items-center gap-1 text-sm">
       {label}
-      <select
+      <Combobox
+        options={options}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="border rounded px-2 py-1"
-      >
-        <option value="">{t.common.all}</option>
-        {options.map((o) => (
-          <option key={String(o.value)} value={String(o.value)}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        clearLabel={t.common.all}
+        placeholder={t.common.selectPlaceholder}
+        searchPlaceholder={t.common.searchPlaceholder}
+        emptyLabel={t.common.noResults}
+        className="min-w-36"
+      />
     </label>
   );
 }
