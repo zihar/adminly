@@ -15,7 +15,7 @@ test.describe("Template — persistensi", () => {
     await page.goto("/dashboard");
     await expect(page.locator("html")).toHaveAttribute("data-template", "adminly");
     await expect(page.locator("html")).toHaveAttribute("data-density", "normal");
-    await expect(page.locator("html")).toHaveAttribute("data-surface", "bergaris");
+    await expect(page.locator("html")).toHaveAttribute("data-surface", "terangkat");
   });
 
   test("cookie asing jatuh ke default, bukan halaman rusak", async ({ page }) => {
@@ -117,7 +117,7 @@ test.describe("Template — kosakata (style terkomputasi)", () => {
     await expect(row).not.toHaveCSS("display", "grid");
   });
 
-  test("ruang-rapat: card memakai box-shadow --lift, adminly tidak", async ({ page }) => {
+  test("ruang-rapat: card memakai box-shadow --lift, kertas-kerja (bergaris) tidak", async ({ page }) => {
     // Dibandingkan lewat elemen probe yang di-render browser yang sama,
     // supaya normalisasi warna (oklch → computed) tak bikin perbandingan
     // string rapuh — keduanya melalui resolusi CSSOM yang identik.
@@ -139,9 +139,65 @@ test.describe("Template — kosakata (style terkomputasi)", () => {
     expect(terangkat.card).not.toBe("none");
     expect(terangkat.card).toBe(terangkat.lift);
 
-    await setTemplate(page, "adminly");
+    await setTemplate(page, "kertas-kerja");
     await page.goto("/dashboard");
     const bergaris = await cardShadowVsLift(page);
     expect(bergaris.card).not.toBe(bergaris.lift);
+  });
+
+  test("adminly: tab aktif di form beraksen emas (garis bawah --gold), template lain tidak", async ({ page }) => {
+    async function activeTabShadow(p: Page) {
+      return p.evaluate(() => {
+        const probe = document.createElement("div");
+        probe.style.boxShadow = "inset 0 -3px 0 var(--gold)";
+        document.body.appendChild(probe);
+        const gold = getComputedStyle(probe).boxShadow;
+        probe.remove();
+        const tab = document.querySelector('[data-slot="tabs-trigger"][data-active]');
+        return { tab: tab ? getComputedStyle(tab).boxShadow : null, gold };
+      });
+    }
+
+    await setTemplate(page, "adminly");
+    await page.goto("/items/itm-1/edit");
+    await expect(page.locator('[data-slot="tabs-trigger"][data-active]')).toBeVisible();
+    const adminly = await activeTabShadow(page);
+    expect(adminly.tab).toBe(adminly.gold);
+
+    await setTemplate(page, "kertas-kerja");
+    await page.goto("/items/itm-1/edit");
+    await expect(page.locator('[data-slot="tabs-trigger"][data-active]')).toBeVisible();
+    const lain = await activeTabShadow(page);
+    expect(lain.tab).not.toBe(lain.gold);
+  });
+
+  test("adminly: item sidebar aktif tetap punya cincin fokus keyboard dan penanda emas", async ({ page }) => {
+    await setTemplate(page, "adminly");
+    await page.setViewportSize({ width: 1366, height: 800 });
+    await page.goto("/items");
+    const active = page.locator('[data-sidebar="content"] [data-sidebar="menu-button"][data-active]');
+    await expect(active).toBeVisible();
+
+    // Fokus lewat keyboard supaya :focus-visible aktif.
+    await page.keyboard.press("Tab");
+    await active.focus();
+
+    const result = await active.evaluate((el) => {
+      const probe = document.createElement("div");
+      probe.style.boxShadow = "inset 3px 0 0 var(--gold)";
+      document.body.appendChild(probe);
+      const goldOnly = getComputedStyle(probe).boxShadow;
+      probe.remove();
+      return {
+        shadow: getComputedStyle(el).boxShadow,
+        goldOnly,
+        markBg: getComputedStyle(el, "::before").backgroundColor,
+      };
+    });
+    // Cincin fokus (box-shadow) tidak boleh digantikan oleh garis emas...
+    expect(result.shadow).not.toBe("none");
+    expect(result.shadow).not.toBe(result.goldOnly);
+    // ...dan penanda emas tetap ada, kini lewat ::before.
+    expect(result.markBg).not.toBe("rgba(0, 0, 0, 0)");
   });
 });

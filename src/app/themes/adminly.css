@@ -1,77 +1,155 @@
 /*
- * Template "Adminly" — tampilan bawaan. Nilai di sini adalah salinan
- * verbatim lantai dasar (themes/base.css) pada saat lapisan template
- * diperkenalkan. JANGAN diubah tanpa keputusan sadar: ini yang dipakai
- * fork yang tidak mau tampilannya bergeser.
+ * Template "Adminly" — tampilan bawaan, sekarang bergaya "Dataran Tinggi":
+ * teal tua sebagai merek, emas sebagai aksen, Fraunces untuk judul dan
+ * Figtree untuk isi. Berubah dari abu netral atas keputusan pemilik produk
+ * 2026-10-30. Warna dipakai fungsional (status, modul), bukan dekorasi.
+ *
+ * Mau kembali ke abu netral lama? Ganti nilai token di dua blok di bawah
+ * (nilai lama = berkas themes/base.css) dan `--font-app` ke `var(--font-geist)`.
+ *
+ * Nilai asal dari palet hex: merek #0e3b53 (gelap #7cc3e4), emas #f7d01a,
+ * bg #f3f6f7, garis #dfe7ea, teks #14262f, redam #5d727c; gelap bg #0b171d,
+ * surface #122530. Pasangan status diukur ≥ 4.5:1 oleh contrast.test.ts.
  */
 [data-template="adminly"] {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.971 0.004 215);
+  --foreground: oklch(0.257 0.029 231.2);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.257 0.029 231.2);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.257 0.029 231.2);
+  --primary: oklch(0.335 0.063 236.9);
+  --primary-foreground: oklch(0.985 0.003 230);
+  --secondary: oklch(0.946 0.006 223.5);
+  --secondary-foreground: oklch(0.257 0.029 231.2);
+  --muted: oklch(0.946 0.006 223.5);
+  --muted-foreground: oklch(0.5 0.03 228.4);
+  --accent: oklch(0.946 0.006 223.5);
+  --accent-foreground: oklch(0.257 0.029 231.2);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --border: oklch(0.923 0.01 222.1);
+  --input: oklch(0.923 0.01 222.1);
+  --ring: oklch(0.335 0.063 236.9);
+  --chart-1: oklch(0.335 0.063 236.9);
+  --chart-2: oklch(0.55 0.09 225);
+  --chart-3: oklch(0.866 0.174 94.8);
+  --chart-4: oklch(0.62 0.12 160);
+  --chart-5: oklch(0.6 0.14 330);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --font-app: var(--font-geist);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.257 0.029 231.2);
+  --sidebar-primary: oklch(0.335 0.063 236.9);
+  --sidebar-primary-foreground: oklch(0.985 0.003 230);
+  --sidebar-accent: oklch(0.946 0.006 223.5);
+  --sidebar-accent-foreground: oklch(0.257 0.029 231.2);
+  --sidebar-border: oklch(0.923 0.01 222.1);
+  --sidebar-ring: oklch(0.335 0.063 236.9);
+  --font-app: var(--font-figtree);
   --label-col: 0px;
-  --lift: none;
+  --lift: 0 1px 2px oklch(0.257 0.029 231 / 6%),
+    0 8px 22px -12px oklch(0.257 0.029 231 / 22%);
+  --status-draft-bg: oklch(0.94 0.005 230);
+  --status-draft-fg: oklch(0.4 0.02 230);
+  --status-submitted-bg: oklch(0.95 0.07 95);
+  --status-submitted-fg: oklch(0.4 0.08 80);
+  --status-approved-bg: oklch(0.94 0.05 155);
+  --status-approved-fg: oklch(0.38 0.09 155);
+  --status-rejected-bg: oklch(0.94 0.04 20);
+  --status-rejected-fg: oklch(0.44 0.17 25);
+  --gold: oklch(0.866 0.174 94.8);
+  --m1: oklch(0.52 0.1 236);
+  --m2: oklch(0.62 0.15 55);
+  --m3: oklch(0.55 0.12 160);
+  --m4: oklch(0.55 0.15 330);
+  --font-heading: var(--font-fraunces);
 }
 
 [data-template="adminly"].dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.196 0.021 230.9);
+  --foreground: oklch(0.95 0.008 225);
+  --card: oklch(0.254 0.032 235.4);
+  --card-foreground: oklch(0.95 0.008 225);
+  --popover: oklch(0.254 0.032 235.4);
+  --popover-foreground: oklch(0.95 0.008 225);
+  --primary: oklch(0.782 0.085 229.2);
+  --primary-foreground: oklch(0.196 0.021 230.9);
+  --secondary: oklch(0.3 0.03 235);
+  --secondary-foreground: oklch(0.95 0.008 225);
+  --muted: oklch(0.3 0.03 235);
+  --muted-foreground: oklch(0.74 0.028 228);
+  --accent: oklch(0.3 0.03 235);
+  --accent-foreground: oklch(0.95 0.008 225);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: oklch(0.33 0.03 235);
+  --input: oklch(0.36 0.03 235);
+  --ring: oklch(0.782 0.085 229.2);
+  --chart-1: oklch(0.782 0.085 229.2);
+  --chart-2: oklch(0.68 0.09 225);
+  --chart-3: oklch(0.866 0.174 94.8);
+  --chart-4: oklch(0.74 0.12 160);
+  --chart-5: oklch(0.72 0.13 330);
+  --sidebar: oklch(0.225 0.028 233);
+  --sidebar-foreground: oklch(0.95 0.008 225);
+  --sidebar-primary: oklch(0.782 0.085 229.2);
+  --sidebar-primary-foreground: oklch(0.196 0.021 230.9);
+  --sidebar-accent: oklch(0.3 0.03 235);
+  --sidebar-accent-foreground: oklch(0.95 0.008 225);
+  --sidebar-border: oklch(0.33 0.03 235);
+  --sidebar-ring: oklch(0.782 0.085 229.2);
+  --lift: 0 1px 2px oklch(0 0 0 / 40%), 0 10px 24px -12px oklch(0 0 0 / 60%);
+  --status-draft-bg: oklch(0.3 0.02 232);
+  --status-draft-fg: oklch(0.82 0.015 230);
+  --status-submitted-bg: oklch(0.33 0.06 90);
+  --status-submitted-fg: oklch(0.9 0.12 95);
+  --status-approved-bg: oklch(0.3 0.06 155);
+  --status-approved-fg: oklch(0.86 0.12 155);
+  --status-rejected-bg: oklch(0.31 0.08 22);
+  --status-rejected-fg: oklch(0.87 0.09 22);
+  --gold: oklch(0.866 0.174 94.8);
+  --m1: oklch(0.75 0.09 230);
+  --m2: oklch(0.8 0.13 75);
+  --m3: oklch(0.78 0.12 160);
+  --m4: oklch(0.76 0.12 330);
+}
+
+/* Judul memakai Fraunces; isi tetap Figtree lewat `--font-app`. */
+[data-template="adminly"] :is(h1, h2, h3) {
+  font-family: var(--font-heading);
+}
+
+/* Tab aktif beraksen emas: garis bawah memakai `--gold`, lewat hook
+   `data-slot` yang sudah dibawa komponen Tabs (src/components/ui/tabs.tsx
+   tak disentuh). */
+[data-template="adminly"] [data-slot="tabs-trigger"][data-active] {
+  box-shadow: inset 0 -3px 0 var(--gold);
+}
+
+/* Sidebar: ikon menu berwarna per modul (`data-tone` dari toneOf(item.key),
+   lihat app-sidebar.tsx) dan item aktif bergaris emas di tepi kiri. Aturan
+   warna hanya hidup di berkas ini, jadi template lain tetap monokrom. */
+[data-template="adminly"] [data-sidebar="menu-button"] svg[data-tone="1"] {
+  color: var(--m1);
+}
+[data-template="adminly"] [data-sidebar="menu-button"] svg[data-tone="2"] {
+  color: var(--m2);
+}
+[data-template="adminly"] [data-sidebar="menu-button"] svg[data-tone="3"] {
+  color: var(--m3);
+}
+[data-template="adminly"] [data-sidebar="menu-button"] svg[data-tone="4"] {
+  color: var(--m4);
+}
+/* Penanda emas digambar lewat ::before, BUKAN box-shadow: aturan tak berlapis
+   ini mengalahkan semua utility Tailwind, jadi box-shadow emas akan
+   menghapus cincin fokus keyboard (`focus-visible:ring-2` = box-shadow). */
+[data-template="adminly"] [data-sidebar="content"] [data-sidebar="menu-button"][data-active] {
+  position: relative;
+}
+[data-template="adminly"] [data-sidebar="content"] [data-sidebar="menu-button"][data-active]::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  background: var(--gold);
 }

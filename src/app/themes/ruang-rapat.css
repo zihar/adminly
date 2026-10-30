@@ -48,6 +48,20 @@
   --font-app: var(--font-archivo);
   --label-col: 190px;
   --lift: 0 1px 2px oklch(0.21 0.03 268 / 6%), 0 8px 22px -10px oklch(0.21 0.03 268 / 28%);
+  --status-draft-bg: oklch(0.94 0.005 230);
+  --status-draft-fg: oklch(0.4 0.02 230);
+  --status-submitted-bg: oklch(0.95 0.07 95);
+  --status-submitted-fg: oklch(0.4 0.08 80);
+  --status-approved-bg: oklch(0.94 0.05 155);
+  --status-approved-fg: oklch(0.38 0.09 155);
+  --status-rejected-bg: oklch(0.94 0.04 20);
+  --status-rejected-fg: oklch(0.44 0.17 25);
+  --gold: oklch(0.36 0.14 268);
+  --m1: oklch(0.36 0.14 268);
+  --m2: oklch(0.61 0.105 215);
+  --m3: oklch(0.5 0.12 292);
+  --m4: oklch(0.7 0.09 195);
+  --font-heading: var(--font-app);
 }
 
 [data-template="ruang-rapat"].dark {
@@ -84,4 +98,17 @@
   --sidebar-ring: oklch(0.7 0.1 275);
   /* Bayangan di atas dasar gelap harus jauh lebih pekat agar terbaca. */
   --lift: 0 1px 2px oklch(0 0 0 / 40%), 0 10px 24px -12px oklch(0 0 0 / 70%);
+  --status-draft-bg: oklch(0.3 0.02 232);
+  --status-draft-fg: oklch(0.82 0.015 230);
+  --status-submitted-bg: oklch(0.33 0.06 90);
+  --status-submitted-fg: oklch(0.9 0.12 95);
+  --status-approved-bg: oklch(0.3 0.06 155);
+  --status-approved-fg: oklch(0.86 0.12 155);
+  --status-rejected-bg: oklch(0.31 0.08 22);
+  --status-rejected-fg: oklch(0.87 0.09 22);
+  --gold: oklch(0.665 0.145 275);
+  --m1: oklch(0.665 0.145 275);
+  --m2: oklch(0.735 0.105 215);
+  --m3: oklch(0.62 0.13 292);
+  --m4: oklch(0.78 0.085 195);
 }

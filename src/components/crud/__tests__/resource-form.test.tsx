@@ -170,6 +170,46 @@ describe("ResourceForm", () => {
     expect(screen.queryByText("items.nama")).not.toBeInTheDocument();
   });
 
+  it("label tab memakai i18n (umum → General), bukan kunci mentah", () => {
+    const tabbed = {
+      ...def,
+      form: {
+        ...def.form,
+        layout: [
+          { tabKey: "umum", fields: ["nama"] },
+          { tabKey: "items.detailTab", fields: [] },
+        ],
+      },
+    } as ResourceDef;
+    wrap(<ResourceForm def={tabbed} />);
+    expect(screen.getByRole("tab", { name: "General" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Details" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "umum" })).not.toBeInTheDocument();
+  });
+
+  it("kunci tab tanpa entri i18n jatuh ke kunci berhuruf awal kapital, tanpa galat", () => {
+    const tabbed = {
+      ...def,
+      form: {
+        ...def.form,
+        layout: [
+          { tabKey: "umum", fields: ["nama"] },
+          { tabKey: "lainnya", fields: [] },
+          { tabKey: "modul.tak-dikenal", fields: [] },
+        ],
+      },
+    } as ResourceDef;
+    wrap(<ResourceForm def={tabbed} />);
+    expect(screen.getByRole("tab", { name: "Lainnya" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Tak-dikenal" })).toBeInTheDocument();
+  });
+
+  it("form dibungkus kartu", () => {
+    const { container } = wrap(<ResourceForm def={def} />);
+    const form = container.querySelector("form");
+    expect(form?.closest('[data-slot="card"]')).not.toBeNull();
+  });
+
   it("menampilkan error validasi Zod saat submit kosong", async () => {
     wrap(<ResourceForm def={def} />);
     await userEvent.click(screen.getByRole("button", { name: /save/i }));

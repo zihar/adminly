@@ -19,6 +19,7 @@ import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { resolveLabel } from "@/locales";
 import { FormModeProvider, type FormMode } from "@/components/crud/form-mode-context";
+import { Card, CardContent } from "@/components/ui/card";
 
 // `FormDef.schema` disimpan type-erased (`ZodType<unknown>`) di registry resource
 // (heterogen antar resource). Di sini di-cast ke bentuk yang cocok dengan generic
@@ -76,6 +77,18 @@ export function ResourceForm({ def, id, mode = "edit", onDone }: { def: Resource
       toast.error(t.common.saveFailed);
     }
   }
+
+  // Label tab: `form.tab.<tabKey>` dulu (kunci polos seperti "umum"), lalu
+  // `resolveLabel` untuk kunci bertitik ("items.detailTab"); kunci yang tak
+  // ada di kamus mana pun jatuh ke kunci itu sendiri berhuruf awal kapital.
+  const tabLabel = (tabKey: string): string => {
+    const own = (t.form.tab as Record<string, string>)[tabKey];
+    if (own) return own;
+    const resolved = resolveLabel(t, tabKey);
+    return resolved === tabKey.split(".").at(-1)
+      ? resolved.charAt(0).toUpperCase() + resolved.slice(1)
+      : resolved;
+  };
 
   const tabs = def.form.layout;
   const wf = def.workflow;
@@ -161,11 +174,13 @@ export function ResourceForm({ def, id, mode = "edit", onDone }: { def: Resource
       )}
       <FormProvider {...form}>
         <FormModeProvider mode={mode}>
+        <Card>
+        <CardContent>
         <form onSubmit={mode === "detail" ? (event) => event.preventDefault() : form.handleSubmit(onSubmit)}>
           <Tabs defaultValue={tabs[0]?.tabKey}>
             {tabs.length > 1 && (
               <TabsList>
-                {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{resolveLabel(t, tab.tabKey)}</TabsTrigger>)}
+                {tabs.map((tab) => <TabsTrigger key={tab.tabKey} value={tab.tabKey}>{tabLabel(tab.tabKey)}</TabsTrigger>)}
               </TabsList>
             )}
             {tabs.map((tab) => (
@@ -203,6 +218,8 @@ export function ResourceForm({ def, id, mode = "edit", onDone }: { def: Resource
           </Tabs>
           {mode !== "detail" && <Button type="submit" className="mt-4" disabled={create.isPending || update.isPending}>{t.common.save}</Button>}
         </form>
+        </CardContent>
+        </Card>
         </FormModeProvider>
       </FormProvider>
     </>

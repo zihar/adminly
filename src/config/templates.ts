@@ -35,7 +35,7 @@ export const TEMPLATES = [
     descKey: "template.adminly.desc",
     shell: "sidebar",
     density: "normal",
-    surface: "bergaris",
+    surface: "terangkat",
   },
   {
     id: "kertas-kerja",

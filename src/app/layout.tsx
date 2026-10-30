@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { Archivo, Geist, Geist_Mono, Public_Sans } from "next/font/google";
+import {
+  Archivo,
+  Figtree,
+  Fraunces,
+  Geist,
+  Geist_Mono,
+  Public_Sans,
+} from "next/font/google";
 import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
@@ -43,6 +50,18 @@ const archivo = Archivo({
   preload: false,
 });
 
+const figtree = Figtree({
+  variable: "--font-figtree",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Adminly",
@@ -68,7 +87,7 @@ export default async function RootLayout({
       data-template={templateDef.id}
       data-density={templateDef.density}
       data-surface={templateDef.surface}
-      className={`${geistSans.variable} ${geistMono.variable} ${publicSans.variable} ${archivo.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${publicSans.variable} ${archivo.variable} ${figtree.variable} ${fraunces.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full">

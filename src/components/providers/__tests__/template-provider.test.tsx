@@ -50,7 +50,7 @@ describe("TemplateProvider", () => {
     const el = document.documentElement;
     expect(el.dataset.template).toBe("adminly");
     expect(el.dataset.density).toBe("normal");
-    expect(el.dataset.surface).toBe("bergaris");
+    expect(el.dataset.surface).toBe("terangkat");
     expect(document.cookie).toContain("adminly_template=adminly");
     expect(refresh).toHaveBeenCalledTimes(1);
   });

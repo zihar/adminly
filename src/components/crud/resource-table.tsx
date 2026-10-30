@@ -17,11 +17,14 @@ import { Can } from "@/components/auth/can";
 import { useI18n } from "@/components/providers/i18n-provider";
 import { useScope } from "@/components/providers/scope-provider";
 import { getResource } from "@/config/resources/index";
+import { AvatarCell } from "@/components/crud/avatar-cell";
 import { RelationCell } from "@/components/crud/relation-cell";
 import { WorkflowTransitionButton } from "@/components/crud/workflow-transition-button";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui/combobox";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -92,18 +95,16 @@ function ResourceFilter({
   return (
     <label className="flex items-center gap-1 text-sm">
       {label}
-      <select
+      <Combobox
+        options={options}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="border rounded px-2 py-1"
-      >
-        <option value="">{t.common.all}</option>
-        {options.map((o) => (
-          <option key={String(o.value)} value={String(o.value)}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        clearLabel={t.common.all}
+        placeholder={t.common.selectPlaceholder}
+        searchPlaceholder={t.common.searchPlaceholder}
+        emptyLabel={t.common.noResults}
+        className="w-auto min-w-36"
+      />
     </label>
   );
 }
@@ -143,7 +144,14 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
   // bikin TypeScript memaksakan index signature seragam. Config-nya sendiri
   // di-memo (stabil selama daftar field filter resource tak berubah) supaya
   // `useQueryStates` tak menerima objek baru tiap render.
-  const filterFields = def.list?.filters ?? [];
+  // Field status workflow ikut jadi filter (lewat chip, bukan dropdown) walau
+  // tak tercantum di `list.filters`, memakai kunci `filter_<field>` yang sama.
+  const statusField = def.workflow?.field;
+  const declaredFilters = def.list?.filters ?? [];
+  const filterFields =
+    statusField && !declaredFilters.includes(statusField)
+      ? [...declaredFilters, statusField]
+      : declaredFilters;
   const filterParsersConfig = React.useMemo(
     () =>
       Object.fromEntries(filterFields.map((f) => [filterKey(f), parseAsString.withDefault("")])),
@@ -287,7 +295,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             const status = def.workflow?.statuses.find((s) => s.value === value);
             if (status) {
               return (
-                <Badge variant={status.variant ?? "secondary"}>
+                <Badge variant={status.variant ?? "secondary"} dot>
                   {resolveLabel(t, status.labelKey)}
                 </Badge>
               );
@@ -302,7 +310,11 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             return "";
           }
           if (c.render === "boolean") {
-            return resolveLabel(t, value ? "common.yes" : "common.no");
+            return (
+              <Badge variant={value ? "success" : "secondary"}>
+                {resolveLabel(t, value ? "common.yes" : "common.no")}
+              </Badge>
+            );
           }
           if (c.render === "currency") {
             // Format generik (demo) — mata uang default USD, deterministik
@@ -313,6 +325,9 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
               style: "currency",
               currency: "USD",
             }).format(amount);
+          }
+          if (c.render === "avatar") {
+            return <AvatarCell name={typeof value === "string" ? value : String(value ?? "")} />;
           }
           if (c.render === "image") {
             if (typeof value === "string" && value.length > 0) {
@@ -377,13 +392,25 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // Kolom angka (currency): rata kanan + angka selebar tetap supaya digit sejajar.
+  const numericFields = new Set(
+    def.columns.filter((c) => c.render === "currency").map((c) => c.field),
+  );
+  const hasActiveFilter = !!state.q || Object.keys(activeFilters).length > 0;
+  const clearAllFilters = () => {
+    setSearchInput("");
+    void setState({ q: null, page: 1 });
+    void setFilterState(Object.fromEntries(filterFields.map((f) => [filterKey(f), null])));
+  };
+
   const colSpan = def.columns.length + 2; // + kolom pilih + kolom aksi
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder={t.common.searchPlaceholder}
+          aria-label={t.common.searchPlaceholder}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -391,24 +418,26 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
               void setState({ q: searchInput, page: 1 });
             }
           }}
-          className="max-w-sm"
+          className="min-w-48 max-w-sm flex-1"
         />
-        {filterFields.map((field) => (
-          <ResourceFilter
-            key={field}
-            def={def}
-            field={field}
-            value={filterState[filterKey(field)] ?? ""}
-            onChange={(value) => {
-              // Ganti filter kolom → reset ke halaman 1 (samakan dgn search &
-              // sort di atas). `setState`+`setFilterState` dipanggil di tick
-              // yang sama → nuqs menggabungkannya jadi satu penulisan URL
-              // (aman, bukan dua navigasi terpisah).
-              void setFilterState({ [filterKey(field)]: value || null });
-              void setState({ page: 1 });
-            }}
-          />
-        ))}
+        {filterFields
+          .filter((field) => field !== statusField)
+          .map((field) => (
+            <ResourceFilter
+              key={field}
+              def={def}
+              field={field}
+              value={filterState[filterKey(field)] ?? ""}
+              onChange={(value) => {
+                // Ganti filter kolom → reset ke halaman 1 (samakan dgn search &
+                // sort di atas). `setState`+`setFilterState` dipanggil di tick
+                // yang sama → nuqs menggabungkannya jadi satu penulisan URL
+                // (aman, bukan dua navigasi terpisah).
+                void setFilterState({ [filterKey(field)]: value || null });
+                void setState({ page: 1 });
+              }}
+            />
+          ))}
         <Can permission={def.permissions.create}>
           <Button render={<Link href={`/${def.name}/create`} />}>{t.common.create}</Button>
         </Can>
@@ -433,6 +462,22 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           </Can>
         )}
       </div>
+
+      {def.workflow && (
+        <FilterChips
+          label={resolveLabel(t, def.form.fields[def.workflow.field]?.labelKey ?? def.workflow.field)}
+          allLabel={t.common.all}
+          options={def.workflow.statuses.map((s) => ({
+            value: s.value,
+            label: resolveLabel(t, s.labelKey),
+          }))}
+          value={filterState[filterKey(def.workflow.field)] ?? ""}
+          onChange={(value) => {
+            void setFilterState({ [filterKey(def.workflow!.field)]: value || null });
+            void setState({ page: 1 });
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDeleteOpen}
@@ -461,6 +506,13 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           baris lama tetap tampil, hanya diberi opasitas turun. Skeleton penuh
           HANYA untuk load pertama (`isPending`), lihat `<TableBody>`. */}
       <Table
+        containerClassName="max-h-[70vh] overflow-y-auto rounded-xl border bg-card"
+        // Wadah yang bisa digulir harus terjangkau papan ketik (WCAG 2.1.1).
+        containerProps={{
+          tabIndex: 0,
+          role: "region",
+          "aria-label": resolveLabel(t, `${def.name}.title`),
+        }}
         aria-busy={query.isFetching && !query.isPending}
         className={
           query.isFetching && !query.isPending ? "opacity-60 transition-opacity" : undefined
@@ -469,9 +521,21 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              <TableHead className="w-8" />
+              <TableHead className="sticky top-0 z-10 bg-muted font-semibold w-8" />
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead
+                  key={header.id}
+                  className="sticky top-0 z-10 bg-muted font-semibold"
+                  aria-sort={
+                    header.column.getCanSort()
+                      ? header.column.getIsSorted() === "asc"
+                        ? "ascending"
+                        : header.column.getIsSorted() === "desc"
+                          ? "descending"
+                          : "none"
+                      : undefined
+                  }
+                >
                   {header.column.getCanSort() ? (
                     <button
                       type="button"
@@ -487,7 +551,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                   )}
                 </TableHead>
               ))}
-              <TableHead>{t.common.actions}</TableHead>
+              <TableHead className="sticky top-0 z-10 bg-muted font-semibold">{t.common.actions}</TableHead>
             </TableRow>
           ))}
         </TableHeader>
@@ -509,7 +573,14 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           {query.isSuccess && rows.length === 0 && (
             <TableRow>
               <TableCell colSpan={colSpan} className="text-muted-foreground">
-                {t.common.empty}
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <p>{hasActiveFilter ? t.common.noResults : t.common.empty}</p>
+                  {hasActiveFilter && (
+                    <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
+                      {t.common.clearFilters}
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -534,7 +605,10 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
                   />
                 </TableCell>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    className={numericFields.has(cell.column.id) ? "text-right tabular-nums" : undefined}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

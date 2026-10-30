@@ -9,7 +9,7 @@ export type FieldType =
   | "date" | "datetime" | "checkbox" | "radio" | "file" | "richtext" | "hidden"
   | "cascade";
 
-export type ColumnRender = "text" | "date" | "badge" | "relation" | "image" | "currency" | "boolean";
+export type ColumnRender = "text" | "date" | "badge" | "relation" | "image" | "currency" | "boolean" | "avatar";
 
 export type ColumnDef = {
   field: string;
@@ -67,7 +67,14 @@ export type FormDef = {
 };
 
 /** Varian badge yang dipakai `<Badge>` (ui/badge.tsx). */
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+type BadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "warning"
+  | "danger";
 
 /** Satu status dalam workflow — dipakai stepper & badge kolom status. */
 export type WorkflowStatus = {

@@ -18,6 +18,7 @@ import { ScopeProvider } from "@/components/providers/scope-provider";
 import type { Role } from "@/config/rbac";
 import { registerResources, _resetRegistry } from "@/config/resources/index";
 import { downloadBlob, exportPdf } from "@/lib/crud/export";
+import { toneOf } from "@/lib/tone";
 
 // `I18nProvider`/`RbacProvider` memanggil `useRouter()` (untuk `router.refresh()`
 // saat ganti locale/role) — di luar App Router (mis. di test) itu butuh mock manual.
@@ -201,10 +202,10 @@ beforeAll(async () => {
       field: "status",
       initial: "draft",
       statuses: [
-        { value: "draft", labelKey: "workflow.status.draft" },
-        { value: "submitted", labelKey: "workflow.status.submitted" },
-        { value: "approved", labelKey: "workflow.status.approved" },
-        { value: "rejected", labelKey: "workflow.status.rejected" },
+        { value: "draft", labelKey: "workflow.status.draft", variant: "secondary" },
+        { value: "submitted", labelKey: "workflow.status.submitted", variant: "warning" },
+        { value: "approved", labelKey: "workflow.status.approved", variant: "success" },
+        { value: "rejected", labelKey: "workflow.status.rejected", variant: "destructive" },
       ],
       transitions: [
         { action: "submit", from: ["draft"], to: "submitted", permission: "items:update", labelKey: "workflow.action.submit" },
@@ -352,6 +353,8 @@ function wrap(
     // tanpa opsi ini tetap memverifikasi fallback `useScope()` tanpa provider
     // (lihat `scope-provider.tsx`: `ctx ?? { scope: {}, ... }`).
     scope?: Record<string, unknown>;
+    // Query string awal URL (mis. "q=zzz&filter_prioritas=high").
+    searchParams?: string;
   },
 ) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -364,7 +367,7 @@ function wrap(
               nilai awal — `setState` di komponen ter-reconcile balik ke default pada
               render berikutnya. `hasMemory: true` mensimulasikan adapter sungguhan
               (browser `history`) yang benar-benar menyimpan update URL. */}
-          <NuqsTestingAdapter hasMemory onUrlUpdate={opts?.onUrlUpdate}>
+          <NuqsTestingAdapter hasMemory searchParams={opts?.searchParams} onUrlUpdate={opts?.onUrlUpdate}>
             {content}
           </NuqsTestingAdapter>
         </RbacProvider>
@@ -657,8 +660,273 @@ describe("ResourceTable", () => {
 
     wrap(<ResourceTable def={defWorkflow} />);
 
-    expect(await screen.findByText("Submitted")).toBeInTheDocument();
-    expect(screen.queryByText("submitted")).not.toBeInTheDocument();
+    // Dibatasi ke tabel: chip filter status memakai label yang sama.
+    const table = await screen.findByRole("table");
+    expect(await within(table).findByText("Submitted")).toBeInTheDocument();
+    expect(within(table).queryByText("submitted")).not.toBeInTheDocument();
+  });
+
+  it("status approved dirender sebagai badge varian success, submitted sebagai warning", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", status: "approved" },
+            { id: "2", status: "submitted" },
+          ],
+          meta: { total: 2, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defWorkflow} />);
+
+    const table = await screen.findByRole("table");
+    expect(await within(table).findByText("Approved")).toHaveAttribute("data-variant", "success");
+    expect(within(table).getByText("Submitted")).toHaveAttribute("data-variant", "warning");
+  });
+
+  it("status yang tidak ada di workflow (data lama) jatuh ke teks biasa tanpa galat", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", status: "arsip-lama" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defWorkflow} />);
+
+    const cell = await screen.findByText("arsip-lama");
+    expect(cell).not.toHaveAttribute("data-slot", "badge");
+  });
+
+  it("chip filter status: tampil hanya untuk resource berworkflow; klik Approved menyetel filter_status dan menyaring daftar", async () => {
+    const searches: URLSearchParams[] = [];
+    server.use(
+      http.get("http://localhost:3000/api/items", ({ request }) => {
+        const url = new URL(request.url);
+        searches.push(url.searchParams);
+        const all = [
+          { id: "1", status: "approved" },
+          { id: "2", status: "draft" },
+        ];
+        const only = url.searchParams.get("filter[status]");
+        const data = only ? all.filter((r) => r.status === only) : all;
+        return HttpResponse.json({ data, meta: { total: data.length, page: 1, per_page: 10 } });
+      }),
+    );
+
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    wrap(<ResourceTable def={defWorkflow} />, { onUrlUpdate });
+    const table = await screen.findByRole("table");
+    await within(table).findByText("Draft");
+
+    const chip = screen.getByRole("button", { name: "Approved", pressed: false });
+    await user.click(chip);
+
+    await waitFor(() => expect(within(table).queryByText("Draft")).not.toBeInTheDocument());
+    expect(searches.at(-1)?.get("filter[status]")).toBe("approved");
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).toContain("filter_status=approved");
+    });
+    expect(screen.getByRole("button", { name: "Approved" })).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: "All" }));
+    await waitFor(() => expect(within(table).getByText("Draft")).toBeInTheDocument());
+    expect(searches.at(-1)?.has("filter[status]")).toBe(false);
+  });
+
+  it("resource tanpa workflow TIDAK merender chip filter status", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    expect(screen.queryByRole("button", { name: "All", pressed: true })).not.toBeInTheDocument();
+  });
+
+  it("field status di `list.filters` tidak ganda: chip menggantikan dropdown ResourceFilter-nya", async () => {
+    const defDouble = {
+      ...defWorkflow,
+      list: { perPage: 10, filters: ["status"] },
+    } as ResourceDef;
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", status: "approved" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defDouble} />);
+    await screen.findByRole("table");
+    expect(screen.getByRole("button", { name: "Approved" })).toBeInTheDocument();
+    // ResourceFilter untuk field status akan merender tombol combobox yang
+    // namanya diambil dari <label> ("status"); chip menggantikannya.
+    expect(screen.queryByRole("button", { name: "status" })).not.toBeInTheDocument();
+  });
+
+  it("kolom render:\"avatar\" menampilkan inisial dan nama; nama kosong jadi \"?\" tanpa galat", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", nama: "Ani Rahma Putri" },
+            { id: "2", nama: "" },
+            { id: "3", nama: "Budi" },
+          ],
+          meta: { total: 3, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    const defAvatar = {
+      ...def,
+      columns: [{ field: "nama", labelKey: "items.nama", render: "avatar" }],
+    } as ResourceDef;
+
+    wrap(<ResourceTable def={defAvatar} />);
+
+    expect(await screen.findByText("Ani Rahma Putri")).toBeInTheDocument();
+    expect(screen.getByText("AR")).toBeInTheDocument();
+    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("?")).toBeInTheDocument();
+  });
+
+  it("kolom avatar: nama 200 karakter dipotong (truncate), inisial tetap 2 huruf", async () => {
+    const panjang = `${"a".repeat(100)} ${"b".repeat(99)}`;
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", nama: panjang }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    const defAvatar = {
+      ...def,
+      columns: [{ field: "nama", labelKey: "items.nama", render: "avatar" }],
+    } as ResourceDef;
+
+    wrap(<ResourceTable def={defAvatar} />);
+
+    const name = await screen.findByText(panjang);
+    expect(name.className).toContain("truncate");
+    expect(screen.getByText("AB")).toBeInTheDocument();
+  });
+
+  it("avatar diwarnai token modul --m<1..4> dari toneOf(nama)", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", nama: "Budi" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    const defAvatar = {
+      ...def,
+      columns: [{ field: "nama", labelKey: "items.nama", render: "avatar" }],
+    } as ResourceDef;
+
+    wrap(<ResourceTable def={defAvatar} />);
+
+    const initials = await screen.findByText("B");
+    expect(initials.closest("[data-tone]")).toHaveAttribute("data-tone", String(toneOf("Budi")));
+  });
+
+  it("daftar kosong karena q/filter aktif: tombol Clear all filters menghapus q dan semua filter_* dari URL", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({ data: [], meta: { total: 0, page: 1, per_page: 10 } }),
+      ),
+    );
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    wrap(<ResourceTable def={defFiltered} />, {
+      onUrlUpdate,
+      searchParams: "q=zzz&filter_prioritas=high",
+    });
+
+    const clear = await screen.findByRole("button", { name: "Clear all filters" });
+    await user.click(clear);
+
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)?.[0] as { queryString: string };
+      expect(last.queryString).not.toContain("q=");
+      expect(last.queryString).not.toContain("filter_prioritas");
+    });
+    expect(screen.getByPlaceholderText("Search...")).toHaveValue("");
+  });
+
+  it("daftar kosong tanpa q/filter: tidak ada tombol Clear all filters", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({ data: [], meta: { total: 0, page: 1, per_page: 10 } }),
+      ),
+    );
+    wrap(<ResourceTable def={defFiltered} />);
+
+    expect(await screen.findByText("No data yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear all filters" })).not.toBeInTheDocument();
+  });
+
+  it("header tabel lengket dan kolom currency memakai tabular-nums", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", harga: 1234.5, aktif: true }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+    wrap(<ResourceTable def={defRenderers} />);
+
+    const expectedCurrency = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(1234.5);
+    const cell = await screen.findByText(expectedCurrency);
+    expect(cell.closest("td")).toHaveClass("tabular-nums");
+    for (const th of screen.getAllByRole("columnheader")) {
+      expect(th.className).toContain("sticky");
+    }
+  });
+
+  it("kotak cari punya nama aksesibel (aria-label), bukan hanya placeholder", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    expect(screen.getByPlaceholderText("Search...")).toHaveAttribute("aria-label", "Search...");
+  });
+
+  it("header kolom terurut membawa aria-sort; kolom tak terurut tak membawanya", async () => {
+    wrap(<ResourceTable def={def} />, { searchParams: "sort=nama&order=desc" });
+    await screen.findByText("Beta");
+    const headers = screen.getAllByRole("columnheader");
+    const nama = headers.find((h) => h.textContent?.includes("Name"));
+    expect(nama).toHaveAttribute("aria-sort", "descending");
+    const actions = headers.find((h) => h.textContent === "Actions");
+    expect(actions).not.toHaveAttribute("aria-sort");
+  });
+
+  it("aria-sort: ascending bila urut naik, none bila kolom sortable belum dipilih", async () => {
+    wrap(<ResourceTable def={def} />, { searchParams: "sort=nama&order=asc" });
+    await screen.findByText("Alpha");
+    const nama = screen.getAllByRole("columnheader").find((h) => h.textContent?.includes("Name"));
+    expect(nama).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  it("aria-sort none untuk kolom sortable yang tidak sedang dipakai mengurutkan", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    const nama = screen.getAllByRole("columnheader").find((h) => h.textContent?.includes("Name"));
+    expect(nama).toHaveAttribute("aria-sort", "none");
+  });
+
+  it("wadah tabel yang bisa digulir terjangkau papan ketik (tabIndex 0, role region, bernama)", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    const region = screen.getByRole("region", { name: "Items" });
+    expect(region).toHaveAttribute("tabindex", "0");
+    expect(region).toHaveAttribute("data-slot", "table-container");
   });
 
   it("menampilkan tombol aksi transisi yang diizinkan dari status baris (gated <Can>), TIDAK menampilkan yang tak diizinkan", async () => {
@@ -681,7 +949,7 @@ describe("ResourceTable", () => {
 
     // Tunggu data sungguhan (bukan skeleton loading) sebelum memetik baris —
     // `findAllByRole("row")` tanpa ini bisa resolve ke baris skeleton tunggal.
-    await screen.findByText("Submitted");
+    await within(await screen.findByRole("table")).findByText("Submitted");
     const rows = screen.getAllByRole("row");
     // rows[0] = header; rows[1] = baris "submitted"; rows[2] = baris "approved".
     const submittedRow = rows[1];
@@ -754,8 +1022,9 @@ describe("ResourceTable", () => {
     const expectedDate = new Date("2024-01-15T00:00:00.000Z").toLocaleDateString();
     expect(screen.getByText(expectedDate)).toBeInTheDocument();
 
-    // `boolean`: label i18n (bukan "true"/"false" mentah).
+    // `boolean`: label i18n (bukan "true"/"false" mentah), dirender sbg badge.
     expect(screen.getByText("Yes")).toBeInTheDocument();
+    expect(screen.getByText("Yes")).toHaveAttribute("data-slot", "badge");
     expect(screen.queryByText("true")).not.toBeInTheDocument();
 
     // `currency`: format `Intl.NumberFormat` (USD, generik/demo).
@@ -800,6 +1069,7 @@ describe("ResourceTable", () => {
     wrap(<ResourceTable def={defRenderers} />);
 
     expect(await screen.findByText("No")).toBeInTheDocument();
+    expect(screen.getByText("No")).toHaveAttribute("data-slot", "badge");
     // Tanpa `pemilikId_label` → fallback ke nilai id mentah.
     expect(screen.getByText("7")).toBeInTheDocument();
     // `foto` kosong → tak ada `<img>` yang dirender.
@@ -985,13 +1255,16 @@ describe("ResourceTable", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
 
     // Dropdown filter di-label via `resolveLabel(t, meta.labelKey)` ("items.prioritas" -> "Priority").
-    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    // Kontrol filter = Combobox: tombol pemicu berlabel "Priority"; panel opsi
+    // baru ada di DOM setelah dibuka.
+    const filterSelect = screen.getByLabelText("Priority");
+    await user.click(filterSelect);
     // Opsi "All" (t.common.all) + opsi statis field (Low/High).
-    expect(within(filterSelect).getByRole("option", { name: "All" })).toBeInTheDocument();
-    expect(within(filterSelect).getByRole("option", { name: "Low" })).toBeInTheDocument();
-    expect(within(filterSelect).getByRole("option", { name: "High" })).toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: "All" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Low" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "High" })).toBeInTheDocument();
 
-    await user.selectOptions(filterSelect, "high");
+    await user.click(screen.getByRole("option", { name: "High" }));
 
     await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument());
     expect(screen.getByText("Beta")).toBeInTheDocument();
@@ -1003,7 +1276,8 @@ describe("ResourceTable", () => {
     });
 
     // Pilih "All" lagi -> filter dihapus dari URL & request, kedua baris kembali.
-    await user.selectOptions(filterSelect, "");
+    await user.click(filterSelect);
+    await user.click(await screen.findByRole("option", { name: "All" }));
 
     await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
     expect(screen.getByText("Beta")).toBeInTheDocument();
@@ -1062,8 +1336,8 @@ describe("ResourceTable", () => {
     await screen.findByText("Gamma");
     expect(screen.getByText("Delta")).toBeInTheDocument();
 
-    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
-    await user.selectOptions(filterSelect, "low");
+    await user.click(screen.getByLabelText("Priority"));
+    await user.click(await screen.findByRole("option", { name: "Low" }));
 
     // `page=1` adalah default nuqs sehingga dibuang dari querystring (bukan
     // dicetak eksplisit) — assert lewat ABSENnya `page=2`, sama pola dgn tes
@@ -1111,17 +1385,17 @@ describe("ResourceTable", () => {
     await screen.findByText("Alpha");
     expect(screen.getByText("Beta")).toBeInTheDocument();
 
-    const filterSelect = screen.getByLabelText("Priority") as HTMLSelectElement;
+    const filterSelect = screen.getByLabelText("Priority");
     // Opsi async butuh fetch (`useOptions`) selesai dulu — labelnya sengaja
     // dibedakan ("... (async)") dari fixture statis `defFiltered` supaya tes
     // ini tak bisa lolos palsu kalau `ResourceFilter` diam-diam jatuh balik ke
-    // `meta.options` (yang di sini memang tak ada).
-    await waitFor(() => {
-      expect(within(filterSelect).getByRole("option", { name: "Low (async)" })).toBeInTheDocument();
-    });
-    expect(within(filterSelect).getByRole("option", { name: "High (async)" })).toBeInTheDocument();
+    // `meta.options` (yang di sini memang tak ada). `findByRole` menunggu
+    // fetch selesai; opsi baru ada di DOM saat panel terbuka.
+    await user.click(filterSelect);
+    expect(await screen.findByRole("option", { name: "Low (async)" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "High (async)" })).toBeInTheDocument();
 
-    await user.selectOptions(filterSelect, "high");
+    await user.click(screen.getByRole("option", { name: "High (async)" }));
 
     await waitFor(() => expect(screen.queryByText("Alpha")).not.toBeInTheDocument());
     expect(screen.getByText("Beta")).toBeInTheDocument();
