@@ -67,7 +67,13 @@ export type FormDef = {
 };
 
 /** Varian badge yang dipakai `<Badge>` (ui/badge.tsx). */
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+type BadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "warning";
 
 /** Satu status dalam workflow — dipakai stepper & badge kolom status. */
 export type WorkflowStatus = {

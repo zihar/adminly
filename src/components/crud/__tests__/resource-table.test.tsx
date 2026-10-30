@@ -201,10 +201,10 @@ beforeAll(async () => {
       field: "status",
       initial: "draft",
       statuses: [
-        { value: "draft", labelKey: "workflow.status.draft" },
-        { value: "submitted", labelKey: "workflow.status.submitted" },
-        { value: "approved", labelKey: "workflow.status.approved" },
-        { value: "rejected", labelKey: "workflow.status.rejected" },
+        { value: "draft", labelKey: "workflow.status.draft", variant: "secondary" },
+        { value: "submitted", labelKey: "workflow.status.submitted", variant: "warning" },
+        { value: "approved", labelKey: "workflow.status.approved", variant: "success" },
+        { value: "rejected", labelKey: "workflow.status.rejected", variant: "destructive" },
       ],
       transitions: [
         { action: "submit", from: ["draft"], to: "submitted", permission: "items:update", labelKey: "workflow.action.submit" },
@@ -661,6 +661,41 @@ describe("ResourceTable", () => {
     expect(screen.queryByText("submitted")).not.toBeInTheDocument();
   });
 
+  it("status approved dirender sebagai badge varian success, submitted sebagai warning", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [
+            { id: "1", status: "approved" },
+            { id: "2", status: "submitted" },
+          ],
+          meta: { total: 2, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defWorkflow} />);
+
+    expect(await screen.findByText("Approved")).toHaveAttribute("data-variant", "success");
+    expect(screen.getByText("Submitted")).toHaveAttribute("data-variant", "warning");
+  });
+
+  it("status yang tidak ada di workflow (data lama) jatuh ke teks biasa tanpa galat", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/items", () =>
+        HttpResponse.json({
+          data: [{ id: "1", status: "arsip-lama" }],
+          meta: { total: 1, page: 1, per_page: 10 },
+        }),
+      ),
+    );
+
+    wrap(<ResourceTable def={defWorkflow} />);
+
+    const cell = await screen.findByText("arsip-lama");
+    expect(cell).not.toHaveAttribute("data-slot", "badge");
+  });
+
   it("menampilkan tombol aksi transisi yang diizinkan dari status baris (gated <Can>), TIDAK menampilkan yang tak diizinkan", async () => {
     // Baris "submitted" -> transisi diizinkan: approve+reject (butuh
     // `items:approve`, dipunyai Admin). Baris "approved" -> tak ada transisi
@@ -754,8 +789,9 @@ describe("ResourceTable", () => {
     const expectedDate = new Date("2024-01-15T00:00:00.000Z").toLocaleDateString();
     expect(screen.getByText(expectedDate)).toBeInTheDocument();
 
-    // `boolean`: label i18n (bukan "true"/"false" mentah).
+    // `boolean`: label i18n (bukan "true"/"false" mentah), dirender sbg badge.
     expect(screen.getByText("Yes")).toBeInTheDocument();
+    expect(screen.getByText("Yes")).toHaveAttribute("data-slot", "badge");
     expect(screen.queryByText("true")).not.toBeInTheDocument();
 
     // `currency`: format `Intl.NumberFormat` (USD, generik/demo).
@@ -800,6 +836,7 @@ describe("ResourceTable", () => {
     wrap(<ResourceTable def={defRenderers} />);
 
     expect(await screen.findByText("No")).toBeInTheDocument();
+    expect(screen.getByText("No")).toHaveAttribute("data-slot", "badge");
     // Tanpa `pemilikId_label` → fallback ke nilai id mentah.
     expect(screen.getByText("7")).toBeInTheDocument();
     // `foto` kosong → tak ada `<img>` yang dirender.

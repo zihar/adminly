@@ -287,7 +287,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             const status = def.workflow?.statuses.find((s) => s.value === value);
             if (status) {
               return (
-                <Badge variant={status.variant ?? "secondary"}>
+                <Badge variant={status.variant ?? "secondary"} dot>
                   {resolveLabel(t, status.labelKey)}
                 </Badge>
               );
@@ -302,7 +302,11 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             return "";
           }
           if (c.render === "boolean") {
-            return resolveLabel(t, value ? "common.yes" : "common.no");
+            return (
+              <Badge variant={value ? "success" : "secondary"}>
+                {resolveLabel(t, value ? "common.yes" : "common.no")}
+              </Badge>
+            );
           }
           if (c.render === "currency") {
             // Format generik (demo) — mata uang default USD, deterministik
