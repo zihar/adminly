@@ -1,0 +1,271 @@
+<title>Mockup Modul Ajar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sidebar kelompok berwarna + area utama (header halaman, filter, tabel, panel form). Arah: Dataran Tinggi, teal + emas, status berwarna. */
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --surface-2:#f7fafb; --line:#dfe7ea; --fg:#14262f; --muted:#5d727c;
+  --brand:#0e3b53; --brand-fg:#ffffff; --brand-soft:#e1eef4; --gold:#f7d01a; --gold-fg:#3b2f00;
+  --focus:#1b7aa8; --row-hover:#eef5f8;
+  --draft-bg:#e9edef; --draft-fg:#47585f;
+  --sub-bg:#fff1c2; --sub-fg:#7a5600;
+  --ok-bg:#d9f2e3; --ok-fg:#146237;
+  --no-bg:#fbdede; --no-fg:#9b1c1c;
+  --m1:#1b7aa8; --m2:#2f9e6e; --m3:#c0792a; --m4:#7a5bc0;
+  --shadow:0 1px 2px rgba(14,59,83,.06),0 6px 20px rgba(14,59,83,.06);
+  --font-d:"Fraunces",Georgia,serif; --font-b:"Figtree",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b171d; --surface:#122530; --surface-2:#0f202a; --line:#25404d; --fg:#e6eff3; --muted:#93aab5;
+  --brand:#7cc3e4; --brand-fg:#06202d; --brand-soft:#17384a; --gold:#f7d01a; --gold-fg:#2b2200; --focus:#7cc3e4; --row-hover:#173341;
+  --draft-bg:#243a45; --draft-fg:#b4c6ce; --sub-bg:#4a3b0c; --sub-fg:#f3d36a; --ok-bg:#133b28; --ok-fg:#7fdba8; --no-bg:#4a1b1b; --no-fg:#f4a3a3;
+  --m1:#6bb8de; --m2:#6fd0a0; --m3:#e5a35c; --m4:#b19df0; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b171d; --surface:#122530; --surface-2:#0f202a; --line:#25404d; --fg:#e6eff3; --muted:#93aab5;
+  --brand:#7cc3e4; --brand-fg:#06202d; --brand-soft:#17384a; --gold:#f7d01a; --gold-fg:#2b2200; --focus:#7cc3e4; --row-hover:#173341;
+  --draft-bg:#243a45; --draft-fg:#b4c6ce; --sub-bg:#4a3b0c; --sub-fg:#f3d36a; --ok-bg:#133b28; --ok-fg:#7fdba8; --no-bg:#4a1b1b; --no-fg:#f4a3a3;
+  --m1:#6bb8de; --m2:#6fd0a0; --m3:#e5a35c; --m4:#b19df0; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--font-b)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.side{background:var(--surface);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:18px}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px;font-family:var(--font-d);font-weight:700;font-size:18px;color:var(--brand)}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--brand);display:grid;place-items:center}
+.logo i svg{width:18px;height:18px;fill:var(--gold)}
+.grp{display:flex;flex-direction:column;gap:2px}
+.grp h4{margin:0 8px 4px;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:9px;color:var(--fg);text-decoration:none}
+.nav:hover{background:var(--row-hover)}
+.nav .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.nav .ic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav[aria-current]{background:var(--brand-soft);font-weight:600}
+.nav[aria-current] .ic{background:var(--c);color:#fff}
+.main{padding:22px max(16px,env(safe-area-inset-right,0px)) 40px 28px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.crumb{color:var(--muted);font-size:13px}
+.me{display:flex;align-items:center;gap:8px}
+.theme{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 10px;cursor:pointer}
+.head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.head .badge-ic{width:46px;height:46px;border-radius:14px;background:var(--m1);display:grid;place-items:center;flex:none}
+.head .badge-ic svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.head h1{margin:0;font:700 26px/1.15 var(--font-d);text-wrap:balance}
+.head p{margin:2px 0 0;color:var(--muted)}
+.head .sp{flex:1}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600}
+.btn:hover{background:var(--row-hover)}
+.btn.pri{background:var(--brand);color:var(--brand-fg);border-color:transparent}
+.btn.pri:hover{filter:brightness(1.12)}
+.btn.gold{background:var(--gold);color:var(--gold-fg);border-color:transparent}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;padding:14px;border-bottom:1px solid var(--line);align-items:center}
+.search{position:relative;flex:1 1 220px;min-width:0}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 0}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;font-weight:500}
+.chip b{font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+.chip:hover{background:var(--row-hover)}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--brand-fg);border-color:transparent}
+.chip[aria-pressed="true"] b{color:inherit;opacity:.8}
+/* combobox */
+.cb{position:relative}
+.cb-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:170px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);cursor:pointer;width:100%}
+.cb-btn svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2.4}
+.cb-pop{position:absolute;z-index:20;top:calc(100% + 6px);left:0;min-width:240px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:8px}
+.cb-pop input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);margin-bottom:6px}
+.cb-list{list-style:none;margin:0;padding:0;max-height:210px;overflow:auto}
+.cb-list li{padding:7px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.cb-list li:hover,.cb-list li[aria-selected="true"]{background:var(--brand-soft)}
+.cb-list li small{color:var(--muted)}
+.cb-empty{padding:10px;color:var(--muted)}
+/* tabel */
+.tw{overflow-x:auto;padding-top:12px}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{position:sticky;top:0;text-align:left;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;background:var(--surface-2);padding:10px 14px;border-block:1px solid var(--line);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:hover{background:var(--row-hover)}
+tbody tr:last-child td{border-bottom:0}
+.who{display:flex;align-items:center;gap:10px}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;background:var(--c);flex:none}
+.who b{display:block;font-weight:600}
+.who small{color:var(--muted)}
+.mp{display:inline-flex;align-items:center;gap:8px}
+.mp i{width:9px;height:9px;border-radius:3px;background:var(--c)}
+.st{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;font-weight:600;font-size:12.5px;background:var(--b);color:var(--f)}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.draft{--b:var(--draft-bg);--f:var(--draft-fg)}
+.st.sub{--b:var(--sub-bg);--f:var(--sub-fg)}
+.st.ok{--b:var(--ok-bg);--f:var(--ok-fg)}
+.st.no{--b:var(--no-bg);--f:var(--no-fg)}
+.num{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.act{display:flex;gap:6px;justify-content:flex-end}
+.ib{width:32px;height:32px;border-radius:9px;border:1px solid transparent;background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.ib:hover{background:var(--brand-soft);color:var(--brand)}
+.ib svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.empty{padding:44px 16px;text-align:center;color:var(--muted)}
+.empty h3{margin:0 0 4px;font:700 18px var(--font-d);color:var(--fg)}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--line);color:var(--muted)}
+.pg{display:flex;gap:4px}
+.pg button{min-width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-variant-numeric:tabular-nums}
+.pg button[aria-current]{background:var(--brand);color:var(--brand-fg);border-color:transparent}
+/* form */
+.formcard{padding:0;overflow:hidden}
+.formcard header{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.formcard header h2{margin:0;font:700 18px var(--font-d)}
+.tabs{display:flex;gap:4px;padding:10px 18px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{padding:8px 12px;border:0;background:none;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:3px solid transparent}
+.tab[aria-selected="true"]{color:var(--brand);border-color:var(--gold)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;padding:18px}
+.f label{display:block;font-weight:600;margin-bottom:6px}
+.f label span{color:var(--no-fg)}
+.f input,.f .cb-btn{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.f small{display:block;margin-top:4px;color:var(--muted)}
+.fact{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.note{color:var(--muted);font-size:13px;max-width:70ch}
+@media (max-width:860px){.app{grid-template-columns:1fr}.side{display:none}.main{padding-left:max(16px,env(safe-area-inset-left,0px))}}
+@media (prefers-reduced-motion:no-preference){.btn,.chip,.nav,tbody tr{transition:background .15s,filter .15s}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5M9 7h6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M21 20v-1a4 4 0 0 0-3-3.9M16 4.2a3.5 3.5 0 0 1 0 6.6"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1 1-1.5 2.5-1.5s2.5.6 2.5 1.7-1 1.4-2.5 1.8-2.5.7-2.5 1.8S10.5 16 12 16s2.5-.5 2.5-1.5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-5M13 16V8M18 16v-3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="side" aria-label="Menu utama">
+    <div class="logo"><i><svg viewBox="0 0 24 24"><path d="M12 2l1.8 5.6L19 5l-2.6 5.2L22 12l-5.600 1.800L19 19l-5.200-2.600L12 22l-1.800-5.600L5 19l2.600-5.200L2 12l5.600-1.800L5 5l5.200 2.600z"/></svg></i>Edelweiss</div>
+    <nav class="grp"><h4>Utama</h4>
+      <a class="nav" href="#" style="--c:var(--m1)"><span class="ic"><svg><use href="#i-home"/></svg></span>Beranda</a>
+    </nav>
+    <nav class="grp"><h4>Akademik</h4>
+      <a class="nav" href="#" aria-current="page" style="--c:var(--m1)"><span class="ic"><svg><use href="#i-book"/></svg></span>Modul Ajar</a>
+      <a class="nav" href="#" style="--c:var(--m4)"><span class="ic"><svg><use href="#i-cal"/></svg></span>Kalender Akademik</a>
+      <a class="nav" href="#" style="--c:var(--m2)"><span class="ic"><svg><use href="#i-chart"/></svg></span>Rapor</a>
+    </nav>
+    <nav class="grp"><h4>Sekolah</h4>
+      <a class="nav" href="#" style="--c:var(--m3)"><span class="ic"><svg><use href="#i-users"/></svg></span>Siswa</a>
+      <a class="nav" href="#" style="--c:var(--m2)"><span class="ic"><svg><use href="#i-coin"/></svg></span>Keuangan</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div class="crumb">Akademik / Modul Ajar</div>
+      <div class="me"><button class="theme" id="theme" type="button">Ganti tema</button><span class="av" style="--c:var(--m4)">RA</span></div>
+    </div>
+
+    <div class="head">
+      <div class="badge-ic"><svg><use href="#i-book"/></svg></div>
+      <div><h1>Modul Ajar</h1><p>Perangkat ajar tiap guru, dari draf sampai disetujui kurikulum.</p></div>
+      <div class="sp"></div>
+      <button class="btn pri" type="button"><svg><use href="#i-plus"/></svg>Buat modul ajar</button>
+    </div>
+
+    <section class="card" aria-label="Daftar modul ajar">
+      <div class="chips" id="chips" role="group" aria-label="Filter status"></div>
+      <div class="tools">
+        <div class="search"><svg><use href="#i-search"/></svg><input id="q" type="search" placeholder="Cari guru atau mata pelajaran" aria-label="Cari"></div>
+        <div class="cb" id="cbKelas"></div>
+        <div class="cb" id="cbMapel"></div>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Guru</th><th>Mata pelajaran</th><th>Kelas</th><th>Status</th><th>Diperbarui</th><th><span class="sr" style="position:absolute;left:-9999px">Aksi</span></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <div class="empty" id="empty" hidden><h3>Belum ada modul ajar yang cocok</h3><p>Ubah kata kunci atau hapus filter, lalu coba lagi.</p><button class="btn" id="reset" type="button">Hapus semua filter</button></div>
+      <div class="foot"><span id="count" class="num"></span><div class="pg" aria-label="Halaman"><button type="button">‹</button><button type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button">›</button></div></div>
+    </section>
+
+    <section class="card formcard" aria-label="Contoh form">
+      <header><h2>Modul ajar baru</h2></header>
+      <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true" type="button">Umum</button><button class="tab" role="tab" aria-selected="false" type="button">Tujuan pembelajaran</button><button class="tab" role="tab" aria-selected="false" type="button">Sesi</button></div>
+      <div class="fgrid">
+        <div class="f"><label for="f-nama">Judul modul <span>*</span></label><input id="f-nama" value="Pecahan senilai dan penjumlahan pecahan"><small>Tampil di daftar dan di rapor.</small></div>
+        <div class="f"><label>Mata pelajaran <span>*</span></label><div class="cb" id="cbForm"></div></div>
+        <div class="f"><label for="f-tgl">Tanggal mulai</label><input id="f-tgl" value="3 November 2026"></div>
+        <div class="f"><label for="f-jp">Alokasi waktu</label><input id="f-jp" value="4 JP × 35 menit"></div>
+      </div>
+      <div class="fact"><button class="btn" type="button">Batal</button><button class="btn" type="button">Simpan draf</button><button class="btn gold" type="button"><svg><use href="#i-send"/></svg>Ajukan ke kurikulum</button></div>
+    </section>
+
+    <p class="note">Mockup contoh. Data di atas rekaan untuk melihat tampilan. Coba klik chip status, ketik di kotak cari, dan buka dropdown Kelas atau Mata pelajaran.</p>
+  </main>
+</div>
+
+<script>
+const MAPEL={"Matematika":"var(--m1)","Bahasa Indonesia":"var(--m3)","IPAS":"var(--m2)","Bahasa Inggris":"var(--m4)","PJOK":"var(--m3)","Seni Rupa":"var(--m4)"};
+const DATA=[
+ ["Ratna Aprilia","Matematika","Kelas 4A","sub","28 Okt 2026"],
+ ["Bambang Hartono","Bahasa Indonesia","Kelas 5B","ok","27 Okt 2026"],
+ ["Siti Nurhaliza","IPAS","Kelas 3A","draft","27 Okt 2026"],
+ ["Yohanes Pratama","Bahasa Inggris","Kelas 6A","no","26 Okt 2026"],
+ ["Dewi Lestari","Matematika","Kelas 2B","ok","24 Okt 2026"],
+ ["Agus Salim","PJOK","Kelas 5A","draft","23 Okt 2026"],
+ ["Maria Goretti","Seni Rupa","Kelas 1A","sub","22 Okt 2026"],
+ ["Hendra Wijaya","IPAS","Kelas 6B","ok","20 Okt 2026"]
+];
+const ST={draft:"Draf",sub:"Diajukan",ok:"Disetujui",no:"Ditolak"};
+const COL=["var(--m1)","var(--m2)","var(--m3)","var(--m4)"];
+const state={st:"all",q:"",kelas:"Semua kelas",mapel:"Semua mata pelajaran"};
+const $=s=>document.querySelector(s);
+const ini=n=>n.split(" ").map(w=>w[0]).slice(0,2).join("");
+const ic=id=>`<svg><use href="#${id}"/></svg>`;
+
+function combo(el,label,opts,key,small){
+  el.innerHTML=`<button class="cb-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span></span>${ic("i-chev")}</button>
+  <div class="cb-pop" hidden><input type="search" placeholder="Cari..." aria-label="Cari ${label}"><ul class="cb-list" role="listbox"></ul></div>`;
+  const btn=el.querySelector(".cb-btn"),pop=el.querySelector(".cb-pop"),inp=pop.querySelector("input"),ul=pop.querySelector("ul");
+  const draw=()=>{const t=inp.value.toLowerCase();const m=opts.filter(o=>o.toLowerCase().includes(t));
+    ul.innerHTML=m.length?m.map(o=>`<li role="option" tabindex="0" aria-selected="${state[key]===o}">${o}${small&&small[o]?`<small>${small[o]}</small>`:""}</li>`).join(""):`<li class="cb-empty">Tidak ada hasil untuk "${inp.value}"</li>`;
+    btn.firstElementChild.textContent=state[key];};
+  const pick=li=>{if(!li||li.classList.contains("cb-empty"))return;state[key]=li.firstChild.textContent;close();render();draw();};
+  const close=()=>{pop.hidden=true;btn.setAttribute("aria-expanded","false")};
+  btn.onclick=()=>{const o=pop.hidden;document.querySelectorAll(".cb-pop").forEach(p=>p.hidden=true);pop.hidden=!o;btn.setAttribute("aria-expanded",String(o));if(o){inp.value="";draw();inp.focus()}};
+  inp.oninput=draw;
+  ul.onclick=e=>pick(e.target.closest("li"));
+  ul.onkeydown=e=>{if(e.key==="Enter")pick(e.target.closest("li"))};
+  el.onkeydown=e=>{if(e.key==="Escape"){close();btn.focus()}};
+  document.addEventListener("click",e=>{if(!el.contains(e.target))close()});
+  draw();
+}
+const KELAS=["Semua kelas",...[...new Set(DATA.map(d=>d[2]))].sort()];
+const MAPELS=["Semua mata pelajaran",...Object.keys(MAPEL)];
+const cnt={};DATA.forEach(d=>cnt[d[2]]=(cnt[d[2]]||0)+1);
+const kcount=Object.fromEntries(Object.entries(cnt).map(([k,v])=>[k,v+" modul"]));
+combo($("#cbKelas"),"kelas",KELAS,"kelas",kcount);
+combo($("#cbMapel"),"mata pelajaran",MAPELS,"mapel");
+state.form="Matematika";combo($("#cbForm"),"mata pelajaran",Object.keys(MAPEL),"form");
+
+function chips(){
+  const items=[["all","Semua"],["draft","Draf"],["sub","Diajukan"],["ok","Disetujui"],["no","Ditolak"]];
+  $("#chips").innerHTML=items.map(([k,l])=>{const n=k==="all"?DATA.length:DATA.filter(d=>d[3]===k).length;
+    return `<button class="chip" type="button" data-k="${k}" aria-pressed="${state.st===k}">${l}<b>${n}</b></button>`}).join("");
+}
+$("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;state.st=b.dataset.k;chips();render()};
+$("#q").oninput=e=>{state.q=e.target.value.toLowerCase();render()};
+$("#reset").onclick=()=>{Object.assign(state,{st:"all",q:"",kelas:KELAS[0],mapel:MAPELS[0]});$("#q").value="";chips();render();["#cbKelas","#cbMapel"].forEach(s=>$(s+" .cb-btn span").textContent=state[s==="#cbKelas"?"kelas":"mapel"])};
+function render(){
+  const r=DATA.filter(d=>(state.st==="all"||d[3]===state.st)&&(state.kelas===KELAS[0]||d[2]===state.kelas)&&(state.mapel===MAPELS[0]||d[1]===state.mapel)&&(!state.q||(d[0]+" "+d[1]).toLowerCase().includes(state.q)));
+  $("#rows").innerHTML=r.map((d,i)=>`<tr><td><div class="who"><span class="av" style="--c:${COL[DATA.indexOf(d)%4]}">${ini(d[0])}</span><div><b>${d[0]}</b><small>Guru kelas</small></div></div></td>
+  <td><span class="mp" style="--c:${MAPEL[d[1]]}"><i></i>${d[1]}</span></td><td>${d[2]}</td><td><span class="st ${d[3]}">${ST[d[3]]}</span></td><td class="num">${d[4]}</td>
+  <td><div class="act"><button class="ib" type="button" aria-label="Lihat">${ic("i-eye")}</button><button class="ib" type="button" aria-label="Ubah">${ic("i-edit")}</button></div></td></tr>`).join("");
+  $("#empty").hidden=r.length>0;$("#count").textContent=`Menampilkan ${r.length} dari ${DATA.length} modul`;
+}
+chips();render();
+$("#theme").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark"};
+</script>
