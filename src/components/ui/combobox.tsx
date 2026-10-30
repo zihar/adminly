@@ -86,17 +86,17 @@ function Combobox({
           <Button
             ref={ref}
             variant="outline"
-            className={cn("w-full justify-start font-normal", className)}
+            className={cn("w-full min-w-0 justify-start font-normal", className)}
             aria-invalid={invalid}
             disabled={disabled}
           />
         }
       >
-        {selected?.label ?? placeholder}
+        <span className="truncate">{selected?.label ?? placeholder}</span>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput placeholder={searchPlaceholder} aria-label={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyLabel}</CommandEmpty>
             <CommandGroup>

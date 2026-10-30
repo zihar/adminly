@@ -45,7 +45,7 @@ function FilterChips({
             aria-pressed={active}
             onClick={() => onChange(chip.value)}
             className={cn(
-              "inline-flex h-8 items-center rounded-full border px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+              "inline-flex h-8 touch-manipulation items-center rounded-full max-sm:h-11 border px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
               active
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-card text-foreground hover:bg-muted"

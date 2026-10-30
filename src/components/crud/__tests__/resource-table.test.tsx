@@ -891,6 +891,44 @@ describe("ResourceTable", () => {
     }
   });
 
+  it("kotak cari punya nama aksesibel (aria-label), bukan hanya placeholder", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    expect(screen.getByPlaceholderText("Search...")).toHaveAttribute("aria-label", "Search...");
+  });
+
+  it("header kolom terurut membawa aria-sort; kolom tak terurut tak membawanya", async () => {
+    wrap(<ResourceTable def={def} />, { searchParams: "sort=nama&order=desc" });
+    await screen.findByText("Beta");
+    const headers = screen.getAllByRole("columnheader");
+    const nama = headers.find((h) => h.textContent?.includes("Name"));
+    expect(nama).toHaveAttribute("aria-sort", "descending");
+    const actions = headers.find((h) => h.textContent === "Actions");
+    expect(actions).not.toHaveAttribute("aria-sort");
+  });
+
+  it("aria-sort: ascending bila urut naik, none bila kolom sortable belum dipilih", async () => {
+    wrap(<ResourceTable def={def} />, { searchParams: "sort=nama&order=asc" });
+    await screen.findByText("Alpha");
+    const nama = screen.getAllByRole("columnheader").find((h) => h.textContent?.includes("Name"));
+    expect(nama).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  it("aria-sort none untuk kolom sortable yang tidak sedang dipakai mengurutkan", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    const nama = screen.getAllByRole("columnheader").find((h) => h.textContent?.includes("Name"));
+    expect(nama).toHaveAttribute("aria-sort", "none");
+  });
+
+  it("wadah tabel yang bisa digulir terjangkau papan ketik (tabIndex 0, role region, bernama)", async () => {
+    wrap(<ResourceTable def={def} />);
+    await screen.findByText("Alpha");
+    const region = screen.getByRole("region", { name: "Items" });
+    expect(region).toHaveAttribute("tabindex", "0");
+    expect(region).toHaveAttribute("data-slot", "table-container");
+  });
+
   it("menampilkan tombol aksi transisi yang diizinkan dari status baris (gated <Can>), TIDAK menampilkan yang tak diizinkan", async () => {
     // Baris "submitted" -> transisi diizinkan: approve+reject (butuh
     // `items:approve`, dipunyai Admin). Baris "approved" -> tak ada transisi

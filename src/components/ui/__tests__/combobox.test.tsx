@@ -96,4 +96,20 @@ describe("Combobox", () => {
     await user.click(trigger);
     expect(screen.queryByRole("option")).not.toBeInTheDocument();
   });
+
+  it("kotak cari di dalam panel punya nama aksesibel", async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole("button"));
+    expect(await screen.findByPlaceholderText("Cari…")).toHaveAttribute("aria-label", "Cari…");
+  });
+
+  it("label opsi terpilih dipotong (truncate) dan tombol boleh menyempit (min-w-0)", () => {
+    const panjang = "Label yang sangat panjang ".repeat(10).trim();
+    setup({ options: [{ value: "x", label: panjang }], value: "x" });
+    const trigger = screen.getByRole("button");
+    const label = screen.getByText(panjang);
+    expect(label.className).toContain("truncate");
+    expect(trigger.className).toContain("min-w-0");
+    expect(trigger).toContainElement(label);
+  });
 });

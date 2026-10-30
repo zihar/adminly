@@ -74,4 +74,12 @@ describe("FilterChips", () => {
     await user.keyboard(" ");
     expect(onChange).toHaveBeenLastCalledWith("approved");
   });
+
+  it("chip ramah sentuh: touch-manipulation dan target lebih tinggi di layar kecil", () => {
+    setup();
+    for (const chip of screen.getAllByRole("button")) {
+      expect(chip.className).toContain("touch-manipulation");
+      expect(chip.className).toContain("max-sm:h-11");
+    }
+  });
 });

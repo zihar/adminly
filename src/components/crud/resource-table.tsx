@@ -410,6 +410,7 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder={t.common.searchPlaceholder}
+          aria-label={t.common.searchPlaceholder}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -506,6 +507,12 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
           HANYA untuk load pertama (`isPending`), lihat `<TableBody>`. */}
       <Table
         containerClassName="max-h-[70vh] overflow-y-auto rounded-xl border bg-card"
+        // Wadah yang bisa digulir harus terjangkau papan ketik (WCAG 2.1.1).
+        containerProps={{
+          tabIndex: 0,
+          role: "region",
+          "aria-label": resolveLabel(t, `${def.name}.title`),
+        }}
         aria-busy={query.isFetching && !query.isPending}
         className={
           query.isFetching && !query.isPending ? "opacity-60 transition-opacity" : undefined
@@ -516,7 +523,19 @@ export function ResourceTable({ def }: { def: ResourceDef }) {
             <TableRow key={headerGroup.id}>
               <TableHead className="sticky top-0 z-10 bg-muted font-semibold w-8" />
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="sticky top-0 z-10 bg-muted font-semibold">
+                <TableHead
+                  key={header.id}
+                  className="sticky top-0 z-10 bg-muted font-semibold"
+                  aria-sort={
+                    header.column.getCanSort()
+                      ? header.column.getIsSorted() === "asc"
+                        ? "ascending"
+                        : header.column.getIsSorted() === "desc"
+                          ? "descending"
+                          : "none"
+                      : undefined
+                  }
+                >
                   {header.column.getCanSort() ? (
                     <button
                       type="button"
